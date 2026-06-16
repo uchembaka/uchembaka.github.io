@@ -111,6 +111,7 @@ nav.top a[aria-current="page"]{color:var(--amber)}
 /* prose */
 .lede{font-size:clamp(18px,2.3vw,22px);line-height:1.62;color:var(--haze-dim);max-width:60ch;font-weight:300}
 .lede strong{color:var(--haze);font-weight:400}
+.lede b{color:var(--amber)}
 .lede em{font-style:italic;color:var(--haze)}
 .lede + .lede{margin-top:22px}
 
