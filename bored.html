@@ -1,0 +1,128 @@
+---
+---
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<script>(function(){try{var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark"){t=(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+<title>Bored — Uche Mbaka</title>
+<meta name="description" content="A few small browser games — Sudoku, KenKen and Tetris — for when you are bored." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+{% include header.html active="bored" %}
+
+<main class="page">
+  <div class="wrap">
+    <div class="pagehead">
+      <div class="eyebrow">06 — Diversions</div>
+      <h1>Procrastination</h1>
+    </div>
+
+    <p class="lede" style="margin-bottom:46px">A collection of small distractions.</p>
+
+    <div class="games-grid">
+
+      <a class="game-card" href="games/sudoku.html">
+        <div class="game-thumb">
+          <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <g stroke="var(--line-2)" stroke-width="0.8">
+              <line x1="15" y1="5" x2="15" y2="95"/><line x1="25" y1="5" x2="25" y2="95"/>
+              <line x1="45" y1="5" x2="45" y2="95"/><line x1="55" y1="5" x2="55" y2="95"/>
+              <line x1="75" y1="5" x2="75" y2="95"/><line x1="85" y1="5" x2="85" y2="95"/>
+              <line x1="5" y1="15" x2="95" y2="15"/><line x1="5" y1="25" x2="95" y2="25"/>
+              <line x1="5" y1="45" x2="95" y2="45"/><line x1="5" y1="55" x2="95" y2="55"/>
+              <line x1="5" y1="75" x2="95" y2="75"/><line x1="5" y1="85" x2="95" y2="85"/>
+            </g>
+            <g stroke="var(--haze-dim)" stroke-width="1.8" stroke-linejoin="round">
+              <rect x="5" y="5" width="90" height="90" rx="2"/>
+              <line x1="35" y1="5" x2="35" y2="95"/><line x1="65" y1="5" x2="65" y2="95"/>
+              <line x1="5" y1="35" x2="95" y2="35"/><line x1="5" y1="65" x2="95" y2="65"/>
+            </g>
+            <g font-family="'Space Grotesk',sans-serif" font-size="9" font-weight="600" text-anchor="middle">
+              <text x="10" y="13.5" fill="var(--amber)">5</text>
+              <text x="50" y="13.5" fill="var(--haze)">3</text>
+              <text x="80" y="33.5" fill="var(--amber)">7</text>
+              <text x="20" y="53.5" fill="var(--haze)">1</text>
+              <text x="60" y="73.5" fill="var(--amber)">9</text>
+              <text x="90" y="93.5" fill="var(--haze)">4</text>
+            </g>
+          </svg>
+        </div>
+        <div class="game-info">
+          <h2>Sudoku</h2>
+          <p>Fill the 9×9 grid so every row, column and box holds 1–9. Three difficulties, with a few gentle hints when you get stuck.</p>
+          <span class="play">Play →</span>
+        </div>
+      </a>
+
+      <a class="game-card" href="games/kenken.html">
+        <div class="game-thumb">
+          <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <g stroke="var(--line-2)" stroke-width="0.8">
+              <line x1="27.5" y1="5" x2="27.5" y2="95"/><line x1="50" y1="5" x2="50" y2="95"/><line x1="72.5" y1="5" x2="72.5" y2="95"/>
+              <line x1="5" y1="27.5" x2="95" y2="27.5"/><line x1="5" y1="50" x2="95" y2="50"/><line x1="5" y1="72.5" x2="95" y2="72.5"/>
+            </g>
+            <rect x="5" y="5" width="90" height="90" rx="2" stroke="var(--haze-dim)" stroke-width="1.8"/>
+            <g stroke="var(--amber)" stroke-width="2" fill="none" stroke-linejoin="round">
+              <path d="M6 6 H49 V26.5 H26.5 V49 H6 Z"/>
+              <rect x="51" y="6" width="43" height="20.5" rx="1"/>
+              <rect x="73.5" y="51" width="20.5" height="43" rx="1"/>
+              <rect x="28.5" y="73.5" width="43" height="20.5" rx="1"/>
+            </g>
+            <g font-family="'JetBrains Mono',monospace" font-size="7" font-weight="600" fill="var(--haze)">
+              <text x="8.5" y="15">6+</text>
+              <text x="53.5" y="15">2÷</text>
+              <text x="75.5" y="60">3−</text>
+              <text x="31" y="84">8×</text>
+            </g>
+          </svg>
+        </div>
+        <div class="game-info">
+          <h2>KenKen</h2>
+          <p>A Latin-square cousin of Sudoku. Make each cage reach its target with ×, ÷, +, −. Four sizes, from a quick 4×4 up to a fierce 9×9.</p>
+          <span class="play">Play →</span>
+        </div>
+      </a>
+
+      <a class="game-card" href="games/tetris.html">
+        <div class="game-thumb">
+          <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <rect x="20" y="5" width="60" height="90" rx="3" stroke="var(--haze-dim)" stroke-width="1.8"/>
+            <g>
+              <!-- falling T piece -->
+              <rect x="34.5" y="16" width="10.5" height="10.5" rx="1.5" fill="var(--amber)"/>
+              <rect x="46"   y="16" width="10.5" height="10.5" rx="1.5" fill="var(--amber)"/>
+              <rect x="57.5" y="16" width="10.5" height="10.5" rx="1.5" fill="var(--amber)"/>
+              <rect x="46"   y="27.5" width="10.5" height="10.5" rx="1.5" fill="var(--amber)"/>
+              <!-- settled rows -->
+              <rect x="23"   y="72" width="10.5" height="10.5" rx="1.5" fill="var(--steel)"/>
+              <rect x="46"   y="72" width="10.5" height="10.5" rx="1.5" fill="#9c6b53"/>
+              <rect x="57.5" y="72" width="10.5" height="10.5" rx="1.5" fill="var(--steel)"/>
+              <rect x="23"   y="83.5" width="10.5" height="10.5" rx="1.5" fill="#9c6b53"/>
+              <rect x="34.5" y="83.5" width="10.5" height="10.5" rx="1.5" fill="var(--amber)"/>
+              <rect x="46"   y="83.5" width="10.5" height="10.5" rx="1.5" fill="var(--steel)"/>
+              <rect x="69"   y="83.5" width="10.5" height="10.5" rx="1.5" fill="var(--amber)"/>
+            </g>
+          </svg>
+        </div>
+        <div class="game-info">
+          <h2>Tetris</h2>
+          <p>Stack the falling tetrominoes, clear full lines and chase the level counter. Arrows to move and rotate, space to hard-drop.</p>
+          <span class="play">Play →</span>
+        </div>
+      </a>
+
+    </div>
+  </div>
+</main>
+
+{% include footer.html %}
+
+</body>
+</html>

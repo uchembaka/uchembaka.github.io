@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>(function(){try{var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark"){t=(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+<title>Sudoku — Uche Mbaka</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080A0F;
+    --surface: #0D1017;
+    --board: #0D1017;
+    --ink: #E9E6DF;
+    --ink-soft: #6A7180;
+    --accent: #CFA15F;
+    --accent-deep: #E0B978;
+    --accent-soft: rgba(207,161,95,0.16);
+    --line: rgba(233,230,223,0.12);
+    --line-strong: rgba(233,230,223,0.34);
+    --error: #d98a72;
+    --error-soft: rgba(217,138,114,0.18);
+    --overlay: rgba(8,10,15,0.92);
+    --on-accent: #080A0F;
+    --shadow: rgba(0,0,0,0.45);
+  }
+  [data-theme="light"] {
+    --bg: #F3F0E9;
+    --surface: #FBFAF5;
+    --board: #FBFAF5;
+    --ink: #1B1C20;
+    --ink-soft: #6E727D;
+    --accent: #9E6B22;
+    --accent-deep: #7D5417;
+    --accent-soft: rgba(158,107,34,0.12);
+    --line: rgba(20,21,26,0.12);
+    --line-strong: rgba(20,21,26,0.32);
+    --error: #b3442e;
+    --error-soft: rgba(179,68,46,0.14);
+    --overlay: rgba(243,240,233,0.94);
+    --on-accent: #FBFAF5;
+    --shadow: rgba(20,21,26,0.10);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Newsreader", Georgia, serif;
+    font-weight: 300;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 28px 16px 48px;
+    transition: background .35s ease, color .35s ease;
+  }
+
+  .back {
+    align-self: flex-start;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--ink-soft); margin-bottom: 18px; transition: color .25s;
+  }
+  .back:hover { color: var(--accent); }
+
+  header { text-align: center; margin-bottom: 24px; }
+
+  h1 {
+    font-family: "Space Grotesk", system-ui, sans-serif;
+    font-size: 2.2rem; font-weight: 500; letter-spacing: -0.01em;
+  }
+  h1 span { color: var(--accent); }
+
+  .subtitle {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--ink-soft); margin-top: 8px;
+  }
+
+  .toolbar {
+    display: flex; gap: 8px; align-items: center; margin-bottom: 18px;
+    flex-wrap: wrap; justify-content: center;
+    font-family: "JetBrains Mono", monospace;
+  }
+
+  .level-btn {
+    border: 1px solid var(--line); background: transparent; color: var(--ink-soft);
+    padding: 8px 18px; border-radius: 999px; font-size: 0.72rem; letter-spacing: 0.1em;
+    text-transform: uppercase; cursor: pointer; transition: all 0.18s ease;
+  }
+  .level-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .level-btn.active { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  .level-btn:focus-visible, .num-btn:focus-visible, .action-btn:focus-visible, .cell:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 2px;
+  }
+
+  .status {
+    display: flex; gap: 28px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.72rem; color: var(--ink-soft);
+    margin-bottom: 16px; letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .status strong { color: var(--ink); font-weight: 500; }
+
+  .board-wrap { position: relative; }
+
+  .board {
+    display: grid; grid-template-columns: repeat(9, 1fr);
+    width: min(92vw, 460px); aspect-ratio: 1;
+    background: var(--board);
+    border: 2px solid var(--line-strong);
+    border-radius: 10px; overflow: hidden;
+    box-shadow: 0 10px 30px var(--shadow);
+  }
+
+  .cell {
+    border: 0;
+    border-right: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    background: transparent;
+    font-family: "Newsreader", Georgia, serif;
+    font-size: clamp(1rem, 4vw, 1.45rem);
+    color: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: background 0.12s ease; user-select: none;
+  }
+  .cell:nth-child(9n) { border-right: none; }
+  .cell.box-right { border-right: 2px solid var(--line-strong); }
+  .cell.box-bottom { border-bottom: 2px solid var(--line-strong); }
+  .cell:nth-child(n+73) { border-bottom: none; }
+
+  .cell.given { color: var(--ink); font-weight: 400; cursor: default; }
+  .cell.peer { background: var(--accent-soft); opacity: 0.6; }
+  .cell.same-num { background: var(--accent-soft); }
+  .cell.selected { background: var(--accent-soft); box-shadow: inset 0 0 0 2px var(--accent); }
+  .cell.error { color: var(--error); background: var(--error-soft); }
+  .cell.pop { animation: pop 0.18s ease; }
+  @keyframes pop { 50% { transform: scale(1.18); } }
+
+  .numpad {
+    display: grid; grid-template-columns: repeat(9, 1fr); gap: 6px;
+    width: min(92vw, 460px); margin-top: 18px;
+  }
+
+  .num-btn {
+    aspect-ratio: 1; border: 1px solid var(--line); background: var(--surface);
+    border-radius: 8px; font-family: "Newsreader", Georgia, serif;
+    font-size: 1.2rem; color: var(--ink); cursor: pointer; transition: all 0.15s ease;
+  }
+  .num-btn:hover { background: var(--accent-soft); border-color: var(--accent); }
+  .num-btn.done { opacity: 0.22; pointer-events: none; }
+
+  .actions {
+    display: flex; gap: 10px; margin-top: 14px;
+    font-family: "JetBrains Mono", monospace;
+  }
+
+  .action-btn {
+    border: 1px solid var(--line); background: transparent; color: var(--ink-soft);
+    padding: 9px 20px; border-radius: 999px; font-size: 0.7rem; letter-spacing: 0.1em;
+    text-transform: uppercase; cursor: pointer; transition: all 0.18s ease;
+  }
+  .action-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .action-btn.primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+  .action-btn.primary:hover { background: var(--accent-deep); border-color: var(--accent-deep); color: var(--on-accent); }
+
+  .overlay {
+    position: absolute; inset: 0; background: var(--overlay);
+    backdrop-filter: blur(3px);
+    border-radius: 10px; display: none; flex-direction: column;
+    align-items: center; justify-content: center; gap: 10px; text-align: center; padding: 24px;
+  }
+  .overlay.show { display: flex; animation: fade 0.4s ease; }
+  @keyframes fade { from { opacity: 0; } }
+  .overlay h2 { font-family: "Space Grotesk", sans-serif; font-weight: 500; font-size: 1.7rem; }
+  .overlay h2 em { color: var(--accent); font-style: normal; }
+  .overlay p { font-family: "JetBrains Mono", monospace; font-size: 0.72rem; color: var(--ink-soft); letter-spacing: 0.06em; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<a class="back" href="../bored.html">← Bored</a>
+
+<header>
+  <h1>Sudo<span>ku</span></h1>
+  <div class="subtitle">A quiet puzzle</div>
+</header>
+
+<div class="toolbar" role="group" aria-label="Difficulty">
+  <button class="level-btn active" data-level="easy">Easy</button>
+  <button class="level-btn" data-level="medium">Medium</button>
+  <button class="level-btn" data-level="hard">Hard</button>
+</div>
+
+<div class="status">
+  <div>Time <strong id="timer">0:00</strong></div>
+  <div>Mistakes <strong id="mistakes">0</strong></div>
+  <div>Hints <strong id="hints">3</strong></div>
+</div>
+
+<div class="board-wrap">
+  <div class="board" id="board" role="grid" aria-label="Sudoku board"></div>
+  <div class="overlay" id="overlay">
+    <h2>Solved, <em>beautifully</em>.</h2>
+    <p id="overlay-stats"></p>
+    <button class="action-btn primary" onclick="newGame()">Play again</button>
+  </div>
+</div>
+
+<div class="numpad" id="numpad"></div>
+
+<div class="actions">
+  <button class="action-btn" id="erase-btn">Erase</button>
+  <button class="action-btn" id="hint-btn">Hint</button>
+  <button class="action-btn primary" id="new-btn">New game</button>
+</div>
+
+<script>
+const CLUES = { easy: 40, medium: 32, hard: 25 };
+let solution = [], puzzle = [], given = [];
+let selected = -1, level = 'easy', mistakes = 0, hintsLeft = 3;
+let seconds = 0, timerId = null, finished = false;
+
+const boardEl = document.getElementById('board');
+const numpadEl = document.getElementById('numpad');
+
+// ---------- Generator ----------
+function shuffle(a) {
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function isValid(g, idx, v) {
+  const r = Math.floor(idx / 9), c = idx % 9;
+  for (let i = 0; i < 9; i++) {
+    if (g[r * 9 + i] === v || g[i * 9 + c] === v) return false;
+  }
+  const br = Math.floor(r / 3) * 3, bc = Math.floor(c / 3) * 3;
+  for (let i = 0; i < 3; i++)
+    for (let j = 0; j < 3; j++)
+      if (g[(br + i) * 9 + bc + j] === v) return false;
+  return true;
+}
+
+function fillGrid(g, idx = 0) {
+  if (idx === 81) return true;
+  if (g[idx] !== 0) return fillGrid(g, idx + 1);
+  for (const v of shuffle([1,2,3,4,5,6,7,8,9])) {
+    if (isValid(g, idx, v)) {
+      g[idx] = v;
+      if (fillGrid(g, idx + 1)) return true;
+      g[idx] = 0;
+    }
+  }
+  return false;
+}
+
+function countSolutions(g, idx = 0, count = 0) {
+  if (count > 1) return count;
+  while (idx < 81 && g[idx] !== 0) idx++;
+  if (idx === 81) return count + 1;
+  for (let v = 1; v <= 9; v++) {
+    if (isValid(g, idx, v)) {
+      g[idx] = v;
+      count = countSolutions(g, idx + 1, count);
+      g[idx] = 0;
+      if (count > 1) break;
+    }
+  }
+  return count;
+}
+
+function makePuzzle(clues) {
+  solution = new Array(81).fill(0);
+  fillGrid(solution);
+  const p = solution.slice();
+  const order = shuffle([...Array(81).keys()]);
+  let removed = 0, target = 81 - clues;
+  for (const idx of order) {
+    if (removed >= target) break;
+    const backup = p[idx];
+    p[idx] = 0;
+    const copy = p.slice();
+    if (countSolutions(copy) !== 1) {
+      p[idx] = backup;
+    } else {
+      removed++;
+    }
+  }
+  return p;
+}
+
+// ---------- Rendering ----------
+function buildBoard() {
+  boardEl.innerHTML = '';
+  for (let i = 0; i < 81; i++) {
+    const cell = document.createElement('button');
+    cell.className = 'cell';
+    cell.dataset.idx = i;
+    const r = Math.floor(i / 9), c = i % 9;
+    if (c === 2 || c === 5) cell.classList.add('box-right');
+    if (r === 2 || r === 5) cell.classList.add('box-bottom');
+    cell.addEventListener('click', () => selectCell(i));
+    boardEl.appendChild(cell);
+  }
+}
+
+function buildNumpad() {
+  numpadEl.innerHTML = '';
+  for (let n = 1; n <= 9; n++) {
+    const b = document.createElement('button');
+    b.className = 'num-btn';
+    b.textContent = n;
+    b.dataset.num = n;
+    b.addEventListener('click', () => placeNumber(n));
+    numpadEl.appendChild(b);
+  }
+}
+
+function render() {
+  const cells = boardEl.children;
+  const selVal = selected >= 0 ? puzzle[selected] : 0;
+  const selR = Math.floor(selected / 9), selC = selected % 9;
+  const selBox = selected >= 0 ? Math.floor(selR / 3) * 3 + Math.floor(selC / 3) : -1;
+
+  for (let i = 0; i < 81; i++) {
+    const cell = cells[i];
+    const v = puzzle[i];
+    cell.textContent = v || '';
+    cell.classList.toggle('given', given[i]);
+    cell.classList.toggle('error', v !== 0 && v !== solution[i]);
+    const r = Math.floor(i / 9), c = i % 9;
+    const box = Math.floor(r / 3) * 3 + Math.floor(c / 3);
+    cell.classList.toggle('peer', selected >= 0 && i !== selected && (r === selR || c === selC || box === selBox));
+    cell.classList.toggle('same-num', selVal !== 0 && v === selVal && i !== selected);
+    cell.classList.toggle('selected', i === selected);
+  }
+  // grey out completed numbers
+  const counts = {};
+  puzzle.forEach(v => { if (v) counts[v] = (counts[v] || 0) + 1; });
+  document.querySelectorAll('.num-btn').forEach(b => {
+    b.classList.toggle('done', counts[b.dataset.num] >= 9);
+  });
+}
+
+// ---------- Game logic ----------
+function selectCell(i) {
+  if (finished) return;
+  selected = i;
+  render();
+}
+
+function placeNumber(n) {
+  if (finished || selected < 0 || given[selected]) return;
+  if (puzzle[selected] === n) { puzzle[selected] = 0; render(); return; }
+  puzzle[selected] = n;
+  if (n !== solution[selected]) {
+    mistakes++;
+    document.getElementById('mistakes').textContent = mistakes;
+  } else {
+    boardEl.children[selected].classList.add('pop');
+    setTimeout(() => boardEl.children[selected].classList.remove('pop'), 200);
+  }
+  render();
+  checkWin();
+}
+
+function erase() {
+  if (finished || selected < 0 || given[selected]) return;
+  puzzle[selected] = 0;
+  render();
+}
+
+function hint() {
+  if (finished || hintsLeft <= 0) return;
+  let idx = selected;
+  if (idx < 0 || given[idx] || puzzle[idx] === solution[idx]) {
+    const empties = [];
+    for (let i = 0; i < 81; i++) if (puzzle[i] !== solution[i]) empties.push(i);
+    if (!empties.length) return;
+    idx = empties[Math.floor(Math.random() * empties.length)];
+  }
+  puzzle[idx] = solution[idx];
+  given[idx] = true;
+  hintsLeft--;
+  document.getElementById('hints').textContent = hintsLeft;
+  selected = idx;
+  render();
+  checkWin();
+}
+
+function checkWin() {
+  for (let i = 0; i < 81; i++) if (puzzle[i] !== solution[i]) return;
+  finished = true;
+  clearInterval(timerId);
+  document.getElementById('overlay-stats').textContent =
+    `${level[0].toUpperCase() + level.slice(1)} · ${formatTime(seconds)} · ${mistakes} mistake${mistakes === 1 ? '' : 's'}`;
+  document.getElementById('overlay').classList.add('show');
+}
+
+function formatTime(s) {
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+}
+
+function startTimer() {
+  clearInterval(timerId);
+  seconds = 0;
+  document.getElementById('timer').textContent = '0:00';
+  timerId = setInterval(() => {
+    seconds++;
+    document.getElementById('timer').textContent = formatTime(seconds);
+  }, 1000);
+}
+
+function newGame() {
+  document.getElementById('overlay').classList.remove('show');
+  finished = false;
+  mistakes = 0;
+  hintsLeft = 3;
+  selected = -1;
+  document.getElementById('mistakes').textContent = '0';
+  document.getElementById('hints').textContent = '3';
+  puzzle = makePuzzle(CLUES[level]);
+  given = puzzle.map(v => v !== 0);
+  render();
+  startTimer();
+}
+
+// ---------- Events ----------
+document.querySelectorAll('.level-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    level = btn.dataset.level;
+    newGame();
+  });
+});
+
+document.getElementById('new-btn').addEventListener('click', newGame);
+document.getElementById('erase-btn').addEventListener('click', erase);
+document.getElementById('hint-btn').addEventListener('click', hint);
+
+document.addEventListener('keydown', e => {
+  if (e.key >= '1' && e.key <= '9') placeNumber(Number(e.key));
+  else if (e.key === 'Backspace' || e.key === 'Delete' || e.key === '0') erase();
+  else if (selected >= 0 && e.key.startsWith('Arrow')) {
+    e.preventDefault();
+    let r = Math.floor(selected / 9), c = selected % 9;
+    if (e.key === 'ArrowUp') r = Math.max(0, r - 1);
+    if (e.key === 'ArrowDown') r = Math.min(8, r + 1);
+    if (e.key === 'ArrowLeft') c = Math.max(0, c - 1);
+    if (e.key === 'ArrowRight') c = Math.min(8, c + 1);
+    selectCell(r * 9 + c);
+  }
+});
+
+// ---------- Init ----------
+buildBoard();
+buildNumpad();
+newGame();
+</script>
+</body>
+</html>

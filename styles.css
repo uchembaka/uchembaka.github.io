@@ -191,6 +191,34 @@ footer .copy{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacin
 .theme-toggle:focus-visible{outline:none}
 .theme-toggle:focus-visible .track{outline:2px solid var(--amber);outline-offset:3px}
 
+/* ---------- bored / games ---------- */
+.games-grid{display:grid;grid-template-columns:1fr 1fr;gap:26px}
+@media (max-width:720px){.games-grid{grid-template-columns:1fr;gap:20px}}
+.game-card{
+  position:relative;
+  aspect-ratio:1/1;
+  display:flex;align-items:center;gap:26px;
+  padding:30px;
+  border:1px solid var(--line);
+  border-radius:16px;
+  background:linear-gradient(160deg, var(--ink-2), rgba(var(--ink-rgb),0));
+  transition:border-color .3s ease, transform .3s ease, box-shadow .3s ease;
+}
+.game-card:hover{
+  border-color:var(--amber);
+  transform:translateY(-4px);
+  box-shadow:0 18px 40px rgba(0,0,0,.22);
+}
+@media (max-width:480px){.game-card{aspect-ratio:auto;flex-direction:column;text-align:center;gap:20px;padding:26px}}
+.game-thumb{flex:0 0 42%;max-width:42%;display:flex;align-items:center;justify-content:center}
+@media (max-width:480px){.game-thumb{flex:0 0 auto;max-width:60%}}
+.game-thumb svg{width:100%;height:auto;display:block}
+.game-info{flex:1;min-width:0}
+.game-info h2{font-family:"Space Grotesk",sans-serif;font-weight:500;font-size:clamp(22px,3vw,30px);letter-spacing:-.02em;color:var(--haze);margin:0 0 12px}
+.game-info p{font-size:15.5px;line-height:1.6;color:var(--haze-dim);font-weight:300;margin:0 0 18px;max-width:34ch}
+.game-info .play{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--amber)}
+.game-card:hover .play{color:var(--amber)}
+
 /* ---------- revision: hero role, footer creed, confession ---------- */
 .hero .role{margin-top:30px;font-family:"Space Grotesk",system-ui,sans-serif;font-weight:400;font-size:clamp(18px,2.4vw,24px);letter-spacing:-.005em;color:var(--haze-dim)}
 

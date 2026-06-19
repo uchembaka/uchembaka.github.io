@@ -1,3 +1,5 @@
+---
+---
 <!doctype html>
 <html lang="en">
 <head>
@@ -13,18 +15,7 @@
 </head>
 <body>
 
-<header class="bar" id="bar">
-  <div class="wrap">
-    <a href="index.html" class="brand">Uche<b>.</b>Mbaka</a>
-    <nav class="top">
-      <a href="about.html" aria-current="page">About</a>
-      <a href="publications.html">Publications</a>
-      <a href="cv.html">CV</a>
-      <a href="faith.html">Faith</a>
-      <a href="contact.html">Contact</a>
-    </nav>
-  </div>
-</header>
+{% include header.html active="about" %}
 
 <main class="page">
   <div class="wrap">
@@ -45,19 +36,6 @@
   </div>
 </main>
 
-<footer>
-  <div class="wrap">
-    <p class="footer-creed">Saved by grace alone through faith in <b>Christ</b> alone, for the glory of <b>God</b>.</p>
-    <div class="flinks">
-      <a href="mailto:uche.mbaka@ucd.ie">Email</a>
-      <a href="https://github.com/uchembaka" target="_blank" rel="noopener">GitHub</a>
-      <a href="https://orcid.org/0000-0002-1427-6388" target="_blank" rel="noopener">ORCID</a>
-      <button class="theme-toggle" id="themeToggle" aria-label="Switch between light and dark theme" aria-pressed="false"><span class="tmode mono" id="tmode">Dark</span><span class="track"><span class="knob"></span></span></button>
-    </div>
-    <span class="copy">© MMXXVI</span>
-  </div>
-</footer>
-
-<script src="main.js"></script>
+{% include footer.html %}
 </body>
 </html>

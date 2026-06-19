@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>(function(){try{var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark"){t=(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+<title>KenKen — Uche Mbaka</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080A0F;
+    --surface: #0D1017;
+    --board: #0D1017;
+    --ink: #E9E6DF;
+    --ink-soft: #6A7180;
+    --accent: #CFA15F;
+    --accent-deep: #E0B978;
+    --accent-soft: rgba(207,161,95,0.16);
+    --line: rgba(233,230,223,0.12);
+    --line-strong: rgba(233,230,223,0.40);
+    --error: #d98a72;
+    --error-soft: rgba(217,138,114,0.20);
+    --overlay: rgba(8,10,15,0.92);
+    --on-accent: #080A0F;
+    --shadow: rgba(0,0,0,0.45);
+    --cage-0: rgba(207,161,95,0.12);
+    --cage-1: rgba(92,117,133,0.16);
+    --cage-2: rgba(233,230,223,0.05);
+    --cage-3: rgba(207,161,95,0.22);
+    --cage-4: rgba(92,117,133,0.26);
+    --cage-5: rgba(170,140,110,0.18);
+    --cage-6: rgba(120,150,140,0.16);
+    --cage-7: rgba(190,120,90,0.15);
+    --cage-8: rgba(150,160,180,0.12);
+  }
+  [data-theme="light"] {
+    --bg: #F3F0E9;
+    --surface: #FBFAF5;
+    --board: #FBFAF5;
+    --ink: #1B1C20;
+    --ink-soft: #6E727D;
+    --accent: #9E6B22;
+    --accent-deep: #7D5417;
+    --accent-soft: rgba(158,107,34,0.12);
+    --line: rgba(20,21,26,0.12);
+    --line-strong: rgba(20,21,26,0.40);
+    --error: #b3442e;
+    --error-soft: rgba(179,68,46,0.16);
+    --overlay: rgba(243,240,233,0.95);
+    --on-accent: #FBFAF5;
+    --shadow: rgba(20,21,26,0.10);
+    --cage-0: #f3dcd0;
+    --cage-1: #e9dcc2;
+    --cage-2: #dde0cf;
+    --cage-3: #ecd5c4;
+    --cage-4: #ddd9c4;
+    --cage-5: #f0d8d0;
+    --cage-6: #e6d4b8;
+    --cage-7: #d9d6c6;
+    --cage-8: #e7d3c0;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: "Newsreader", Georgia, serif; font-weight: 300;
+    min-height: 100vh; display: flex; flex-direction: column;
+    align-items: center; padding: 28px 16px 48px;
+    transition: background .35s ease, color .35s ease;
+  }
+  .back {
+    align-self: flex-start;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--ink-soft); margin-bottom: 18px; transition: color .25s;
+  }
+  .back:hover { color: var(--accent); }
+  header { text-align: center; margin-bottom: 18px; }
+  h1 { font-family: "Space Grotesk", system-ui, sans-serif; font-size: 2.2rem; font-weight: 500; letter-spacing: -0.01em; }
+  h1 span { color: var(--accent); }
+  .subtitle {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--ink-soft); margin-top: 8px;
+  }
+
+  .toolbar {
+    display: flex; gap: 8px; align-items: center; margin-bottom: 18px;
+    flex-wrap: wrap; justify-content: center;
+    font-family: "JetBrains Mono", monospace;
+  }
+  .level-btn {
+    border: 1px solid var(--line); background: transparent; color: var(--ink-soft);
+    padding: 8px 18px; border-radius: 999px; font-size: 0.72rem; letter-spacing: 0.1em;
+    text-transform: uppercase; cursor: pointer; transition: all 0.18s ease;
+  }
+  .level-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .level-btn.active { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+
+  .status {
+    display: flex; gap: 26px; margin-bottom: 16px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.72rem; color: var(--ink-soft); letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .status strong { color: var(--ink); font-weight: 500; }
+
+  .board-wrap { position: relative; }
+  .board {
+    display: grid;
+    width: min(94vw, 540px); aspect-ratio: 1;
+    background: var(--board);
+    border: 3px solid var(--line-strong);
+    border-radius: 10px; overflow: hidden;
+    box-shadow: 0 10px 30px var(--shadow);
+  }
+  .cell {
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+    font-family: "Newsreader", Georgia, serif;
+    font-size: calc(var(--cell, 60px) * 0.46);
+    color: var(--accent);
+    cursor: pointer; user-select: none;
+    transition: filter 0.1s ease; min-width: 0;
+  }
+  .cell .label {
+    position: absolute; top: 3px; left: 5px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: calc(var(--cell, 60px) * 0.2);
+    font-weight: 500; color: var(--ink); letter-spacing: -0.02em; line-height: 1;
+  }
+  .cell.selected { box-shadow: inset 0 0 0 3px var(--accent); z-index: 2; }
+  .cell.peer { filter: brightness(1.4); }
+  .cell.error { color: var(--error); }
+  .cell.error::after { content: ''; position: absolute; inset: 0; background: var(--error-soft); }
+  .cell .val { position: relative; z-index: 1; }
+  .cell.pop .val { animation: pop 0.18s ease; }
+  @keyframes pop { 50% { transform: scale(1.2); } }
+
+  .numpad { display: grid; gap: 6px; width: min(94vw, 540px); margin-top: 16px; }
+  .num-btn {
+    aspect-ratio: 1; border: 1px solid var(--line); background: var(--surface);
+    border-radius: 8px; font-family: "Newsreader", Georgia, serif; font-size: 1.15rem;
+    color: var(--ink); cursor: pointer; transition: all 0.15s ease;
+  }
+  .num-btn:hover { background: var(--accent-soft); border-color: var(--accent); }
+  .num-btn.erase { font-family: "JetBrains Mono", monospace; font-size: 0.65rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); }
+
+  .actions {
+    display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; justify-content: center;
+    font-family: "JetBrains Mono", monospace;
+  }
+  .btn {
+    border: 1px solid var(--line); background: transparent; color: var(--ink-soft);
+    padding: 9px 20px; border-radius: 999px; font-size: 0.7rem; letter-spacing: 0.1em;
+    text-transform: uppercase; cursor: pointer; transition: all 0.18s ease;
+  }
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .btn.primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+  .btn.primary:hover { background: var(--accent-deep); border-color: var(--accent-deep); color: var(--on-accent); }
+  .btn:focus-visible, .num-btn:focus-visible, .level-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .hint {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.66rem; color: var(--ink-soft); line-height: 1.9; letter-spacing: 0.04em;
+    margin-top: 14px; text-align: center; max-width: 540px;
+  }
+  .hint b { color: var(--ink); font-weight: 500; }
+
+  #message {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.7rem; min-height: 1.2em; margin-top: 10px; letter-spacing: 0.05em;
+  }
+  #message.good { color: var(--accent); }
+  #message.bad { color: var(--error); }
+
+  .overlay {
+    position: absolute; inset: 0; background: var(--overlay); backdrop-filter: blur(3px);
+    border-radius: 10px; display: none; flex-direction: column;
+    align-items: center; justify-content: center; gap: 12px; text-align: center; padding: 24px;
+  }
+  .overlay.show { display: flex; animation: fade 0.4s ease; }
+  @keyframes fade { from { opacity: 0; } }
+  .overlay h2 { font-family: "Space Grotesk", sans-serif; font-weight: 500; font-size: 1.8rem; }
+  .overlay h2 em { color: var(--accent); font-style: normal; }
+  .overlay p { font-family: "JetBrains Mono", monospace; font-size: 0.72rem; color: var(--ink-soft); letter-spacing: 0.06em; }
+
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+
+<a class="back" href="../bored.html">← Bored</a>
+
+<header>
+  <h1>Ken<span>Ken</span></h1>
+  <div class="subtitle" id="subtitle">9 × 9 · Extreme</div>
+</header>
+
+<div class="toolbar" role="group" aria-label="Difficulty">
+  <button class="level-btn" data-level="easy">Easy</button>
+  <button class="level-btn" data-level="medium">Medium</button>
+  <button class="level-btn" data-level="hard">Hard</button>
+  <button class="level-btn active" data-level="extreme">Extreme</button>
+</div>
+
+<div class="status">
+  <div>Time <strong id="timer">0:00</strong></div>
+  <div>Filled <strong id="filled">0/81</strong></div>
+</div>
+
+<div class="board-wrap">
+  <div class="board" id="board" role="grid" aria-label="KenKen board"></div>
+  <div class="overlay" id="overlay">
+    <h2>Solved, <em>masterfully</em>.</h2>
+    <p id="overlay-stats"></p>
+    <button class="btn primary" onclick="newGame()">New puzzle</button>
+  </div>
+</div>
+
+<div class="numpad" id="numpad"></div>
+
+<div class="actions">
+  <button class="btn" id="check-btn">Check</button>
+  <button class="btn" id="reveal-btn">Reveal</button>
+  <button class="btn primary" id="new-btn">New puzzle</button>
+</div>
+
+<div id="message"></div>
+
+<div class="hint">
+  Fill each row and column with the digits with no repeats. Each cage's numbers must reach its target using the shown operation
+  ( <b>&times;</b> <b>&divide;</b> <b>+</b> <b>&minus;</b> ). Click a cell and type, or use the pad below.
+</div>
+
+<script>
+// ---------------- Level configuration ----------------
+const LEVELS = {
+  easy:    { n: 4, label: '4 × 4 · Easy',    sizeCum: [0.22, 0.97, 1.00, 1.00], style: 'easy' },
+  medium:  { n: 6, label: '6 × 6 · Medium',  sizeCum: [0.08, 0.52, 0.92, 1.00], style: 'medium' },
+  hard:    { n: 7, label: '7 × 7 · Hard',    sizeCum: [0.04, 0.40, 0.82, 1.00], style: 'hard' },
+  extreme: { n: 9, label: '9 × 9 · Extreme', sizeCum: [0.02, 0.40, 0.84, 1.00], style: 'extreme' }
+};
+
+// Cage tints come from CSS variables so they adapt to light/dark theme.
+const CAGE_COLORS = [
+  'var(--cage-0)','var(--cage-1)','var(--cage-2)','var(--cage-3)','var(--cage-4)',
+  'var(--cage-5)','var(--cage-6)','var(--cage-7)','var(--cage-8)'
+];
+
+let n = 9, level = 'extreme';
+let solution = [], spec = [], cellCage = [], cageColor = [], cageLabelCell = [];
+let entries = [], selected = -1, finished = false;
+let seconds = 0, timerId = null;
+
+const boardEl = document.getElementById('board');
+const numpadEl = document.getElementById('numpad');
+const msgEl = document.getElementById('message');
+
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+function latinSquare(n){
+  const base=[];
+  for(let r=0;r<n;r++){const row=[];for(let c=0;c<n;c++)row.push(((r+c)%n)+1);base.push(row);}
+  const rp=shuffle([...Array(n).keys()]), cp=shuffle([...Array(n).keys()]), sp=shuffle([...Array(n).keys()]);
+  const g=new Array(n*n);
+  for(let r=0;r<n;r++)for(let c=0;c<n;c++) g[r*n+c]=sp[base[rp[r]][cp[c]]-1]+1;
+  return g;
+}
+function nbrs(idx,n){
+  const r=(idx/n)|0,c=idx%n,res=[];
+  if(r>0)res.push(idx-n); if(r<n-1)res.push(idx+n);
+  if(c>0)res.push(idx-1); if(c<n-1)res.push(idx+1);
+  return res;
+}
+function makeCages(n, cum){
+  const un=new Set([...Array(n*n).keys()]);
+  const cc=new Array(n*n).fill(-1);
+  const cages=[];
+  function pickSize(){const r=Math.random();if(r<cum[0])return 1;if(r<cum[1])return 2;if(r<cum[2])return 3;return 4;}
+  while(un.size){
+    let start=-1;for(const x of un){start=x;break;}
+    const cage=[start];un.delete(start);cc[start]=cages.length;
+    const tgt=pickSize();
+    while(cage.length<tgt){
+      const cand=[];
+      for(const cell of cage)for(const nb of nbrs(cell,n))if(un.has(nb))cand.push(nb);
+      if(!cand.length)break;
+      const pick=cand[(Math.random()*cand.length)|0];
+      cage.push(pick);un.delete(pick);cc[pick]=cages.length;
+    }
+    cages.push(cage);
+  }
+  return {cages, cc};
+}
+function assignOps(g, cages, style){
+  return cages.map(cells=>{
+    const vals=cells.map(i=>g[i]);
+    if(cells.length===1) return {cells, op:'=', target:vals[0]};
+    if(cells.length===2){
+      const [a,b]=vals, hi=Math.max(a,b), lo=Math.min(a,b), div=(hi%lo===0);
+      const opts=[];
+      if(style==='easy'){
+        opts.push(['+',a+b]); opts.push(['+',a+b]);
+        opts.push(['-',hi-lo]); opts.push(['-',hi-lo]);
+        if(a*b<=12) opts.push(['*',a*b]);
+      } else if(style==='medium'){
+        opts.push(['+',a+b]); opts.push(['-',hi-lo]);
+        opts.push(['*',a*b]);
+        if(div) opts.push(['/',hi/lo]);
+      } else if(style==='hard'){
+        opts.push(['*',a*b]); opts.push(['*',a*b]);
+        if(div){opts.push(['/',hi/lo]);opts.push(['/',hi/lo]);}
+        opts.push(['-',hi-lo]); opts.push(['+',a+b]);
+      } else { // extreme
+        if(div){opts.push(['/',hi/lo]);opts.push(['/',hi/lo]);}
+        opts.push(['*',a*b]); opts.push(['*',a*b]);
+        opts.push(['-',hi-lo]); opts.push(['+',a+b]);
+      }
+      const [op,target]=opts[(Math.random()*opts.length)|0];
+      return {cells, op, target};
+    }
+    // size >= 3
+    const pMul = style==='easy'?0 : style==='medium'?0.5 : style==='hard'?0.65 : 0.70;
+    if(Math.random()<pMul) return {cells, op:'*', target:vals.reduce((p,v)=>p*v,1)};
+    return {cells, op:'+', target:vals.reduce((s,v)=>s+v,0)};
+  });
+}
+
+function countSolutions(spec, cc, n, limit=2, budget=600000){
+  const rows=new Array(n).fill(0), cols=new Array(n).fill(0);
+  const sol=new Array(n*n).fill(0);
+  const nC=spec.length;
+  const remain=spec.map(c=>c.cells.length);
+  const sum=new Array(nC).fill(0), prod=new Array(nC).fill(1);
+  let count=0, nodes=0, aborted=false;
+  function bt(idx){
+    if(aborted||count>=limit)return;
+    if(++nodes>budget){aborted=true;return;}
+    if(idx===n*n){count++;return;}
+    const r=(idx/n)|0,c=idx%n,ci=cc[idx],cage=spec[ci];
+    for(let v=1;v<=n;v++){
+      const bit=1<<v;
+      if((rows[r]&bit)||(cols[c]&bit))continue;
+      const newRemain=remain[ci]-1;
+      let ok=true;
+      if(cage.op==='*'){
+        const np=prod[ci]*v;
+        if(cage.target%np!==0)ok=false;
+        else if(newRemain===0&&np!==cage.target)ok=false;
+      }else if(cage.op==='+'){
+        const ns=sum[ci]+v;
+        if(ns>cage.target)ok=false;
+        else if(newRemain>0&&ns+newRemain*n<cage.target)ok=false;
+        else if(newRemain===0&&ns!==cage.target)ok=false;
+      }else if(cage.op==='='){
+        if(v!==cage.target)ok=false;
+      }else if(cage.op==='-'){
+        if(newRemain===0){const o=cage.cells.find(x=>x!==idx);if(Math.abs(sol[o]-v)!==cage.target)ok=false;}
+      }else if(cage.op==='/'){
+        if(newRemain===0){const o=cage.cells.find(x=>x!==idx);const hi=Math.max(sol[o],v),lo=Math.min(sol[o],v);if(!(lo>0&&hi%lo===0&&hi/lo===cage.target))ok=false;}
+      }
+      if(!ok)continue;
+      sol[idx]=v; rows[r]|=bit; cols[c]|=bit;
+      const ps=sum[ci],pp=prod[ci]; sum[ci]+=v; prod[ci]*=v; remain[ci]--;
+      bt(idx+1);
+      sum[ci]=ps; prod[ci]=pp; remain[ci]++;
+      sol[idx]=0; rows[r]^=bit; cols[c]^=bit;
+      if(aborted||count>=limit)return;
+    }
+  }
+  bt(0);
+  return aborted?-1:count;
+}
+
+function generatePuzzle(level){
+  const cfg=LEVELS[level];
+  const budget = cfg.n<=6 ? 250000 : 600000;
+  for(let att=0; att<900; att++){
+    const g=latinSquare(cfg.n);
+    const {cages, cc}=makeCages(cfg.n, cfg.sizeCum);
+    const sp=assignOps(g, cages, cfg.style);
+    if(countSolutions(sp, cc, cfg.n, 2, budget)===1) return {g, spec:sp, cc, n:cfg.n};
+  }
+  return null;
+}
+
+function colorCages(spec, cc, n){
+  const adj=spec.map(()=>new Set());
+  for(let idx=0;idx<n*n;idx++){
+    const ci=cc[idx];
+    for(const nb of nbrs(idx,n)){const cj=cc[nb];if(cj!==ci){adj[ci].add(cj);adj[cj].add(ci);}}
+  }
+  const color=new Array(spec.length).fill(-1);
+  for(let ci=0;ci<spec.length;ci++){
+    const used=new Set();
+    for(const nb of adj[ci]) if(color[nb]>=0) used.add(color[nb]);
+    let k=0; while(used.has(k)) k++;
+    color[ci]=k % CAGE_COLORS.length;
+  }
+  return color;
+}
+
+// ---------------- Rendering ----------------
+const SYM = { '*':'×', '/':'÷', '+':'+', '-':'−', '=':'' };
+function labelFor(cage){ return cage.target + SYM[cage.op]; }
+
+function buildBoard(){
+  boardEl.innerHTML='';
+  boardEl.style.gridTemplateColumns = `repeat(${n}, 1fr)`;
+  boardEl.style.setProperty('--cell', `calc(min(94vw, 540px) / ${n})`);
+  cageLabelCell = spec.map(c=>Math.min(...c.cells));
+  for(let idx=0;idx<n*n;idx++){
+    const r=(idx/n)|0,c=idx%n,ci=cellCage[idx];
+    const cell=document.createElement('div');
+    cell.className='cell'; cell.dataset.idx=idx; cell.setAttribute('role','gridcell'); cell.tabIndex=0;
+    cell.style.background=CAGE_COLORS[cageColor[ci]];
+    const topT   = r===0     || cellCage[idx-n]!==ci;
+    const leftT  = c===0     || cellCage[idx-1]!==ci;
+    const rightT = c===n-1   || cellCage[idx+1]!==ci;
+    const botT   = r===n-1   || cellCage[idx+n]!==ci;
+    cell.style.borderTop    = topT   ? '2px solid var(--line-strong)' : '1px solid var(--line)';
+    cell.style.borderLeft   = leftT  ? '2px solid var(--line-strong)' : '1px solid var(--line)';
+    cell.style.borderRight  = rightT ? '2px solid var(--line-strong)' : '1px solid var(--line)';
+    cell.style.borderBottom = botT   ? '2px solid var(--line-strong)' : '1px solid var(--line)';
+    if(cageLabelCell[ci]===idx){
+      const lab=document.createElement('span'); lab.className='label'; lab.textContent=labelFor(spec[ci]);
+      cell.appendChild(lab);
+    }
+    const val=document.createElement('span'); val.className='val'; cell.appendChild(val);
+    cell.addEventListener('click',()=>selectCell(idx));
+    cell.addEventListener('keydown',e=>{ if(e.key>='1'&&e.key<=String(n)){selectCell(idx);place(+e.key);} });
+    boardEl.appendChild(cell);
+  }
+}
+
+function buildNumpad(){
+  numpadEl.innerHTML='';
+  numpadEl.style.gridTemplateColumns = `repeat(${n+1}, 1fr)`;
+  for(let k=1;k<=n;k++){
+    const b=document.createElement('button'); b.className='num-btn'; b.textContent=k;
+    b.addEventListener('click',()=>place(k)); numpadEl.appendChild(b);
+  }
+  const e=document.createElement('button'); e.className='num-btn erase'; e.textContent='clear';
+  e.addEventListener('click',()=>place(0)); numpadEl.appendChild(e);
+}
+
+function getConflicts(){
+  const bad=new Set();
+  for(let r=0;r<n;r++){
+    const seen={};
+    for(let c=0;c<n;c++){const i=r*n+c,v=entries[i];if(v){(seen[v]=seen[v]||[]).push(i);}}
+    Object.values(seen).forEach(arr=>{if(arr.length>1)arr.forEach(i=>bad.add(i));});
+  }
+  for(let c=0;c<n;c++){
+    const seen={};
+    for(let r=0;r<n;r++){const i=r*n+c,v=entries[i];if(v){(seen[v]=seen[v]||[]).push(i);}}
+    Object.values(seen).forEach(arr=>{if(arr.length>1)arr.forEach(i=>bad.add(i));});
+  }
+  return bad;
+}
+
+function render(){
+  const cells=boardEl.children;
+  const bad=getConflicts();
+  const selR=selected>=0?(selected/n|0):-1, selC=selected>=0?selected%n:-1;
+  let filled=0;
+  for(let i=0;i<n*n;i++){
+    const cell=cells[i]; const v=entries[i];
+    cell.querySelector('.val').textContent=v||'';
+    if(v)filled++;
+    cell.classList.toggle('selected', i===selected);
+    const r=(i/n)|0,c=i%n;
+    cell.classList.toggle('peer', selected>=0 && i!==selected && (r===selR||c===selC));
+    cell.classList.toggle('error', bad.has(i));
+  }
+  document.getElementById('filled').textContent=`${filled}/${n*n}`;
+}
+
+// ---------------- Play ----------------
+function selectCell(i){ if(finished)return; selected=i; render(); }
+
+function place(val){
+  if(finished||selected<0)return;
+  if(val>n)return;
+  entries[selected]=val;
+  if(val){const cell=boardEl.children[selected]; cell.classList.add('pop'); setTimeout(()=>cell.classList.remove('pop'),200);}
+  msgEl.textContent=''; msgEl.className='';
+  render(); checkWin();
+}
+
+function cageSatisfied(cage){
+  const vals=cage.cells.map(i=>entries[i]);
+  if(vals.some(v=>!v))return false;
+  switch(cage.op){
+    case '=': return vals[0]===cage.target;
+    case '+': return vals.reduce((s,v)=>s+v,0)===cage.target;
+    case '*': return vals.reduce((p,v)=>p*v,1)===cage.target;
+    case '-': return Math.abs(vals[0]-vals[1])===cage.target;
+    case '/': {const hi=Math.max(...vals),lo=Math.min(...vals);return lo>0&&hi%lo===0&&hi/lo===cage.target;}
+  }
+}
+function isComplete(){
+  if(entries.some(v=>!v))return false;
+  if(getConflicts().size)return false;
+  return spec.every(cageSatisfied);
+}
+function checkWin(){
+  if(isComplete()){
+    finished=true; clearInterval(timerId);
+    document.getElementById('overlay-stats').textContent=`${LEVELS[level].label} · ${fmt(seconds)}`;
+    document.getElementById('overlay').classList.add('show');
+  }
+}
+function check(){
+  const conflicts=getConflicts();
+  const empty=entries.filter(v=>!v).length;
+  if(conflicts.size){ msgEl.textContent='Some rows or columns repeat a number.'; msgEl.className='bad'; return; }
+  const broken=spec.filter(cg=>cg.cells.every(i=>entries[i]) && !cageSatisfied(cg)).length;
+  if(broken){ msgEl.textContent=`${broken} completed cage${broken>1?'s do':' does'} not meet its target.`; msgEl.className='bad'; return; }
+  if(empty){ msgEl.textContent=`So far so good — ${empty} cell${empty>1?'s':''} to go.`; msgEl.className='good'; return; }
+  msgEl.textContent='Looks right!'; msgEl.className='good';
+}
+function reveal(){
+  entries=solution.slice(); finished=true; clearInterval(timerId);
+  render(); msgEl.textContent='Revealed the solution.'; msgEl.className='';
+}
+function fmt(s){ return `${(s/60)|0}:${String(s%60).padStart(2,'0')}`; }
+function startTimer(){
+  clearInterval(timerId); seconds=0;
+  document.getElementById('timer').textContent='0:00';
+  timerId=setInterval(()=>{seconds++;document.getElementById('timer').textContent=fmt(seconds);},1000);
+}
+
+function newGame(){
+  document.getElementById('overlay').classList.remove('show');
+  msgEl.textContent='Generating a puzzle…'; msgEl.className='';
+  finished=true; selected=-1;
+  setTimeout(()=>{
+    const res=generatePuzzle(level);
+    if(!res){ msgEl.textContent='Could not build a puzzle — tap New puzzle to retry.'; msgEl.className='bad'; return; }
+    solution=res.g; spec=res.spec; cellCage=res.cc; n=res.n;
+    cageColor=colorCages(spec, cellCage, n);
+    entries=new Array(n*n).fill(0);
+    finished=false;
+    buildNumpad(); buildBoard(); render();
+    msgEl.textContent=''; msgEl.className='';
+    startTimer();
+  }, 30);
+}
+
+document.querySelectorAll('.level-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.level-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    level=btn.dataset.level;
+    document.getElementById('subtitle').textContent=LEVELS[level].label;
+    newGame();
+  });
+});
+
+document.getElementById('new-btn').addEventListener('click', newGame);
+document.getElementById('check-btn').addEventListener('click', check);
+document.getElementById('reveal-btn').addEventListener('click', reveal);
+
+document.addEventListener('keydown', e=>{
+  if(e.key>='1'&&e.key<='9') place(+e.key);
+  else if(e.key==='Backspace'||e.key==='Delete'||e.key==='0') place(0);
+  else if(selected>=0 && e.key.startsWith('Arrow')){
+    e.preventDefault();
+    let r=(selected/n)|0,c=selected%n;
+    if(e.key==='ArrowUp')r=Math.max(0,r-1);
+    if(e.key==='ArrowDown')r=Math.min(n-1,r+1);
+    if(e.key==='ArrowLeft')c=Math.max(0,c-1);
+    if(e.key==='ArrowRight')c=Math.min(n-1,c+1);
+    selectCell(r*n+c);
+  }
+});
+
+newGame();
+</script>
+</body>
+</html>
