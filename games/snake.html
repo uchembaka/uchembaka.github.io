@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>(function(){try{var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark"){t=(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+<title>Snake — Uche Mbaka</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080A0F;
+    --surface: #0D1017;
+    --grid: #0D1017;
+    --gridline: rgba(233,230,223,0.05);
+    --ink: #E9E6DF;
+    --ink-soft: #6A7180;
+    --accent: #CFA15F;
+    --accent-deep: #E0B978;
+    --steel: #5C7585;
+    --snake: #8AA0AE;
+    --line: rgba(233,230,223,0.12);
+    --line-strong: rgba(233,230,223,0.40);
+    --overlay: rgba(8,10,15,0.92);
+    --on-accent: #080A0F;
+    --shadow: rgba(0,0,0,0.45);
+  }
+  [data-theme="light"] {
+    --bg: #F3F0E9;
+    --surface: #FBFAF5;
+    --grid: #ece9df;
+    --gridline: rgba(61,57,41,0.06);
+    --ink: #1B1C20;
+    --ink-soft: #6E727D;
+    --accent: #9E6B22;
+    --accent-deep: #7D5417;
+    --steel: #4A6377;
+    --snake: #3f5666;
+    --line: rgba(20,21,26,0.12);
+    --line-strong: rgba(20,21,26,0.40);
+    --overlay: rgba(243,240,233,0.95);
+    --on-accent: #FBFAF5;
+    --shadow: rgba(20,21,26,0.10);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: "Newsreader", Georgia, serif; font-weight: 300;
+    min-height: 100vh; display: flex; flex-direction: column;
+    align-items: center; padding: 28px 16px 48px;
+    transition: background .35s ease, color .35s ease;
+  }
+  .back {
+    align-self: flex-start;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--ink-soft); margin-bottom: 18px; transition: color .25s;
+  }
+  .back:hover { color: var(--accent); }
+  header { text-align: center; margin-bottom: 16px; }
+  h1 { font-family: "Space Grotesk", system-ui, sans-serif; font-size: 2.2rem; font-weight: 500; letter-spacing: -0.01em; }
+  h1 span { color: var(--accent); }
+  .subtitle {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--ink-soft); margin-top: 8px;
+  }
+
+  .status {
+    display: flex; gap: 28px; margin-bottom: 16px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.72rem; color: var(--ink-soft); letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .status strong { color: var(--ink); font-weight: 500; font-size: 1.05rem; }
+
+  .board-wrap { position: relative; width: min(92vw, 440px); }
+  canvas {
+    width: 100%; height: auto; display: block;
+    background: var(--grid);
+    border: 2px solid var(--line-strong); border-radius: 12px;
+    box-shadow: 0 10px 30px var(--shadow);
+    touch-action: none;
+  }
+
+  .pad {
+    display: grid; grid-template-columns: repeat(3, 56px);
+    grid-template-rows: repeat(2, 56px); gap: 8px;
+    margin-top: 18px; justify-content: center;
+  }
+  .pad button {
+    border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+    border-radius: 12px; font-size: 1.2rem; cursor: pointer;
+    transition: all 0.12s ease; touch-action: manipulation;
+  }
+  .pad button:hover { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+  .pad button:active { transform: scale(0.94); }
+  .pad .up { grid-column: 2; grid-row: 1; }
+  .pad .left { grid-column: 1; grid-row: 2; }
+  .pad .down { grid-column: 2; grid-row: 2; }
+  .pad .right { grid-column: 3; grid-row: 2; }
+
+  .actions { display: flex; gap: 10px; margin-top: 18px; font-family: "JetBrains Mono", monospace; }
+  .btn {
+    border: 1px solid var(--line); background: transparent; color: var(--ink-soft);
+    padding: 9px 20px; border-radius: 999px; font-size: 0.7rem; letter-spacing: 0.1em;
+    text-transform: uppercase; cursor: pointer; transition: all 0.18s ease;
+  }
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .btn.primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+  .btn.primary:hover { background: var(--accent-deep); border-color: var(--accent-deep); color: var(--on-accent); }
+  .btn:focus-visible, .pad button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .hint {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.66rem; color: var(--ink-soft); line-height: 1.9; letter-spacing: 0.04em;
+    margin-top: 16px; text-align: center; max-width: 420px;
+  }
+  .hint b { color: var(--ink); font-weight: 500; }
+
+  .overlay {
+    position: absolute; inset: 0; background: var(--overlay); backdrop-filter: blur(3px);
+    border-radius: 12px; display: none; flex-direction: column;
+    align-items: center; justify-content: center; gap: 12px; text-align: center; padding: 24px;
+  }
+  .overlay.show { display: flex; animation: fade 0.4s ease; }
+  @keyframes fade { from { opacity: 0; } }
+  .overlay h2 { font-family: "Space Grotesk", sans-serif; font-weight: 500; font-size: 1.7rem; }
+  .overlay h2 em { color: var(--accent); font-style: normal; }
+  .overlay p { font-family: "JetBrains Mono", monospace; font-size: 0.74rem; color: var(--ink-soft); letter-spacing: 0.05em; line-height: 1.7; }
+  .overlay p b { color: var(--ink); font-weight: 500; }
+
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+
+<a class="back" href="../bored.html">← Bored</a>
+
+<header>
+  <h1>Sna<span>ke</span></h1>
+  <div class="subtitle">Eat · grow · don't bite yourself</div>
+</header>
+
+<div class="status">
+  <div>Score <strong id="score">0</strong></div>
+  <div>Best <strong id="best">0</strong></div>
+</div>
+
+<div class="board-wrap">
+  <canvas id="board" width="440" height="440"></canvas>
+  <div class="overlay show" id="overlay">
+    <h2 id="ov-title">Sna<em>ke</em></h2>
+    <p id="ov-text">Use the arrow keys, WASD, swipes, or the pad below.</p>
+    <button class="btn primary" id="ov-btn">Start</button>
+  </div>
+</div>
+
+<div class="pad" id="pad" aria-label="Direction pad">
+  <button class="up" data-dir="up" aria-label="Up">&uarr;</button>
+  <button class="left" data-dir="left" aria-label="Left">&larr;</button>
+  <button class="down" data-dir="down" aria-label="Down">&darr;</button>
+  <button class="right" data-dir="right" aria-label="Right">&rarr;</button>
+</div>
+
+<div class="actions">
+  <button class="btn" id="pause-btn">Pause</button>
+  <button class="btn primary" id="restart-btn">Restart</button>
+</div>
+
+<div class="hint">
+  Steer the snake to the <b>amber</b> morsels. Each one grows you and speeds things up a touch.
+  Slip off any edge and you reappear on the opposite side — only biting your own tail ends the run.
+</div>
+
+<script>
+const COLS = 20, CELL = 22;
+const canvas = document.getElementById('board');
+const ctx = canvas.getContext('2d');
+const scoreEl = document.getElementById('score');
+const bestEl = document.getElementById('best');
+const overlay = document.getElementById('overlay');
+const ovTitle = document.getElementById('ov-title');
+const ovText = document.getElementById('ov-text');
+const ovBtn = document.getElementById('ov-btn');
+const pauseBtn = document.getElementById('pause-btn');
+
+// ---------- persistent best score ----------
+const BEST_KEY = 'umbaka.snake.best';
+function loadBest(){ try { return parseInt(localStorage.getItem(BEST_KEY), 10) || 0; } catch(e){ return 0; } }
+function saveBest(v){ try { localStorage.setItem(BEST_KEY, String(v)); } catch(e){} }
+
+const DIRS = {
+  up:    { x: 0, y: -1 },
+  down:  { x: 0, y: 1 },
+  left:  { x: -1, y: 0 },
+  right: { x: 1, y: 0 }
+};
+const OPP = { up: 'down', down: 'up', left: 'right', right: 'left' };
+
+let snake, dir, nextDir, food, score, best = loadBest();
+let phase = 'idle';   // idle | playing | paused | over
+let tickTimer = null, speed = 200;
+
+function placeFood(){
+  const occupied = new Set(snake.map(s => s.y * COLS + s.x));
+  const free = [];
+  for (let i = 0; i < COLS * COLS; i++) if (!occupied.has(i)) free.push(i);
+  if (!free.length) return null;             // board full = win-ish
+  const idx = free[(Math.random() * free.length) | 0];
+  return { x: idx % COLS, y: (idx / COLS) | 0 };
+}
+
+function reset(){
+  const mid = (COLS / 2) | 0;
+  snake = [ { x: mid, y: mid }, { x: mid - 1, y: mid }, { x: mid - 2, y: mid } ];
+  dir = 'right'; nextDir = 'right';
+  score = 0; speed = 200;
+  food = placeFood();
+  scoreEl.textContent = '0';
+}
+
+function setDir(d){
+  if (!DIRS[d]) return;
+  // ignore reversals relative to the committed direction
+  if (d === OPP[dir]) return;
+  nextDir = d;
+}
+
+function step(){
+  dir = nextDir;
+  const head = snake[0];
+  // wrap around the edges, Nokia-style
+  const nx = (head.x + DIRS[dir].x + COLS) % COLS;
+  const ny = (head.y + DIRS[dir].y + COLS) % COLS;
+
+  // self collision (tail will move unless we eat; exclude the tail tip that will vacate)
+  const eating = food && nx === food.x && ny === food.y;
+  const body = eating ? snake : snake.slice(0, snake.length - 1);
+  if (body.some(s => s.x === nx && s.y === ny)) { gameOver(); return; }
+
+  snake.unshift({ x: nx, y: ny });
+  if (eating){
+    score++;
+    scoreEl.textContent = score;
+    if (speed > 110) speed = Math.max(110, 200 - score * 2);
+    food = placeFood();
+    restartTimer();
+  } else {
+    snake.pop();
+  }
+}
+
+function drawCell(x, y, color, inset){
+  const p = inset || 1;
+  ctx.fillStyle = color;
+  ctx.fillRect(x * CELL + p, y * CELL + p, CELL - 2 * p, CELL - 2 * p);
+}
+
+function draw(){
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  // faint grid
+  ctx.strokeStyle = getCss('--gridline');
+  for (let i = 1; i < COLS; i++){
+    ctx.beginPath(); ctx.moveTo(i * CELL, 0); ctx.lineTo(i * CELL, COLS * CELL); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, i * CELL); ctx.lineTo(COLS * CELL, i * CELL); ctx.stroke();
+  }
+  const R = CELL * 0.46;
+  // food — amber circle
+  if (food){
+    drawCircle(food.x, food.y, R, getCss('--accent'));
+  }
+  // snake — steel circles, same shape as the food
+  const bodyColor = getCss('--snake');
+  const eyeColor = getCss('--grid');
+  snake.forEach((s, i) => {
+    drawCircle(s.x, s.y, R, bodyColor);
+    if (i === 0){
+      // tiny eyes on the head, facing the direction of travel
+      const cx = s.x * CELL + CELL / 2, cy = s.y * CELL + CELL / 2;
+      const d = DIRS[dir];
+      const perpX = d.y, perpY = d.x;       // perpendicular offset for the two eyes
+      const fwd = R * 0.34, sep = R * 0.42, er = CELL * 0.07;
+      ctx.fillStyle = eyeColor;
+      [-1, 1].forEach(sgn => {
+        const ex = cx + d.x * fwd + perpX * sep * sgn;
+        const ey = cy + d.y * fwd + perpY * sep * sgn;
+        ctx.beginPath(); ctx.arc(ex, ey, er, 0, Math.PI * 2); ctx.fill();
+      });
+    }
+  });
+}
+
+function drawCircle(gx, gy, r, color){
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(gx * CELL + CELL / 2, gy * CELL + CELL / 2, r, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+let cssCache = {};
+function getCss(name){
+  if (cssCache[name]) return cssCache[name];
+  const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  cssCache[name] = v; return v;
+}
+
+function loop(){
+  if (phase !== 'playing') return;
+  step();
+  if (phase === 'playing') draw();
+}
+
+function restartTimer(){
+  clearInterval(tickTimer);
+  tickTimer = setInterval(loop, speed);
+}
+
+function gameOver(){
+  phase = 'over';
+  clearInterval(tickTimer);
+  const isRecord = score > best;
+  if (isRecord){ best = score; saveBest(best); }
+  bestEl.textContent = best;
+  ovTitle.innerHTML = 'Game <em>over</em>';
+  ovText.innerHTML = `You grew to <b>${snake.length}</b> and scored <b>${score}</b>.<br>` +
+    `Best <b>${best}</b>` + (isRecord && score > 0 ? ' — a new high score!' : '');
+  ovBtn.textContent = 'Play again';
+  overlay.classList.add('show');
+}
+
+function startGame(){
+  overlay.classList.remove('show');
+  reset();
+  phase = 'playing';
+  draw();
+  restartTimer();
+  pauseBtn.textContent = 'Pause';
+}
+
+function togglePause(){
+  if (phase === 'playing'){
+    phase = 'paused';
+    clearInterval(tickTimer);
+    pauseBtn.textContent = 'Resume';
+    ovTitle.innerHTML = 'Paused';
+    ovText.textContent = '';
+    ovBtn.textContent = 'Resume';
+    overlay.classList.add('show');
+  } else if (phase === 'paused'){
+    overlay.classList.remove('show');
+    phase = 'playing';
+    pauseBtn.textContent = 'Pause';
+    restartTimer();
+  }
+}
+
+ovBtn.addEventListener('click', () => { phase === 'paused' ? togglePause() : startGame(); });
+document.getElementById('restart-btn').addEventListener('click', startGame);
+pauseBtn.addEventListener('click', togglePause);
+
+document.getElementById('pad').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (b) setDir(b.dataset.dir);
+});
+
+document.addEventListener('keydown', e => {
+  const map = {
+    ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right',
+    w: 'up', s: 'down', a: 'left', d: 'right'
+  };
+  const d = map[e.key] || map[e.key.toLowerCase()];
+  if (d){ e.preventDefault(); setDir(d); }
+  else if (e.key === ' ' || e.key.toLowerCase() === 'p'){ e.preventDefault(); togglePause(); }
+});
+
+// swipe
+let touchStart = null;
+canvas.addEventListener('touchstart', e => { const t = e.touches[0]; touchStart = { x: t.clientX, y: t.clientY }; }, { passive: true });
+canvas.addEventListener('touchmove', e => {
+  if (!touchStart) return;
+  const t = e.touches[0];
+  const dx = t.clientX - touchStart.x, dy = t.clientY - touchStart.y;
+  if (Math.abs(dx) < 24 && Math.abs(dy) < 24) return;
+  if (Math.abs(dx) > Math.abs(dy)) setDir(dx > 0 ? 'right' : 'left');
+  else setDir(dy > 0 ? 'down' : 'up');
+  touchStart = null;
+}, { passive: true });
+
+// idle preview frame
+bestEl.textContent = best;
+reset(); draw();
+</script>
+</body>
+</html>

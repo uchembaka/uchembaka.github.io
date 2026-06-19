@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>(function(){try{var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark"){t=(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+<title>Speed Match — Uche Mbaka</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080A0F; --surface: #0D1017; --tile: #161A24;
+    --ink: #E9E6DF; --ink-soft: #6A7180;
+    --accent: #CFA15F; --accent-deep: #E0B978; --accent-soft: rgba(207,161,95,0.18);
+    --line: rgba(233,230,223,0.12); --line-strong: rgba(233,230,223,0.40);
+    --error: #d98a72; --error-soft: rgba(217,138,114,0.18);
+    --good: #7E9B6B; --good-soft: rgba(126,155,107,0.18);
+    --overlay: rgba(8,10,15,0.92); --on-accent: #080A0F; --shadow: rgba(0,0,0,0.45);
+    --glow: rgba(207,161,95,0.40);
+  }
+  [data-theme="light"] {
+    --bg: #F3F0E9; --surface: #FBFAF5; --tile: #ece9df;
+    --ink: #1B1C20; --ink-soft: #6E727D;
+    --accent: #9E6B22; --accent-deep: #7D5417; --accent-soft: rgba(158,107,34,0.14);
+    --line: rgba(20,21,26,0.12); --line-strong: rgba(20,21,26,0.40);
+    --error: #b3442e; --error-soft: rgba(179,68,46,0.14);
+    --good: #5f7544; --good-soft: rgba(95,117,68,0.16);
+    --overlay: rgba(243,240,233,0.96); --on-accent: #FBFAF5; --shadow: rgba(20,21,26,0.10);
+    --glow: rgba(158,107,34,0.32);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: "Newsreader", Georgia, serif; font-weight: 300;
+    min-height: 100vh; display: flex; flex-direction: column;
+    align-items: center; padding: 28px 16px 48px;
+    transition: background .35s ease, color .35s ease;
+  }
+  .back {
+    align-self: flex-start;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--ink-soft); margin-bottom: 18px; transition: color .25s;
+  }
+  .back:hover { color: var(--accent); }
+  header { text-align: center; margin-bottom: 16px; }
+  h1 { font-family: "Space Grotesk", system-ui, sans-serif; font-size: 2.1rem; font-weight: 500; letter-spacing: -0.01em; }
+  h1 span { color: var(--accent); }
+  .subtitle {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--ink-soft); margin-top: 8px;
+  }
+  .status {
+    display: flex; gap: 26px; align-items: baseline; margin-bottom: 12px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.7rem; color: var(--ink-soft); letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .status .stat strong { color: var(--ink); font-weight: 500; font-size: 1.15rem; }
+
+  .timebar-wrap {
+    width: min(90vw, 360px); height: 7px; background: var(--surface);
+    border-radius: 999px; overflow: hidden; margin-bottom: 18px;
+  }
+  #timebar { height: 100%; width: 100%; background: var(--accent);
+    border-radius: 999px; transition: width 0.08s linear; }
+  #timebar.low { background: var(--error); }
+
+  .board-wrap { position: relative; }
+  .board {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+    width: min(78vw, 280px); aspect-ratio: 1; padding: 18px;
+    background: var(--surface); border-radius: 18px;
+    box-shadow: 0 10px 30px var(--shadow);
+    transition: background 0.15s ease;
+  }
+  .board.flash-good { background: var(--good-soft); }
+  .board.flash-bad { background: var(--error-soft); }
+  .cell { display: flex; align-items: center; justify-content: center; }
+  .cell .dot {
+    width: 100%; aspect-ratio: 1; border-radius: 14px;
+    background: var(--accent);
+    box-shadow: 0 3px 12px var(--glow);
+    transform: scale(0);
+    transition: transform 0.08s ease, background 0.15s ease;
+  }
+  .cell.on .dot { transform: scale(1); }
+  .board.flash-good .cell.on .dot { background: var(--good); box-shadow: 0 3px 12px var(--good-soft); }
+  .board.flash-bad  .cell.on .dot { background: var(--error); box-shadow: 0 3px 12px var(--error-soft); }
+
+  .ask {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.76rem; letter-spacing: 0.06em; color: var(--ink-soft);
+    height: 1.4em; margin: 16px 0;
+  }
+  .ask b { color: var(--accent); font-weight: 500; }
+
+  .answers { display: flex; gap: 14px; }
+  .ans {
+    border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+    padding: 16px 30px; border-radius: 14px; cursor: pointer;
+    font-family: "Space Grotesk", system-ui, sans-serif;
+    font-size: 1rem; font-weight: 500; letter-spacing: 0.01em; min-width: 130px;
+    transition: all 0.12s ease;
+  }
+  .ans .key { display: block; font-family: "JetBrains Mono", monospace; font-size: 0.62rem; color: var(--ink-soft); margin-top: 5px; letter-spacing: 0.12em; }
+  .ans:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .ans:active:not(:disabled) { transform: scale(0.96); }
+  .ans:disabled { opacity: 0.4; cursor: default; }
+  .ans.match { border-color: var(--accent-soft); }
+
+  .footer { display: flex; gap: 10px; margin-top: 20px; font-family: "JetBrains Mono", monospace; }
+  .btn {
+    border: 1px solid var(--line); background: transparent; color: var(--ink-soft);
+    padding: 9px 20px; border-radius: 999px; font-size: 0.7rem; letter-spacing: 0.1em;
+    text-transform: uppercase; cursor: pointer; transition: all 0.18s ease;
+  }
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .btn.primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+  .btn.primary:hover { background: var(--accent-deep); border-color: var(--accent-deep); color: var(--on-accent); }
+  .btn:focus-visible, .ans:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .hint {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.66rem; color: var(--ink-soft); line-height: 1.9; letter-spacing: 0.04em;
+    margin-top: 16px; text-align: center; max-width: 420px;
+  }
+
+  .overlay {
+    position: absolute; inset: 0; background: var(--overlay); backdrop-filter: blur(3px);
+    border-radius: 18px; display: none; flex-direction: column;
+    align-items: center; justify-content: center; gap: 12px; text-align: center; padding: 22px;
+  }
+  .overlay.show { display: flex; animation: fade 0.4s ease; }
+  @keyframes fade { from { opacity: 0; } }
+  .overlay h2 { font-family: "Space Grotesk", sans-serif; font-weight: 500; font-size: 1.5rem; line-height: 1.3; }
+  .overlay h2 em { color: var(--accent); font-style: normal; }
+  .overlay p { font-family: "JetBrains Mono", monospace; font-size: 0.72rem; color: var(--ink-soft); line-height: 1.7; letter-spacing: 0.04em; }
+  .overlay p b { color: var(--ink); font-weight: 500; }
+
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+
+<a class="back" href="../bored.html">← Bored</a>
+
+<header>
+  <h1><span>Speed Match</span></h1>
+  <div class="subtitle">Does it match the one before?</div>
+</header>
+
+<div class="status">
+  <div class="stat">Score <strong id="score">0</strong></div>
+  <div class="stat">Streak <strong id="streak">0</strong></div>
+  <div class="stat">Best <strong id="best">0</strong></div>
+  <div class="stat">Time <strong id="time">45</strong></div>
+</div>
+
+<div class="timebar-wrap"><div id="timebar"></div></div>
+
+<div class="board-wrap">
+  <div class="board" id="board" aria-label="Symbol"></div>
+  <div class="overlay show" id="overlay">
+    <h2 id="ov-title"><em>Speed Match</em></h2>
+    <p id="ov-text">A symbol appears. For each one, decide whether it's the
+      <b>same symbol</b> as the one shown just before it. Go as fast as you can for 45 seconds.</p>
+    <button class="btn primary" id="ov-btn">Start</button>
+  </div>
+</div>
+
+<div class="ask" id="ask">&nbsp;</div>
+
+<div class="answers">
+  <button class="ans" id="no-btn" disabled>No match<span class="key">&larr; / A</span></button>
+  <button class="ans match" id="yes-btn" disabled>Match<span class="key">&rarr; / L</span></button>
+</div>
+
+<div class="footer">
+  <button class="btn" id="restart-btn">Restart</button>
+</div>
+
+<div class="hint">
+  Only the current symbol is shown &mdash; compare it to the one you remember from a moment ago.
+  A correct answer builds your streak; a miss costs a little time.
+</div>
+
+<script>
+const scoreEl = document.getElementById('score');
+const streakEl = document.getElementById('streak');
+const bestEl = document.getElementById('best');
+const timeEl = document.getElementById('time');
+const timebar = document.getElementById('timebar');
+const boardEl = document.getElementById('board');
+const askEl = document.getElementById('ask');
+const yesBtn = document.getElementById('yes-btn');
+const noBtn = document.getElementById('no-btn');
+const overlay = document.getElementById('overlay');
+const ovTitle = document.getElementById('ov-title');
+const ovText = document.getElementById('ov-text');
+const ovBtn = document.getElementById('ov-btn');
+
+// ---------- persistent best score ----------
+const BEST_KEY = 'umbaka.speed-match.best';
+function loadBest(){ try { return parseInt(localStorage.getItem(BEST_KEY), 10) || 0; } catch(e){ return 0; } }
+function saveBest(v){ try { localStorage.setItem(BEST_KEY, String(v)); } catch(e){} }
+
+// Each symbol is a distinct spatial pattern of filled cells on a 3x3 grid.
+const SYMBOLS = [
+  [1, 4, 7],                   // vertical bar
+  [3, 4, 5],                   // horizontal bar
+  [0, 2, 4, 6, 8],             // X
+  [0, 1, 2, 3, 5, 6, 7, 8],    // ring
+  [0, 4, 8],                   // diagonal
+  [1, 3, 5, 7]                 // diamond
+];
+const ROUND_MS = 45000;
+const PENALTY_MS = 1500;
+const MATCH_PROB = 0.5;
+const FEEDBACK_MS = 180;
+
+let cells = [];
+let prev = null, curr = null;          // symbol indices
+let score = 0, streak = 0, correct = 0, wrong = 0, best = loadBest();
+let timeLeft = ROUND_MS, lastTick = 0, rafId = null;
+let phase = 'idle';                     // idle | reference | input | feedback | over
+let awaiting = false, advanceTimer = null;
+
+function buildBoard(){
+  boardEl.innerHTML = '';
+  cells = [];
+  for (let i = 0; i < 9; i++){
+    const c = document.createElement('div');
+    c.className = 'cell';
+    const dot = document.createElement('div');
+    dot.className = 'dot';
+    c.appendChild(dot);
+    boardEl.appendChild(c);
+    cells.push(c);
+  }
+}
+
+function genSymbol(prev){
+  if (prev === null) return (Math.random() * SYMBOLS.length) | 0;
+  if (Math.random() < MATCH_PROB) return prev;                 // same symbol again
+  let s; do { s = (Math.random() * SYMBOLS.length) | 0; } while (s === prev);
+  return s;
+}
+
+function showSymbol(idx){
+  const on = new Set(SYMBOLS[idx]);
+  cells.forEach((c, i) => c.classList.toggle('on', on.has(i)));
+}
+
+function setButtons(on){ yesBtn.disabled = !on; noBtn.disabled = !on; }
+
+function nextItem(){
+  prev = curr;
+  curr = genSymbol(prev);
+  showSymbol(curr);
+  phase = 'input';
+  awaiting = true;
+  askEl.innerHTML = 'Same symbol as the one before?';
+}
+
+function answer(saidMatch){
+  if (phase !== 'input' || !awaiting) return;
+  awaiting = false;
+  const isMatch = (curr === prev);
+  const right = (saidMatch === isMatch);
+  if (right){
+    correct++; streak++;
+    score += 10 + Math.min(streak, 12);
+    boardEl.classList.add('flash-good');
+  } else {
+    wrong++; streak = 0;
+    timeLeft = Math.max(0, timeLeft - PENALTY_MS);
+    boardEl.classList.add('flash-bad');
+  }
+  scoreEl.textContent = score;
+  streakEl.textContent = streak;
+  phase = 'feedback';
+  clearTimeout(advanceTimer);
+  advanceTimer = setTimeout(() => {
+    boardEl.classList.remove('flash-good', 'flash-bad');
+    if (phase === 'over') return;
+    nextItem();
+  }, FEEDBACK_MS);
+}
+
+function tick(now){
+  if (phase === 'over') return;
+  if (!lastTick) lastTick = now;
+  const dt = now - lastTick;
+  lastTick = now;
+  timeLeft -= dt;
+  if (timeLeft <= 0){ timeLeft = 0; endGame(); return; }
+  timebar.style.width = (timeLeft / ROUND_MS) * 100 + '%';
+  timebar.classList.toggle('low', timeLeft <= 8000);
+  timeEl.textContent = Math.ceil(timeLeft / 1000);
+  rafId = requestAnimationFrame(tick);
+}
+
+function endGame(){
+  phase = 'over';
+  awaiting = false;
+  clearTimeout(advanceTimer);
+  cancelAnimationFrame(rafId);
+  setButtons(false);
+  timebar.style.width = '0%';
+  timeEl.textContent = '0';
+  cells.forEach(c => c.classList.remove('on'));
+  boardEl.classList.remove('flash-good', 'flash-bad');
+  const isRecord = score > best;
+  if (isRecord){ best = score; saveBest(best); }
+  bestEl.textContent = best;
+  const answered = correct + wrong;
+  const acc = answered ? Math.round((correct / answered) * 100) : 0;
+  ovTitle.innerHTML = "Time&rsquo;s <em>up</em>";
+  ovText.innerHTML =
+    `Score <b>${score}</b><br>` +
+    `${correct} correct &middot; ${wrong} missed &middot; ${acc}% accuracy<br>` +
+    `Best <b>${best}</b>` + (isRecord && score > 0 ? ' — a new high score!' : '');
+  ovBtn.textContent = 'Play again';
+  overlay.classList.add('show');
+}
+
+function beginPlay(){
+  // first symbol is the reference — shown briefly, not judged
+  prev = null;
+  curr = genSymbol(null);
+  showSymbol(curr);
+  phase = 'reference';
+  askEl.innerHTML = 'Remember this symbol&hellip;';
+  setButtons(true);
+  clearTimeout(advanceTimer);
+  advanceTimer = setTimeout(() => {
+    lastTick = 0;
+    rafId = requestAnimationFrame(tick);
+    nextItem();
+  }, 1000);
+}
+
+function newGame(){
+  overlay.classList.remove('show');
+  clearTimeout(advanceTimer);
+  cancelAnimationFrame(rafId);
+  score = 0; streak = 0; correct = 0; wrong = 0;
+  timeLeft = ROUND_MS; lastTick = 0;
+  scoreEl.textContent = '0'; streakEl.textContent = '0';
+  timeEl.textContent = Math.ceil(ROUND_MS / 1000);
+  timebar.style.width = '100%'; timebar.classList.remove('low');
+  buildBoard();
+  beginPlay();
+}
+
+yesBtn.addEventListener('click', () => answer(true));
+noBtn.addEventListener('click', () => answer(false));
+ovBtn.addEventListener('click', newGame);
+document.getElementById('restart-btn').addEventListener('click', () => { newGame(); });
+
+document.addEventListener('keydown', e => {
+  if (['ArrowLeft','ArrowRight'].includes(e.key)) e.preventDefault();
+  const k = e.key.toLowerCase();
+  if (e.key === 'ArrowRight' || k === 'l' || k === 'j') answer(true);
+  else if (e.key === 'ArrowLeft' || k === 'a' || k === 'f') answer(false);
+});
+
+// idle grid behind the opening overlay
+buildBoard();
+bestEl.textContent = best;
+</script>
+</body>
+</html>

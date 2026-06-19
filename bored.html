@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <script>(function(){try{var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark"){t=(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
 <title>Bored — Uche Mbaka</title>
-<meta name="description" content="A few small browser games — Sudoku, KenKen and Tetris — for when you are bored." />
+<meta name="description" content="A handful of small browser games and puzzles — for when you are bored." />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -114,6 +114,85 @@
         <div class="game-info">
           <h2>Tetris</h2>
           <p>Stack the falling tetrominoes, clear full lines and chase the level counter. Arrows to move and rotate, space to hard-drop.</p>
+          <span class="play">Play →</span>
+        </div>
+      </a>
+
+      <a class="game-card" href="games/memory-matrix.html">
+        <div class="game-thumb">
+          <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <g fill="var(--amber)">
+              <rect x="30" y="6"  width="18" height="18" rx="4"/>
+              <rect x="54" y="6"  width="18" height="18" rx="4"/>
+              <rect x="6"  y="30" width="18" height="18" rx="4"/>
+              <rect x="78" y="30" width="18" height="18" rx="4"/>
+              <rect x="30" y="54" width="18" height="18" rx="4"/>
+              <rect x="54" y="78" width="18" height="18" rx="4"/>
+            </g>
+            <g fill="none" stroke="var(--line-2)" stroke-width="1.5">
+              <rect x="6"  y="6"  width="18" height="18" rx="4"/>
+              <rect x="78" y="6"  width="18" height="18" rx="4"/>
+              <rect x="30" y="30" width="18" height="18" rx="4"/>
+              <rect x="54" y="30" width="18" height="18" rx="4"/>
+              <rect x="6"  y="54" width="18" height="18" rx="4"/>
+              <rect x="54" y="54" width="18" height="18" rx="4"/>
+              <rect x="78" y="54" width="18" height="18" rx="4"/>
+              <rect x="6"  y="78" width="18" height="18" rx="4"/>
+              <rect x="30" y="78" width="18" height="18" rx="4"/>
+              <rect x="78" y="78" width="18" height="18" rx="4"/>
+            </g>
+          </svg>
+        </div>
+        <div class="game-info">
+          <h2>Memory Matrix</h2>
+          <p>A pattern of squares flashes, then fades — reproduce it from memory. The grid grows each level; three lives, one mistake each.</p>
+          <span class="play">Play →</span>
+        </div>
+      </a>
+
+      <a class="game-card" href="games/snake.html">
+        <div class="game-thumb">
+          <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <rect x="6" y="6" width="88" height="88" rx="12" stroke="var(--line-2)" stroke-width="1.6"/>
+            <g fill="var(--steel)">
+              <circle cx="30" cy="36" r="6.5"/>
+              <circle cx="44" cy="36" r="6.5"/>
+              <circle cx="58" cy="36" r="6.5"/>
+              <circle cx="58" cy="50" r="6.5"/>
+              <circle cx="58" cy="64" r="6.5"/>
+            </g>
+            <circle cx="30" cy="36" r="1.7" fill="var(--ink-2)"/>
+            <circle cx="74" cy="64" r="7" fill="var(--amber)"/>
+          </svg>
+        </div>
+        <div class="game-info">
+          <h2>Snake</h2>
+          <p>Steer the snake to the morsels, growing longer and quicker with each bite. Edges wrap around — only biting your own tail ends it.</p>
+          <span class="play">Play →</span>
+        </div>
+      </a>
+
+      <a class="game-card" href="games/speed-match.html">
+        <div class="game-thumb">
+          <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <g fill="var(--amber)">
+              <rect x="15" y="15" width="18" height="18" rx="5"/>
+              <rect x="67" y="15" width="18" height="18" rx="5"/>
+              <rect x="41" y="41" width="18" height="18" rx="5"/>
+              <rect x="15" y="67" width="18" height="18" rx="5"/>
+              <rect x="67" y="67" width="18" height="18" rx="5"/>
+            </g>
+            <g fill="none" stroke="var(--line-2)" stroke-width="1.5">
+              <rect x="41" y="15" width="18" height="18" rx="5"/>
+              <rect x="15" y="41" width="18" height="18" rx="5"/>
+              <rect x="67" y="41" width="18" height="18" rx="5"/>
+              <rect x="41" y="67" width="18" height="18" rx="5"/>
+            </g>
+          </svg>
+        </div>
+        <div class="game-info">
+          <h2>Speed Match</h2>
+          <p>A symbol flashes — was it the same as the one just before? Answer fast for 45 seconds; streaks score more, misses cost time.</p>
           <span class="play">Play →</span>
         </div>
       </a>
