@@ -145,6 +145,24 @@
   }
 })();
 
+/* ---------- mobile hamburger nav ---------- */
+(function(){
+  var btn = document.getElementById('navToggle');
+  var nav = document.getElementById('primary-nav');
+  if(!btn || !nav) return;
+  function close(){ nav.classList.remove('open'); btn.setAttribute('aria-expanded','false'); }
+  btn.addEventListener('click', function(e){
+    e.stopPropagation();
+    var open = nav.classList.toggle('open');
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+  document.addEventListener('click', function(e){
+    if(nav.classList.contains('open') && !nav.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') close(); });
+  window.addEventListener('resize', function(){ if(window.innerWidth > 640) close(); });
+})();
+
 /* ---------- top bar tint on scroll ---------- */
 (function(){
   var bar=document.getElementById('bar');

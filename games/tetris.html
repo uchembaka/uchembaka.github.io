@@ -115,6 +115,25 @@
   }
   .hint b { color: var(--ink); font-weight: 500; }
 
+  /* on-screen controls for touch / small screens */
+  .touch-controls {
+    display: none;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px; width: min(94vw, 320px); margin-top: 24px;
+  }
+  .tc-btn {
+    -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+    border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+    border-radius: 12px; min-height: 56px;
+    font-family: "Space Grotesk", system-ui, sans-serif; font-size: 1.5rem; font-weight: 500;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; user-select: none; transition: background .12s ease, border-color .12s ease;
+  }
+  .tc-btn:active { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  .tc-btn.wide { grid-column: span 2; font-family: "JetBrains Mono", monospace; font-size: 0.8rem; letter-spacing: 0.16em; text-transform: uppercase; }
+  @media (hover: none) and (pointer: coarse) { .touch-controls { display: grid; } }
+  @media (max-width: 560px) { .touch-controls { display: grid; } }
+
   .overlay {
     position: absolute; inset: 0; background: var(--overlay); backdrop-filter: blur(3px);
     border-radius: 10px; display: none; flex-direction: column;
@@ -170,6 +189,14 @@
       <b>P</b> pause
     </div>
   </div>
+</div>
+
+<div class="touch-controls" id="touch-controls">
+  <button class="tc-btn" id="tc-left" aria-label="Move left">◀</button>
+  <button class="tc-btn" id="tc-rotate" aria-label="Rotate">⟳</button>
+  <button class="tc-btn" id="tc-right" aria-label="Move right">▶</button>
+  <button class="tc-btn" id="tc-down" aria-label="Soft drop">▼</button>
+  <button class="tc-btn wide" id="tc-drop" aria-label="Hard drop">Drop</button>
 </div>
 
 <script>
@@ -443,6 +470,19 @@ document.addEventListener('keydown', e => {
     case 'p': case 'P': togglePause(); break;
   }
 });
+
+// ---------- touch controls ----------
+function bindTouch(id, fn) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  // pointerdown fires for both touch and mouse, once per press
+  el.addEventListener('pointerdown', e => { e.preventDefault(); fn(); });
+}
+bindTouch('tc-left', () => move(-1));
+bindTouch('tc-right', () => move(1));
+bindTouch('tc-rotate', tryRotate);
+bindTouch('tc-down', softDrop);
+bindTouch('tc-drop', hardDrop);
 
 // initial idle render
 grid = emptyGrid();
