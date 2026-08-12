@@ -69,6 +69,7 @@ header.bar.scrolled{background:linear-gradient(180deg, rgba(var(--ink-rgb),.96),
 .bar .wrap{display:flex;align-items:center;justify-content:space-between;height:64px}
 .brand{font-family:"Space Grotesk",sans-serif;font-weight:600;font-size:15px;letter-spacing:.02em;color:var(--haze)}
 .brand b{color:var(--amber);font-weight:600}
+.brand .mark{display:none}
 nav.top{display:flex;gap:26px}
 nav.top a{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--mute);transition:color .25s}
 nav.top a:hover{color:var(--haze)}
@@ -80,6 +81,13 @@ nav.top a[aria-current="page"]{color:var(--amber)}
 .nav-toggle:focus-visible{outline:2px solid var(--amber);outline-offset:2px;border-radius:4px}
 
 @media (max-width:640px){
+  /* compact mark replaces the full logotype in the nav bar */
+  .brand .full{display:none}
+  .brand .mark{
+    display:inline-flex;align-items:center;justify-content:center;
+    border:1px solid var(--line-2);border-radius:12px;
+    padding:6px 10px;font-size:17px;letter-spacing:.01em;line-height:1;
+  }
   .nav-toggle{display:flex}
   .nav-toggle[aria-expanded="true"] span:nth-child(1){transform:translateY(7px) rotate(45deg)}
   .nav-toggle[aria-expanded="true"] span:nth-child(2){opacity:0}
@@ -151,8 +159,6 @@ nav.top a[aria-current="page"]{color:var(--amber)}
 .pub .auth b{color:var(--haze);font-weight:400;font-style:italic}
 .pub .venue{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:11px}
 .pub .venue .v{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--mute)}
-.pub .venue .q{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.08em;border:1px solid var(--line-2);border-radius:999px;padding:2px 8px;color:var(--haze-dim)}
-.pub .venue .status{font-family:"JetBrains Mono",monospace;font-size:10.5px;color:var(--steel)}
 .pub .venue a.lnk{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--amber);border-bottom:1px solid transparent;transition:border-color .25s}
 .pub .venue a.lnk:hover{border-color:var(--amber)}
 @media (max-width:640px){.pub{grid-template-columns:1fr;gap:8px}.pub .yr{padding-top:0}}
