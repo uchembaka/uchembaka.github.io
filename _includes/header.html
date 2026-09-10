@@ -1,6 +1,6 @@
 <header class="bar" id="bar">
   <div class="wrap">
-    <a href="index.html" class="brand" aria-label="Uche Mbaka — home">
+    <a href="{{ include.base }}index.html" class="brand" aria-label="Uche Mbaka — home">
       <span class="full">Uche<b>.</b>Mbaka</span>
       <span class="mark">U<b>.</b>M</span>
     </a>
@@ -8,11 +8,12 @@
       <span></span><span></span><span></span>
     </button>
     <nav class="top" id="primary-nav">
-      <a href="about.html"{% if include.active == "about" %} aria-current="page"{% endif %}>About</a>
-      <a href="publications.html"{% if include.active == "publications" %} aria-current="page"{% endif %}>Publications</a>
-      <a href="cv.html"{% if include.active == "cv" %} aria-current="page"{% endif %}>CV</a>
-      <a href="bored.html"{% if include.active == "bored" %} aria-current="page"{% endif %}>Procrastination</a>
-      <a href="contact.html"{% if include.active == "contact" %} aria-current="page"{% endif %}>Contact</a>
+      <a href="{{ include.base }}about.html"{% if include.active == "about" %} aria-current="page"{% endif %}>About</a>
+      <a href="{{ include.base }}publications.html"{% if include.active == "publications" %} aria-current="page"{% endif %}>Publications</a>
+      <a href="{{ include.base }}teaching.html"{% if include.active == "teaching" %} aria-current="page"{% endif %}>Teaching</a>
+      <a href="{{ include.base }}cv.html"{% if include.active == "cv" %} aria-current="page"{% endif %}>CV</a>
+      <a href="{{ include.base }}bored.html"{% if include.active == "bored" %} aria-current="page"{% endif %}>Procrastination</a>
+      <a href="{{ include.base }}contact.html"{% if include.active == "contact" %} aria-current="page"{% endif %}>Contact</a>
     </nav>
   </div>
 </header>

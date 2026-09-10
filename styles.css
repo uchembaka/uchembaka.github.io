@@ -264,3 +264,9 @@ footer .copy{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacin
 .hero .role .accent{color:var(--amber);font-weight:500}
 a.ref-inline{transition:color .25s;border-bottom:1px solid transparent}
 a.ref-inline:hover{color:var(--amber);border-color:var(--line-2)}
+
+/* ---------- teaching ---------- */
+.crumb{display:inline-block;margin-bottom:28px;transition:color .25s}
+.crumb:hover{color:var(--amber)}
+.tile-code{display:block;font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--mute);margin-bottom:10px}
+.game-info .tile-code + h2{margin-top:0}

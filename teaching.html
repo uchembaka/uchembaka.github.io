@@ -1,0 +1,74 @@
+---
+---
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<script>(function(){try{var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark"){t=(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+<title>Teaching — Uche Mbaka</title>
+<meta name="description" content="Modules taught by Uche Mbaka, with interactive apps and quizzes for each." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css?v={{ site.time | date: '%s' }}">
+</head>
+<body>
+
+{% include header.html active="teaching" %}
+
+<main class="page">
+  <div class="wrap">
+    <div class="pagehead">
+      <div class="eyebrow">05 — Teaching</div>
+      <h1>Teaching</h1>
+    </div>
+
+    <p class="lede" style="margin-bottom:46px">Modules I teach, each with a handful of small interactive drills built to make the ideas stick.</p>
+
+    <div class="games-grid">
+
+      <a class="game-card" href="teaching/STAT20070.html">
+        <div class="game-thumb">
+          <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <g stroke="var(--line-2)" stroke-width="0.8">
+              <line x1="14" y1="22" x2="95" y2="22"/>
+              <line x1="14" y1="42" x2="95" y2="42"/>
+              <line x1="14" y1="62" x2="95" y2="62"/>
+              <line x1="34" y1="6" x2="34" y2="82"/>
+              <line x1="54" y1="6" x2="54" y2="82"/>
+              <line x1="74" y1="6" x2="74" y2="82"/>
+            </g>
+            <g stroke="var(--haze-dim)" stroke-width="1.8" stroke-linecap="round">
+              <line x1="14" y1="6" x2="14" y2="82"/>
+              <line x1="14" y1="82" x2="95" y2="82"/>
+            </g>
+            <path d="M16 70 C 34 66, 40 44, 54 38 S 78 26, 94 14"
+                  stroke="var(--amber)" stroke-width="2.2" stroke-linecap="round"/>
+            <g fill="var(--steel)">
+              <circle cx="22" cy="74" r="2.6"/><circle cx="31" cy="62" r="2.6"/>
+              <circle cx="40" cy="65" r="2.6"/><circle cx="49" cy="47" r="2.6"/>
+              <circle cx="58" cy="41" r="2.6"/><circle cx="67" cy="30" r="2.6"/>
+              <circle cx="78" cy="33" r="2.6"/><circle cx="88" cy="18" r="2.6"/>
+            </g>
+            <g fill="var(--amber)">
+              <circle cx="45" cy="55" r="2.6"/><circle cx="72" cy="22" r="2.6"/>
+            </g>
+          </svg>
+        </div>
+        <div class="game-info">
+          <span class="tile-code">STAT 20070 · UCD</span>
+          <h2>Data Modelling for Science</h2>
+          <p>Describing data, probability and inference for scientists — with interactive drills for the ideas that trip people up.</p>
+          <span class="play">Open →</span>
+        </div>
+      </a>
+
+    </div>
+  </div>
+</main>
+
+{% include footer.html %}
+
+</body>
+</html>
