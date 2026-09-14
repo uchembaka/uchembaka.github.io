@@ -169,6 +169,15 @@
   .bar{transition:y .25s ease, height .25s ease, width .25s ease, x .25s ease}
   .bar:hover{fill:var(--haze)}
 
+  .legend{
+    display:flex;align-items:center;gap:10px;
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--mute);
+    margin:16px 0 0;
+  }
+  .legend .swatch{width:20px;height:2px;border-radius:2px;background:var(--haze);flex:0 0 auto}
+  .legend[hidden]{display:none}
+
   .bin-warning{
     font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.14em;
     text-transform:uppercase;color:var(--amber);
@@ -225,10 +234,16 @@
       <button class="mode-btn" data-mode="rel" type="button">Relative freq.</button>
       <button class="mode-btn" data-mode="pct" type="button">Percentage</button>
     </div>
+
+    <p class="card-label" style="margin-top:24px">Overlay</p>
+    <div class="mode-row">
+      <button class="mode-btn active" id="densityBtn" type="button" aria-pressed="true">Density curve</button>
+    </div>
   </div>
 
   <div class="card chart-card">
-    <svg id="chart" viewBox="0 0 560 300" role="img" aria-label="Histogram of CK concentration"></svg>
+    <svg id="chart" viewBox="0 0 560 300" role="img" aria-label="Histogram of CK concentration with a kernel density curve"></svg>
+    <p class="legend" id="legend"><span class="swatch"></span>Kernel density estimate — the shape the bins are trying to show</p>
     <p class="bin-warning" id="binWarning"></p>
   </div>
 
@@ -280,6 +295,25 @@ const std = Math.sqrt(variance);
 const skew = DATA.reduce((a,b)=>a + (b-mean)**3, 0) / n / (std**3);
 
 let mode = 'freq';
+let showDensity = true;
+
+/* ---------- kernel density estimate ----------
+   Gaussian kernel, Silverman's rule-of-thumb bandwidth. Computed once: the
+   estimate depends on the data alone, not on how the data is binned. */
+const sorted = [...DATA].sort((a,b) => a-b);
+function quantile(p) {
+  const idx = (sorted.length - 1) * p;
+  const lo = Math.floor(idx), hi = Math.ceil(idx);
+  return sorted[lo] + (sorted[hi] - sorted[lo]) * (idx - lo);
+}
+const iqr = quantile(0.75) - quantile(0.25);
+const bw = 0.9 * Math.min(std, iqr / 1.349) * Math.pow(n, -0.2);
+
+const GRID = 180;
+const gridX = Array.from({length: GRID}, (_, i) => min + range * i / (GRID - 1));
+const gridD = gridX.map(x =>
+  DATA.reduce((s, v) => s + Math.exp(-0.5 * ((x - v) / bw) ** 2), 0) / (n * bw * Math.sqrt(2 * Math.PI))
+);
 
 const svg = document.getElementById('chart');
 const binSlider = document.getElementById('binSlider');
@@ -317,7 +351,13 @@ function render() {
   else if (mode === 'rel') values = counts.map(c => c / n);
   else values = counts.map(c => (c / n) * 100);
 
-  const maxVal = Math.max(...values) * 1.2 || 1;
+  // the density is on the "area = 1" scale, so it is rescaled to whatever the
+  // bars are showing: f(x)·n·h for counts, f(x)·h for proportions, ·100 for %
+  const densScale = mode === 'freq' ? n * width : mode === 'rel' ? width : width * 100;
+  const curve = gridD.map(d => d * densScale);
+
+  const peak = showDensity ? Math.max(...values, ...curve) : Math.max(...values);
+  const maxVal = peak * 1.18 || 1;
 
   // on narrow screens the SVG is scaled down a long way, so the type is sized up
   // in user units to keep the axis labels legible on a phone
@@ -366,6 +406,15 @@ function render() {
     svg.appendChild(rect);
   });
 
+  // density curve, drawn over the bars
+  if (showDensity) {
+    const d = gridX.map((x, i) => `${i ? 'L' : 'M'}${xScale(x).toFixed(2)} ${yScale(curve[i]).toFixed(2)}`).join(' ');
+    svg.appendChild(el('path', {
+      d, fill: 'none', stroke: 'var(--haze)', 'stroke-width': 2,
+      'stroke-linejoin': 'round', 'stroke-linecap': 'round', 'pointer-events': 'none'
+    }));
+  }
+
   // x axis
   svg.appendChild(el('line', { x1: ML, x2: W - MR, y1: MT + plotH, y2: MT + plotH, stroke: 'var(--haze-dim)', 'stroke-width': 1.4 }));
 
@@ -393,13 +442,22 @@ function render() {
   }
 }
 
-document.querySelectorAll('.mode-btn').forEach(btn => {
+document.querySelectorAll('.mode-btn[data-mode]').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.mode-btn[data-mode]').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     mode = btn.dataset.mode;
     render();
   });
+});
+
+const densityBtn = document.getElementById('densityBtn');
+densityBtn.addEventListener('click', () => {
+  showDensity = !showDensity;
+  densityBtn.classList.toggle('active', showDensity);
+  densityBtn.setAttribute('aria-pressed', showDensity ? 'true' : 'false');
+  document.getElementById('legend').hidden = !showDensity;
+  render();
 });
 
 binSlider.addEventListener('input', render);
@@ -414,7 +472,7 @@ document.getElementById('statN').textContent = n;
 document.getElementById('statSkew').innerHTML =
   `${skew.toFixed(2)} <span>(${skew > 0.3 ? 'right-skewed' : skew < -0.3 ? 'left-skewed' : 'roughly symmetric'})</span>`;
 document.getElementById('dataNote').innerHTML =
-  'Skewness is a property of the raw data, not of the bins — <b>notice it never changes as you drag the slider</b>. Only how clearly the histogram reveals it does.';
+  'Skewness is a property of the raw data, not of the bins — <b>the number never changes as you drag the slider, and the density curve keeps the same shape</b>. Only how clearly the bars reveal that long right tail does.';
 
 render();
 </script>
