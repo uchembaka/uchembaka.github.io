@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>(function(){try{var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark"){t=(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+<title>Histogram Bin-Width Explorer — Uche Mbaka</title>
+<meta name="description" content="A companion tool for STAT 20070: see how the same 36 values look with fewer or more histogram bins.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#080A0F;
+    --ink-rgb:8,10,15;
+    --ink-2:#0D1017;
+    --haze:#E9E6DF;
+    --haze-dim:#B9B6AE;
+    --mute:#6A7180;
+    --mute-2:#454B58;
+    --line:rgba(233,230,223,.09);
+    --line-2:rgba(233,230,223,.16);
+    --amber:#CFA15F;
+    --steel:#5C7585;
+    --on-accent:#080A0F;
+  }
+  [data-theme="light"]{
+    --ink:#F3F0E9;
+    --ink-rgb:243,240,233;
+    --ink-2:#FBFAF5;
+    --haze:#1B1C20;
+    --haze-dim:#4A4C54;
+    --mute:#6E727D;
+    --mute-2:#9A9DA6;
+    --line:rgba(20,21,26,.10);
+    --line-2:rgba(20,21,26,.18);
+    --amber:#9E6B22;
+    --steel:#4A6377;
+    --on-accent:#FBFAF5;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    min-height:100vh;
+    background:var(--ink);
+    color:var(--haze);
+    font-family:"Newsreader",Georgia,serif;
+    font-weight:300;
+    font-size:18px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    display:flex;
+    justify-content:center;
+    padding:44px 22px 72px;
+    transition:background .35s ease, color .35s ease;
+  }
+  ::selection{background:rgba(207,161,95,.22);color:var(--haze)}
+  a{color:inherit;text-decoration:none}
+
+  .stage{width:100%;max-width:680px}
+
+  .mono{
+    font-family:"JetBrains Mono",ui-monospace,monospace;
+    font-weight:400;font-size:11px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--mute);
+  }
+
+  /* ---------- top row ---------- */
+  .toprow{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:34px}
+  .back{transition:color .25s}
+  .back:hover{color:var(--amber)}
+
+  .theme-toggle{display:inline-flex;align-items:center;gap:10px;background:none;border:0;padding:0;cursor:pointer;font:inherit;line-height:1}
+  .theme-toggle .tmode{color:var(--mute);transition:color .25s}
+  .theme-toggle:hover .tmode{color:var(--amber)}
+  .theme-toggle .track{width:40px;height:21px;border-radius:999px;border:1px solid var(--line-2);position:relative;transition:border-color .25s;flex:0 0 auto}
+  .theme-toggle:hover .track{border-color:var(--amber)}
+  .theme-toggle .knob{position:absolute;top:50%;left:3px;transform:translateY(-50%);width:13px;height:13px;border-radius:50%;background:var(--mute);transition:left .28s cubic-bezier(.4,0,.2,1),background .25s}
+  [data-theme="light"] .theme-toggle .knob{left:22px;background:var(--amber)}
+  .theme-toggle:focus-visible{outline:none}
+  .theme-toggle:focus-visible .track{outline:2px solid var(--amber);outline-offset:3px}
+
+  /* ---------- header ---------- */
+  header{margin-bottom:30px}
+  .eyebrow{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--mute-2);margin:0 0 16px;
+  }
+  h1{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;
+    font-size:clamp(30px,5.4vw,44px);line-height:1.02;letter-spacing:-.025em;
+    color:var(--haze);margin:0 0 16px;
+  }
+  .sub{font-size:17px;line-height:1.6;color:var(--haze-dim);font-weight:300;margin:0;max-width:52ch}
+  .sub b{color:var(--amber);font-weight:400}
+
+  /* ---------- cards ---------- */
+  .card{
+    background:linear-gradient(160deg, var(--ink-2), rgba(var(--ink-rgb),0));
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:26px 28px 24px;
+    margin-bottom:18px;
+  }
+  @media (max-width:480px){.card{padding:22px 20px 20px}}
+
+  .card-label{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--mute);margin:0;
+  }
+
+  /* ---------- controls ---------- */
+  .control-row{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:6px 16px}
+  @media (max-width:520px){.control-row .readout{flex:0 0 100%}}
+
+  .readout{
+    font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.06em;
+    color:var(--amber);white-space:nowrap;
+  }
+
+  input[type="range"]{
+    -webkit-appearance:none;appearance:none;
+    width:100%;height:3px;
+    background:var(--line-2);
+    border-radius:2px;
+    margin:18px 0 8px;
+    cursor:pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb{
+    -webkit-appearance:none;appearance:none;
+    width:15px;height:15px;border-radius:50%;
+    background:var(--amber);
+    border:3px solid var(--ink);
+    box-shadow:0 0 0 1px var(--amber);
+    cursor:pointer;margin-top:-6px;
+  }
+  input[type="range"]::-moz-range-thumb{
+    width:15px;height:15px;border-radius:50%;
+    background:var(--amber);
+    border:3px solid var(--ink);
+    box-shadow:0 0 0 1px var(--amber);
+    cursor:pointer;
+  }
+  input[type="range"]:focus-visible{outline:2px solid var(--amber);outline-offset:6px;border-radius:4px}
+
+  .slider-ticks{
+    display:flex;justify-content:space-between;
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.08em;
+    color:var(--mute-2);margin-bottom:26px;
+  }
+
+  .mode-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+
+  .mode-btn{
+    background:none;cursor:pointer;
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--haze);
+    border:1px solid var(--line-2);border-radius:999px;padding:10px 20px;
+    transition:.25s;
+  }
+  .mode-btn:hover{border-color:var(--amber);color:var(--amber)}
+  .mode-btn:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+  .mode-btn.active{background:var(--amber);border-color:var(--amber);color:var(--on-accent)}
+
+  /* ---------- chart ---------- */
+  .chart-card{padding:24px 22px 18px}
+  svg{width:100%;height:auto;display:block;overflow:visible}
+  .bar{transition:y .25s ease, height .25s ease, width .25s ease, x .25s ease}
+  .bar:hover{fill:var(--haze)}
+
+  .bin-warning{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--amber);
+    margin:18px 0 0;min-height:17px;
+  }
+
+  /* ---------- stats ---------- */
+  .stat-row{display:flex;flex-wrap:wrap;gap:14px 40px;margin-bottom:18px}
+  .stat .k{
+    display:block;font-family:"JetBrains Mono",monospace;font-size:11px;
+    letter-spacing:.16em;text-transform:uppercase;color:var(--mute);margin-bottom:5px;
+  }
+  .stat .v{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:400;
+    font-size:19px;letter-spacing:-.015em;color:var(--haze);
+  }
+  .stat .v span{color:var(--haze-dim);font-size:15px}
+
+  .data-note{
+    font-size:16px;line-height:1.6;color:var(--haze-dim);font-weight:300;
+    font-style:italic;margin:0;padding-top:18px;border-top:1px solid var(--line);
+  }
+  .data-note b{color:var(--amber);font-weight:400;font-style:normal}
+
+  @media (prefers-reduced-motion:reduce){*{transition:none !important}}
+</style>
+</head>
+<body>
+
+<div class="stage">
+
+  <div class="toprow">
+    <a class="back mono" href="../STAT20070.html">← STAT 20070</a>
+    <button class="theme-toggle" id="themeToggle" aria-label="Switch between light and dark theme" aria-pressed="false"><span class="tmode mono" id="tmode">Dark</span><span class="track"><span class="knob"></span></span></button>
+  </div>
+
+  <header>
+    <p class="eyebrow">STAT 20070 · Section 1 tool</p>
+    <h1>Histogram<br>Bin-Width Explorer</h1>
+    <p class="sub">The CK-concentration example used <b>9 bins of width 20</b>. Drag the slider to see how the same 36 values look with fewer or more bins.</p>
+  </header>
+
+  <div class="card">
+    <div class="control-row">
+      <label class="card-label" for="binSlider">Number of bins</label>
+      <span class="readout" id="binReadout" aria-live="polite"></span>
+    </div>
+    <input type="range" id="binSlider" min="3" max="30" value="9" step="1">
+    <div class="slider-ticks"><span>3</span><span>30</span></div>
+
+    <p class="card-label">Bar height shows</p>
+    <div class="mode-row">
+      <button class="mode-btn active" data-mode="freq" type="button">Frequency</button>
+      <button class="mode-btn" data-mode="rel" type="button">Relative freq.</button>
+      <button class="mode-btn" data-mode="pct" type="button">Percentage</button>
+    </div>
+  </div>
+
+  <div class="card chart-card">
+    <svg id="chart" viewBox="0 0 560 300" role="img" aria-label="Histogram of CK concentration"></svg>
+    <p class="bin-warning" id="binWarning"></p>
+  </div>
+
+  <div class="card">
+    <div class="stat-row">
+      <div class="stat">
+        <span class="k">Sample size</span>
+        <span class="v" id="statN"></span>
+      </div>
+      <div class="stat">
+        <span class="k">Skewness of the data</span>
+        <span class="v" id="statSkew"></span>
+      </div>
+    </div>
+    <p class="data-note" id="dataNote"></p>
+  </div>
+</div>
+
+<script>
+/* ---------- theme toggle (shares the site's stored preference) ---------- */
+(function(){
+  var root = document.documentElement;
+  var btn  = document.getElementById('themeToggle');
+  function current(){ return root.getAttribute('data-theme') === 'light' ? 'light' : 'dark'; }
+  function sync(){
+    var t = current();
+    btn.setAttribute('aria-pressed', t === 'light' ? 'true' : 'false');
+    document.getElementById('tmode').textContent = t === 'light' ? 'Light' : 'Dark';
+  }
+  sync();
+  btn.addEventListener('click', function(){
+    var t = current() === 'light' ? 'dark' : 'light';
+    root.setAttribute('data-theme', t);
+    try{ localStorage.setItem('theme', t); }catch(e){}
+    sync();
+  });
+})();
+
+const DATA = [121,82,100,151,68,58,95,145,64,201,101,163,84,57,139,60,78,94,119,104,110,113,118,203,62,83,67,93,92,110,25,123,70,48,95,42];
+
+const n = DATA.length;
+const min = Math.min(...DATA);
+const max = Math.max(...DATA);
+const range = max - min;
+
+const mean = DATA.reduce((a,b)=>a+b,0) / n;
+const variance = DATA.reduce((a,b)=>a + (b-mean)**2, 0) / n;
+const std = Math.sqrt(variance);
+const skew = DATA.reduce((a,b)=>a + (b-mean)**3, 0) / n / (std**3);
+
+let mode = 'freq';
+
+const svg = document.getElementById('chart');
+const binSlider = document.getElementById('binSlider');
+const binReadout = document.getElementById('binReadout');
+const binWarning = document.getElementById('binWarning');
+
+const NS = 'http://www.w3.org/2000/svg';
+const MONO = "'JetBrains Mono', monospace";
+
+function el(tag, attrs) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  return e;
+}
+
+function computeBins(k) {
+  const width = range / k;
+  const edges = Array.from({length: k+1}, (_, i) => min + i*width);
+  const counts = new Array(k).fill(0);
+  DATA.forEach(v => {
+    let idx = Math.floor((v - min) / width);
+    if (idx >= k) idx = k - 1;
+    if (idx < 0) idx = 0;
+    counts[idx]++;
+  });
+  return { width, edges, counts };
+}
+
+function render() {
+  const k = parseInt(binSlider.value, 10);
+  const { width, edges, counts } = computeBins(k);
+
+  let values;
+  if (mode === 'freq') values = counts;
+  else if (mode === 'rel') values = counts.map(c => c / n);
+  else values = counts.map(c => (c / n) * 100);
+
+  const maxVal = Math.max(...values) * 1.2 || 1;
+
+  // on narrow screens the SVG is scaled down a long way, so the type is sized up
+  // in user units to keep the axis labels legible on a phone
+  const small = window.innerWidth < 560;
+  const FS = small ? 16 : 10;
+
+  const W = 560, H = small ? 330 : 300;
+  const ML = small ? 62 : 46, MR = 14, MT = 14, MB = small ? 48 : 34;
+  const plotW = W - ML - MR, plotH = H - MT - MB;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+
+  const xScale = v => ML + ((v - min) / range) * plotW;
+  const yScale = v => MT + plotH - (v / maxVal) * plotH;
+
+  svg.innerHTML = '';
+
+  // gridlines + y labels
+  const ticksY = 4;
+  for (let i = 0; i <= ticksY; i++) {
+    const val = maxVal * i / ticksY;
+    const y = yScale(val);
+    svg.appendChild(el('line', { x1: ML, x2: W - MR, y1: y, y2: y, stroke: 'var(--line-2)', 'stroke-width': 1 }));
+    let label;
+    if (mode === 'freq') label = Math.round(val);
+    else if (mode === 'rel') label = val.toFixed(2);
+    else label = Math.round(val) + '%';
+    const t = el('text', { x: ML - 10, y: y + FS * 0.36, 'text-anchor': 'end', 'font-size': FS, 'letter-spacing': '.06em', 'font-family': MONO, fill: 'var(--mute)' });
+    t.textContent = label;
+    svg.appendChild(t);
+  }
+
+  // bars
+  counts.forEach((c, i) => {
+    const x0 = xScale(edges[i]);
+    const x1 = xScale(edges[i+1]);
+    const y0 = yScale(values[i]);
+    const rect = el('rect', {
+      class: 'bar',
+      x: x0, y: y0, width: Math.max(x1 - x0, 0.5), height: (MT + plotH) - y0,
+      fill: 'var(--amber)', stroke: 'var(--ink)', 'stroke-width': 1
+    });
+    const pct = ((c / n) * 100).toFixed(0);
+    const title = el('title', {});
+    title.textContent = `${edges[i].toFixed(1)}–${edges[i+1].toFixed(1)}: ${c} observation${c === 1 ? '' : 's'} (${pct}%)`;
+    rect.appendChild(title);
+    svg.appendChild(rect);
+  });
+
+  // x axis
+  svg.appendChild(el('line', { x1: ML, x2: W - MR, y1: MT + plotH, y2: MT + plotH, stroke: 'var(--haze-dim)', 'stroke-width': 1.4 }));
+
+  const maxLabels = small ? 4 : 7;
+  const step = Math.max(1, Math.ceil((k + 1) / maxLabels));
+  for (let i = 0; i <= k; i += step) {
+    const t = el('text', { x: xScale(edges[i]), y: MT + plotH + FS + 8, 'text-anchor': 'middle', 'font-size': FS, 'letter-spacing': '.06em', 'font-family': MONO, fill: 'var(--mute)' });
+    t.textContent = Math.round(edges[i]);
+    svg.appendChild(t);
+  }
+  if (k % step !== 0) {
+    const t = el('text', { x: xScale(edges[k]), y: MT + plotH + FS + 8, 'text-anchor': 'middle', 'font-size': FS, 'letter-spacing': '.06em', 'font-family': MONO, fill: 'var(--mute)' });
+    t.textContent = Math.round(edges[k]);
+    svg.appendChild(t);
+  }
+
+  binReadout.textContent = `${k} bins · width ≈ ${width.toFixed(1)}`;
+
+  if (k <= 4) {
+    binWarning.textContent = 'Too few bins — the shape of the data is being flattened out.';
+  } else if (k >= 24) {
+    binWarning.textContent = 'Too many bins — the histogram is getting noisy and hard to read.';
+  } else {
+    binWarning.textContent = '';
+  }
+}
+
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    mode = btn.dataset.mode;
+    render();
+  });
+});
+
+binSlider.addEventListener('input', render);
+
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(render, 150);
+});
+
+document.getElementById('statN').textContent = n;
+document.getElementById('statSkew').innerHTML =
+  `${skew.toFixed(2)} <span>(${skew > 0.3 ? 'right-skewed' : skew < -0.3 ? 'left-skewed' : 'roughly symmetric'})</span>`;
+document.getElementById('dataNote').innerHTML =
+  'Skewness is a property of the raw data, not of the bins — <b>notice it never changes as you drag the slider</b>. Only how clearly the histogram reveals it does.';
+
+render();
+</script>
+
+</body>
+</html>
