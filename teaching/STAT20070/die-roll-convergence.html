@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>(function(){try{var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark"){t=(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+<title>Die-Roll Convergence — Uche Mbaka</title>
+<meta name="description" content="A companion tool for STAT 20070: watch the relative frequency of a die face settle towards 1/6 as the rolls pile up.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#080A0F;
+    --ink-rgb:8,10,15;
+    --ink-2:#0D1017;
+    --haze:#E9E6DF;
+    --haze-dim:#B9B6AE;
+    --mute:#6A7180;
+    --mute-2:#454B58;
+    --line:rgba(233,230,223,.09);
+    --line-2:rgba(233,230,223,.16);
+    --amber:#CFA15F;
+    --amber-soft:rgba(207,161,95,.16);
+    --steel:#5C7585;
+    --on-accent:#080A0F;
+  }
+  [data-theme="light"]{
+    --ink:#F3F0E9;
+    --ink-rgb:243,240,233;
+    --ink-2:#FBFAF5;
+    --haze:#1B1C20;
+    --haze-dim:#4A4C54;
+    --mute:#6E727D;
+    --mute-2:#9A9DA6;
+    --line:rgba(20,21,26,.10);
+    --line-2:rgba(20,21,26,.18);
+    --amber:#9E6B22;
+    --amber-soft:rgba(158,107,34,.12);
+    --steel:#4A6377;
+    --on-accent:#FBFAF5;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    min-height:100vh;
+    background:var(--ink);
+    color:var(--haze);
+    font-family:"Newsreader",Georgia,serif;
+    font-weight:300;
+    font-size:18px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    display:flex;
+    justify-content:center;
+    padding:44px 22px 72px;
+    transition:background .35s ease, color .35s ease;
+  }
+  ::selection{background:rgba(207,161,95,.22);color:var(--haze)}
+  a{color:inherit;text-decoration:none}
+
+  .stage{width:100%;max-width:760px}
+
+  .mono{
+    font-family:"JetBrains Mono",ui-monospace,monospace;
+    font-weight:400;font-size:11px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--mute);
+  }
+
+  /* ---------- top row ---------- */
+  .toprow{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:34px}
+  .back{transition:color .25s}
+  .back:hover{color:var(--amber)}
+
+  .theme-toggle{display:inline-flex;align-items:center;gap:10px;background:none;border:0;padding:0;cursor:pointer;font:inherit;line-height:1}
+  .theme-toggle .tmode{color:var(--mute);transition:color .25s}
+  .theme-toggle:hover .tmode{color:var(--amber)}
+  .theme-toggle .track{width:40px;height:21px;border-radius:999px;border:1px solid var(--line-2);position:relative;transition:border-color .25s;flex:0 0 auto}
+  .theme-toggle:hover .track{border-color:var(--amber)}
+  .theme-toggle .knob{position:absolute;top:50%;left:3px;transform:translateY(-50%);width:13px;height:13px;border-radius:50%;background:var(--mute);transition:left .28s cubic-bezier(.4,0,.2,1),background .25s}
+  [data-theme="light"] .theme-toggle .knob{left:22px;background:var(--amber)}
+  .theme-toggle:focus-visible{outline:none}
+  .theme-toggle:focus-visible .track{outline:2px solid var(--amber);outline-offset:3px}
+
+  /* ---------- header ---------- */
+  header{margin-bottom:30px}
+  .eyebrow{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--mute-2);margin:0 0 16px;
+  }
+  h1{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;
+    font-size:clamp(30px,5.2vw,44px);line-height:1.02;letter-spacing:-.025em;
+    color:var(--haze);margin:0 0 16px;
+  }
+  .sub{font-size:17px;line-height:1.6;color:var(--haze-dim);font-weight:300;margin:0;max-width:58ch}
+  .sub b{color:var(--amber);font-weight:400}
+
+  /* ---------- cards ---------- */
+  .card{
+    background:linear-gradient(160deg, var(--ink-2), rgba(var(--ink-rgb),0));
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:26px 28px 24px;
+    margin-bottom:18px;
+  }
+  @media (max-width:480px){.card{padding:22px 18px 20px}}
+
+  .card-label{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--mute);margin:0 0 14px;
+  }
+
+  /* ---------- pills ---------- */
+  .pill{
+    background:none;cursor:pointer;
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--haze);
+    border:1px solid var(--line-2);border-radius:999px;padding:11px 22px;
+    transition:.25s;
+  }
+  .pill:hover:not(:disabled){border-color:var(--amber);color:var(--amber)}
+  .pill:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+  .pill:disabled{opacity:.35;cursor:default}
+  .pill.primary{border-color:var(--amber);color:var(--amber)}
+  .pill.primary:hover:not(:disabled){background:var(--amber);color:var(--on-accent)}
+  .pill.quiet{color:var(--mute)}
+  .pill.quiet:hover:not(:disabled){color:var(--amber)}
+
+  /* ---------- die + controls ---------- */
+  .top-row{display:flex;gap:26px;align-items:center;flex-wrap:wrap}
+  .die-wrap{flex:0 0 auto}
+  .die-face{width:82px;height:82px;display:block;transform-origin:50% 50%}
+  .die-face.tumbling{animation:tumble .09s linear infinite}
+  @keyframes tumble{
+    0%{transform:rotate(0deg) scale(1)}
+    50%{transform:rotate(12deg) scale(1.06)}
+    100%{transform:rotate(-10deg) scale(1)}
+  }
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;flex:1 1 auto}
+
+  .target-row{display:flex;align-items:center;gap:16px;margin-top:28px;flex-wrap:wrap}
+  .face-picker{display:flex;gap:8px;flex-wrap:wrap}
+  .face-btn{
+    width:44px;height:44px;padding:5px;
+    background:none;border:1px solid var(--line-2);border-radius:10px;
+    cursor:pointer;transition:.25s;
+  }
+  .face-btn:hover:not(:disabled){border-color:var(--amber)}
+  .face-btn:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+  .face-btn.active{border-color:var(--amber);background:var(--amber-soft)}
+  .face-btn svg{width:100%;height:100%;display:block}
+  .face-btn:disabled{opacity:.35;cursor:default}
+
+  /* ---------- chart ---------- */
+  svg.chart{width:100%;height:auto;display:block;overflow:visible;margin-top:8px}
+
+  .legend{
+    display:flex;flex-wrap:wrap;gap:10px 24px;margin-top:18px;
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--mute);
+  }
+  .legend span{display:inline-flex;align-items:center;gap:8px}
+  .swatch{width:18px;height:2px;display:inline-block;background:var(--amber);flex:0 0 auto}
+  .swatch.dashed{
+    height:0;background:none;
+    border-top:2px dashed var(--haze-dim);
+  }
+
+  .note{
+    font-size:16px;line-height:1.55;color:var(--haze-dim);font-weight:300;
+    font-style:italic;margin:20px 0 0;
+  }
+  .cap-note{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--amber);margin:14px 0 0;
+  }
+
+  /* ---------- stats ---------- */
+  .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px 32px}
+  @media (max-width:560px){.stat-grid{grid-template-columns:1fr;gap:16px}}
+  .stat-label{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--mute);margin:0 0 6px;
+  }
+  .stat-value{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;
+    font-size:26px;letter-spacing:-.025em;color:var(--haze);margin:0;
+  }
+  .stat-value.accent{color:var(--amber)}
+
+  @media (prefers-reduced-motion:reduce){
+    .die-face.tumbling{animation:none !important}
+    *{transition:none !important}
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+
+  <div class="toprow">
+    <a class="back mono" href="../STAT20070.html">← STAT 20070</a>
+    <button class="theme-toggle" id="themeToggle" aria-label="Switch between light and dark theme" aria-pressed="false"><span class="tmode mono" id="tmode">Dark</span><span class="track"><span class="knob"></span></span></button>
+  </div>
+
+  <header>
+    <p class="eyebrow">Section 2 · Lecture 05 · Intro to Probability</p>
+    <h1>Die-Roll<br>Convergence</h1>
+    <p class="sub">The slide asks about rolling a 6, but the theoretical probability is <b>1/6</b> for every face on a fair die. Roll the die and pick any face to track, the same rolls answer the question either way.</p>
+  </header>
+
+  <div class="card">
+    <div class="top-row">
+      <div class="die-wrap">
+        <svg id="dieFace" class="die-face" viewBox="0 0 100 100" role="img" aria-label="Current die face"></svg>
+      </div>
+      <div class="btn-row">
+        <button class="pill primary" id="roll1" type="button">Roll ×1</button>
+        <button class="pill" id="roll10" type="button">Roll ×10</button>
+        <button class="pill" id="roll100" type="button">Roll ×100</button>
+        <button class="pill quiet" id="resetBtn" type="button">Reset</button>
+      </div>
+    </div>
+
+    <div class="target-row">
+      <span class="card-label" style="margin:0">Track the probability of rolling a</span>
+      <div class="face-picker" id="facePicker"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <svg id="chart" class="chart" viewBox="0 0 640 260" role="img" aria-label="Running relative frequency of the selected face"></svg>
+    <div class="legend">
+      <span><span class="swatch"></span><span id="legendLabel">Relative frequency of a 6</span></span>
+      <span><span class="swatch dashed"></span>Theoretical 1/6 ≈ 0.167</span>
+    </div>
+    <p class="note">The dashed line stays at 1/6 whichever face you track, since every face is equally likely on a fair die.</p>
+    <p class="cap-note" id="capNote"></p>
+  </div>
+
+  <div class="card">
+    <div class="stat-grid">
+      <div class="stat">
+        <p class="stat-label">Total rolls</p>
+        <p class="stat-value" id="statN">0</p>
+      </div>
+      <div class="stat">
+        <p class="stat-label">Times target rolled</p>
+        <p class="stat-value" id="statCount">0</p>
+      </div>
+      <div class="stat">
+        <p class="stat-label">Relative frequency</p>
+        <p class="stat-value accent" id="statFreq">—</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- theme toggle (shares the site's stored preference) ---------- */
+(function(){
+  var root = document.documentElement;
+  var btn  = document.getElementById('themeToggle');
+  function current(){ return root.getAttribute('data-theme') === 'light' ? 'light' : 'dark'; }
+  function sync(){
+    var t = current();
+    btn.setAttribute('aria-pressed', t === 'light' ? 'true' : 'false');
+    document.getElementById('tmode').textContent = t === 'light' ? 'Light' : 'Dark';
+  }
+  sync();
+  btn.addEventListener('click', function(){
+    var t = current() === 'light' ? 'dark' : 'light';
+    root.setAttribute('data-theme', t);
+    try{ localStorage.setItem('theme', t); }catch(e){}
+    sync();
+  });
+})();
+
+const NS = 'http://www.w3.org/2000/svg';
+const MONO = "'JetBrains Mono', monospace";
+
+function el(tag, attrs) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  return e;
+}
+
+const CAP = 3000;
+const TARGET_THEORY = 1 / 6;
+
+let rawRolls = [];   // every individual roll outcome, 1-6, in order
+let targetFace = 6;  // which face we're currently tracking
+let animating = false;
+
+const dieFace = document.getElementById('dieFace');
+const chart = document.getElementById('chart');
+const facePicker = document.getElementById('facePicker');
+const capNote = document.getElementById('capNote');
+const legendLabel = document.getElementById('legendLabel');
+const statN = document.getElementById('statN');
+const statCount = document.getElementById('statCount');
+const statFreq = document.getElementById('statFreq');
+
+const PIP_LAYOUTS = {
+  1: [[50,50]],
+  2: [[28,28],[72,72]],
+  3: [[28,28],[50,50],[72,72]],
+  4: [[28,28],[72,28],[28,72],[72,72]],
+  5: [[28,28],[72,28],[50,50],[28,72],[72,72]],
+  6: [[28,25],[72,25],[28,50],[72,50],[28,75],[72,75]]
+};
+
+function pipSVG(value, dotColor, frameColor) {
+  let inner = `<rect x="5" y="5" width="90" height="90" rx="16" fill="none" stroke="${frameColor}" stroke-width="4"/>`;
+  (PIP_LAYOUTS[value] || []).forEach(([cx, cy]) => {
+    inner += `<circle cx="${cx}" cy="${cy}" r="8.5" fill="${dotColor}"/>`;
+  });
+  return inner;
+}
+
+function drawDie(value) {
+  const hit = value === targetFace;
+  dieFace.innerHTML = pipSVG(
+    value,
+    hit ? 'var(--amber)' : 'var(--steel)',
+    hit ? 'var(--amber)' : 'var(--haze-dim)'
+  );
+}
+
+function buildFacePicker() {
+  facePicker.innerHTML = '';
+  for (let f = 1; f <= 6; f++) {
+    const active = f === targetFace;
+    const btn = document.createElement('button');
+    btn.className = 'face-btn' + (active ? ' active' : '');
+    btn.type = 'button';
+    btn.id = 'face-' + f;
+    btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+    btn.setAttribute('aria-label', `Track face ${f}`);
+    btn.innerHTML = `<svg viewBox="0 0 100 100" aria-hidden="true">${
+      pipSVG(f, active ? 'var(--amber)' : 'var(--mute)', active ? 'var(--amber)' : 'var(--line-2)')
+    }</svg>`;
+    btn.addEventListener('click', () => setTargetFace(f));
+    facePicker.appendChild(btn);
+  }
+}
+
+function setTargetFace(f) {
+  if (animating) return;
+  targetFace = f;
+  buildFacePicker(); // rebuilds all face buttons with correct active state + pip colours
+  legendLabel.textContent = `Relative frequency of a ${f}`;
+  drawDie(rawRolls.length ? rawRolls[rawRolls.length - 1] : 1);
+  renderChart();
+  updateStats();
+}
+
+function computeHistory() {
+  let count = 0;
+  const hist = new Array(rawRolls.length);
+  for (let i = 0; i < rawRolls.length; i++) {
+    if (rawRolls[i] === targetFace) count++;
+    hist[i] = count / (i + 1);
+  }
+  return { hist, count };
+}
+
+function renderChart() {
+  chart.innerHTML = '';
+
+  // on narrow screens the SVG is scaled down a long way, so the type is sized up
+  // in user units to keep the axis labels legible on a phone
+  const small = window.innerWidth < 560;
+  const FS = small ? 17 : 11;
+
+  const W = 640, H = small ? 290 : 260;
+  const ML = small ? 62 : 48, MR = 16, MT = small ? 24 : 18, MB = small ? 50 : 34;
+  const plotW = W - ML - MR, plotH = H - MT - MB;
+  chart.setAttribute('viewBox', `0 0 ${W} ${H}`);
+
+  const { hist } = computeHistory();
+  const n = rawRolls.length;
+  const maxN = Math.max(n, 20);
+  const xScale = i => ML + (i / maxN) * plotW;
+  const yScale = v => MT + plotH - v * plotH;
+
+  [0, 0.25, 0.5, 0.75, 1.0].forEach(v => {
+    const y = yScale(v);
+    chart.appendChild(el('line', { x1: ML, x2: W - MR, y1: y, y2: y, stroke: 'var(--line-2)', 'stroke-width': 1 }));
+    const t = el('text', {
+      x: ML - 10, y: y + FS * 0.35, 'text-anchor': 'end',
+      'font-size': FS, 'letter-spacing': '.04em', 'font-family': MONO, fill: 'var(--mute)'
+    });
+    t.textContent = v.toFixed(2);
+    chart.appendChild(t);
+  });
+
+  chart.appendChild(el('line', { x1: ML, x2: W - MR, y1: MT + plotH, y2: MT + plotH, stroke: 'var(--haze-dim)', 'stroke-width': 1.4 }));
+
+  const xTickCount = 5;
+  for (let i = 0; i <= xTickCount; i++) {
+    const val = Math.round((maxN * i) / xTickCount);
+    const x = xScale(val);
+    const t = el('text', {
+      x, y: MT + plotH + FS + 8, 'text-anchor': 'middle',
+      'font-size': FS, 'letter-spacing': '.04em', 'font-family': MONO, fill: 'var(--mute)'
+    });
+    t.textContent = val;
+    chart.appendChild(t);
+  }
+
+  const refY = yScale(TARGET_THEORY);
+  chart.appendChild(el('line', {
+    x1: ML, x2: W - MR, y1: refY, y2: refY,
+    stroke: 'var(--haze-dim)', 'stroke-width': 1.6, 'stroke-dasharray': '7,5'
+  }));
+
+  if (hist.length > 0) {
+    const pts = hist.map((v, idx) => `${xScale(idx + 1)},${yScale(v)}`).join(' ');
+    chart.appendChild(el('polyline', {
+      points: pts, fill: 'none', stroke: 'var(--amber)',
+      'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round'
+    }));
+  }
+
+  capNote.textContent = n >= CAP
+    ? `Capped at ${CAP} rolls for readability. Reset to start a fresh run.`
+    : '';
+}
+
+function updateStats() {
+  const { count } = computeHistory();
+  const n = rawRolls.length;
+  statN.textContent = n;
+  statCount.textContent = count;
+  statFreq.textContent = n === 0 ? '—' : (count / n).toFixed(3);
+}
+
+function setControlsEnabled(enabled) {
+  document.getElementById('roll1').disabled = !enabled || rawRolls.length >= CAP;
+  document.getElementById('roll10').disabled = !enabled || rawRolls.length >= CAP;
+  document.getElementById('roll100').disabled = !enabled || rawRolls.length >= CAP;
+  document.getElementById('resetBtn').disabled = !enabled;
+  document.querySelectorAll('.face-btn').forEach(b => b.disabled = !enabled);
+}
+
+function animateAndLand(finalValue, onDone) {
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduceMotion) {
+    drawDie(finalValue);
+    onDone();
+    return;
+  }
+  animating = true;
+  setControlsEnabled(false);
+  dieFace.classList.add('tumbling');
+
+  let frame = 0;
+  const totalFrames = 7;
+  const timer = setInterval(() => {
+    frame++;
+    if (frame >= totalFrames) {
+      clearInterval(timer);
+      dieFace.classList.remove('tumbling');
+      drawDie(finalValue);
+      animating = false;
+      setControlsEnabled(true);
+      onDone();
+    } else {
+      drawDie(1 + Math.floor(Math.random() * 6));
+    }
+  }, 70);
+}
+
+function rollBatch(k) {
+  if (animating) return;
+  const remaining = CAP - rawRolls.length;
+  const actual = Math.min(k, remaining);
+  if (actual <= 0) return;
+
+  const batch = [];
+  for (let i = 0; i < actual; i++) batch.push(1 + Math.floor(Math.random() * 6));
+  const finalValue = batch[batch.length - 1];
+
+  animateAndLand(finalValue, () => {
+    rawRolls = rawRolls.concat(batch);
+    renderChart();
+    updateStats();
+    setControlsEnabled(true);
+  });
+}
+
+function reset() {
+  if (animating) return;
+  rawRolls = [];
+  drawDie(1);
+  renderChart();
+  updateStats();
+  setControlsEnabled(true);
+}
+
+document.getElementById('roll1').addEventListener('click', () => rollBatch(1));
+document.getElementById('roll10').addEventListener('click', () => rollBatch(10));
+document.getElementById('roll100').addEventListener('click', () => rollBatch(100));
+document.getElementById('resetBtn').addEventListener('click', reset);
+
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(renderChart, 150);
+});
+
+buildFacePicker();
+reset();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>(function(){try{var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark"){t=(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+<title>Punnett Square — Uche Mbaka</title>
+<meta name="description" content="A companion tool for STAT 20070: the number of dominant alleles in a monohybrid cross as a random variable.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#080A0F;
+    --ink-rgb:8,10,15;
+    --ink-2:#0D1017;
+    --haze:#E9E6DF;
+    --haze-dim:#B9B6AE;
+    --mute:#6A7180;
+    --mute-2:#454B58;
+    --line:rgba(233,230,223,.09);
+    --line-2:rgba(233,230,223,.16);
+    --amber:#CFA15F;
+    --amber-soft:rgba(207,161,95,.16);
+    --steel:#5C7585;
+    --on-accent:#080A0F;
+  }
+  [data-theme="light"]{
+    --ink:#F3F0E9;
+    --ink-rgb:243,240,233;
+    --ink-2:#FBFAF5;
+    --haze:#1B1C20;
+    --haze-dim:#4A4C54;
+    --mute:#6E727D;
+    --mute-2:#9A9DA6;
+    --line:rgba(20,21,26,.10);
+    --line-2:rgba(20,21,26,.18);
+    --amber:#9E6B22;
+    --amber-soft:rgba(158,107,34,.12);
+    --steel:#4A6377;
+    --on-accent:#FBFAF5;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    min-height:100vh;
+    background:var(--ink);
+    color:var(--haze);
+    font-family:"Newsreader",Georgia,serif;
+    font-weight:300;
+    font-size:18px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    display:flex;
+    justify-content:center;
+    padding:44px 22px 72px;
+    transition:background .35s ease, color .35s ease;
+  }
+  ::selection{background:rgba(207,161,95,.22);color:var(--haze)}
+  a{color:inherit;text-decoration:none}
+
+  .stage{width:100%;max-width:760px}
+
+  .mono{
+    font-family:"JetBrains Mono",ui-monospace,monospace;
+    font-weight:400;font-size:11px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--mute);
+  }
+
+  /* ---------- top row ---------- */
+  .toprow{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:34px}
+  .back{transition:color .25s}
+  .back:hover{color:var(--amber)}
+
+  .theme-toggle{display:inline-flex;align-items:center;gap:10px;background:none;border:0;padding:0;cursor:pointer;font:inherit;line-height:1}
+  .theme-toggle .tmode{color:var(--mute);transition:color .25s}
+  .theme-toggle:hover .tmode{color:var(--amber)}
+  .theme-toggle .track{width:40px;height:21px;border-radius:999px;border:1px solid var(--line-2);position:relative;transition:border-color .25s;flex:0 0 auto}
+  .theme-toggle:hover .track{border-color:var(--amber)}
+  .theme-toggle .knob{position:absolute;top:50%;left:3px;transform:translateY(-50%);width:13px;height:13px;border-radius:50%;background:var(--mute);transition:left .28s cubic-bezier(.4,0,.2,1),background .25s}
+  [data-theme="light"] .theme-toggle .knob{left:22px;background:var(--amber)}
+  .theme-toggle:focus-visible{outline:none}
+  .theme-toggle:focus-visible .track{outline:2px solid var(--amber);outline-offset:3px}
+
+  /* ---------- header ---------- */
+  header{margin-bottom:30px}
+  .eyebrow{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--mute-2);margin:0 0 16px;
+  }
+  h1{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;
+    font-size:clamp(29px,5vw,42px);line-height:1.02;letter-spacing:-.025em;
+    color:var(--haze);margin:0 0 16px;
+  }
+  .sub{font-size:17px;line-height:1.6;color:var(--haze-dim);font-weight:300;margin:0;max-width:58ch}
+  .sub b{color:var(--amber);font-weight:400}
+
+  /* ---------- cards ---------- */
+  .card{
+    background:linear-gradient(160deg, var(--ink-2), rgba(var(--ink-rgb),0));
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:26px 28px 24px;
+    margin-bottom:18px;
+  }
+  @media (max-width:480px){.card{padding:22px 18px 20px}}
+
+  .card-title{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;
+    font-size:21px;letter-spacing:-.02em;color:var(--haze);margin:0 0 6px;
+  }
+  .card-note{
+    font-size:16px;line-height:1.55;color:var(--haze-dim);font-weight:300;
+    font-style:italic;margin:0 0 20px;
+  }
+
+  /* ---------- notation table ---------- */
+  .def-row{
+    display:grid;grid-template-columns:186px 1fr;gap:16px;
+    padding:14px 0;border-top:1px solid var(--line);align-items:baseline;
+  }
+  .def-row:first-of-type{border-top:none;padding-top:4px}
+  .def-term{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--amber);
+  }
+  .def-body{font-size:16.5px;line-height:1.5;color:var(--haze-dim);font-weight:300}
+  .def-body b{font-family:"Space Grotesk",system-ui,sans-serif;font-weight:400;color:var(--haze)}
+  @media (max-width:560px){.def-row{grid-template-columns:1fr;gap:5px}}
+
+  /* ---------- pills ---------- */
+  .pill{
+    background:none;cursor:pointer;
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--haze);
+    border:1px solid var(--line-2);border-radius:999px;padding:10px 20px;
+    transition:.25s;
+  }
+  .pill:hover{border-color:var(--amber);color:var(--amber)}
+  .pill:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+  .pill.active{background:var(--amber);border-color:var(--amber);color:var(--on-accent)}
+
+  .emphasis-toggle{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:24px}
+
+  /* ---------- punnett grid ---------- */
+  .grid-wrap{display:grid;grid-template-columns:64px repeat(2,1fr);gap:10px;max-width:360px;margin:0 auto}
+  .grid-label{display:flex;align-items:center;justify-content:center}
+  .allele-badge{
+    width:40px;height:40px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;font-size:19px;
+    letter-spacing:-.01em;border:1px solid;
+  }
+  .allele-badge.dom{border-color:var(--amber);color:var(--amber);background:var(--amber-soft)}
+  .allele-badge.rec{border-color:var(--line-2);color:var(--mute)}
+
+  .cell{
+    aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:rgba(var(--ink-rgb),.5);
+    border:1px solid var(--line-2);border-radius:12px;
+    cursor:pointer;padding:6px;gap:7px;
+    transition:border-color .2s ease, background .2s ease, opacity .2s ease;
+  }
+  .cell:hover{border-color:var(--amber)}
+  .cell:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+
+  .cell-pair{
+    order:1;
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;font-size:28px;
+    letter-spacing:-.02em;color:var(--haze);line-height:1;
+  }
+  .cell-count{
+    order:2;
+    font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.06em;
+    color:var(--mute);line-height:1;
+  }
+  .grid-wrap.emphasize-count .cell-count{
+    order:1;
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;font-size:26px;
+    letter-spacing:-.02em;color:var(--haze);
+  }
+  .grid-wrap.emphasize-count .cell-pair{
+    order:2;
+    font-family:"JetBrains Mono",monospace;font-weight:400;font-size:13px;
+    letter-spacing:.04em;color:var(--mute);
+  }
+
+  .cell.match{background:var(--amber-soft);border-color:var(--amber)}
+  .cell.match .cell-pair,.cell.match .cell-count{color:var(--amber)}
+  .cell.muted{opacity:.28}
+
+  .axis-caption{
+    text-align:center;font-family:"JetBrains Mono",monospace;font-size:11px;
+    letter-spacing:.1em;text-transform:uppercase;color:var(--mute);margin:20px 0 0;
+  }
+
+  /* ---------- measurement space ---------- */
+  .sum-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .sum-btn{
+    padding:14px 0;text-align:center;
+    background:none;border:1px solid var(--line-2);border-radius:10px;
+    font-family:"JetBrains Mono",monospace;font-size:15px;letter-spacing:.04em;
+    color:var(--haze);cursor:pointer;transition:.25s;
+  }
+  .sum-btn:hover{border-color:var(--amber);color:var(--amber)}
+  .sum-btn:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+  .sum-btn.explored:not(.active){border-color:var(--amber);color:var(--amber)}
+  .sum-btn.active{background:var(--amber);border-color:var(--amber);color:var(--on-accent);font-weight:500}
+
+  .stat-box{margin-top:22px;border-left:2px solid var(--amber);padding:4px 0 4px 20px}
+  .stat-line{
+    font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.04em;
+    color:var(--mute);margin:0 0 8px;line-height:1.6;
+  }
+  .stat-line.map{color:var(--haze-dim)}
+  .stat-value{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;
+    font-size:clamp(20px,3.4vw,26px);letter-spacing:-.02em;color:var(--amber);margin:12px 0 0;
+  }
+  .placeholder-note{font-size:16px;line-height:1.55;color:var(--mute);font-style:italic;margin:22px 0 0}
+
+  /* ---------- chart ---------- */
+  svg#chart{width:100%;height:auto;display:block;overflow:visible}
+  .btn-row{display:flex;flex-wrap:wrap;gap:12px;margin-top:22px}
+
+  .phenotype-note{
+    margin-top:26px;padding-top:22px;border-top:1px solid var(--line);
+    font-size:16.5px;line-height:1.62;color:var(--haze-dim);font-weight:300;
+  }
+  .phenotype-note b{color:var(--amber);font-weight:400}
+  .phenotype-note .ratio{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;
+    color:var(--haze);letter-spacing:-.01em;
+  }
+
+  @media (prefers-reduced-motion:reduce){*{transition:none !important}}
+</style>
+</head>
+<body>
+
+<div class="stage">
+
+  <div class="toprow">
+    <a class="back mono" href="random-variables.html">← Random Variables</a>
+    <button class="theme-toggle" id="themeToggle" aria-label="Switch between light and dark theme" aria-pressed="false"><span class="tmode mono" id="tmode">Dark</span><span class="track"><span class="knob"></span></span></button>
+  </div>
+
+  <header>
+    <p class="eyebrow">Section 2 · Lecture 05 · Intro to Probability</p>
+    <h1>Punnett Square</h1>
+    <p class="sub">Two parent plants, each heterozygous (<b>Aa</b>) for flower colour, are crossed, and each passes on one allele at random. The random variable <b>Y</b> counts the dominant alleles the offspring receives.</p>
+  </header>
+
+  <div class="card">
+    <p class="card-title">The setup, in notation</p>
+    <p class="card-note">Three different spaces, and the rule that connects them.</p>
+    <div class="def-row">
+      <span class="def-term">Outcome space, O</span>
+      <span class="def-body"><b>{(A,A), (A,a), (a,A), (a,a)}</b> — 4 equally likely allele combinations</span>
+    </div>
+    <div class="def-row">
+      <span class="def-term">Random variable, Y</span>
+      <span class="def-body"><b>Y(allele 1, allele 2)</b> = number of dominant (A) alleles in the offspring</span>
+    </div>
+    <div class="def-row">
+      <span class="def-term">Measurement space</span>
+      <span class="def-body"><b>{0, 1, 2}</b> — the possible values Y can take</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="card-title">Outcome space O</p>
+    <p class="card-note">Each cell is one outcome: one allele from each parent, combined at random during fertilisation.</p>
+    <div class="emphasis-toggle">
+      <button class="pill active" id="emphasizePairBtn" type="button">Emphasize the genotype</button>
+      <button class="pill" id="emphasizeCountBtn" type="button">Emphasize Y</button>
+    </div>
+    <div class="grid-wrap" id="gridWrap"></div>
+    <p class="axis-caption">Rows = allele from Parent 1 · Columns = allele from Parent 2</p>
+  </div>
+
+  <div class="card">
+    <p class="card-title">Measurement space</p>
+    <p class="card-note">{0, 1, 2} — the number of dominant alleles Y can take. Click one to see which outcomes in O map to it.</p>
+    <div class="sum-row" id="sumRow"></div>
+    <div id="statArea"></div>
+  </div>
+
+  <div class="card">
+    <p class="card-title">The distribution of Y</p>
+    <p class="card-note">Bars fill in as you explore each value above.</p>
+    <svg id="chart" viewBox="0 0 400 220" role="img" aria-label="Distribution of the number of dominant alleles"></svg>
+    <div class="btn-row">
+      <button class="pill" id="revealAll" type="button">Reveal all</button>
+      <button class="pill" id="resetBtn" type="button">Reset</button>
+    </div>
+    <p class="phenotype-note">
+      <b>Connecting to phenotype:</b> since A is dominant, any offspring with Y ≥ 1 has purple flowers — only Y = 0 (genotype aa) is white. That gives the classic <span class="ratio">3 : 1</span> phenotype ratio, built from this <span class="ratio">1 : 2 : 1</span> genotype ratio.
+    </p>
+  </div>
+</div>
+
+<script>
+/* ---------- theme toggle (shares the site's stored preference) ---------- */
+(function(){
+  var root = document.documentElement;
+  var btn  = document.getElementById('themeToggle');
+  function current(){ return root.getAttribute('data-theme') === 'light' ? 'light' : 'dark'; }
+  function sync(){
+    var t = current();
+    btn.setAttribute('aria-pressed', t === 'light' ? 'true' : 'false');
+    document.getElementById('tmode').textContent = t === 'light' ? 'Light' : 'Dark';
+  }
+  sync();
+  btn.addEventListener('click', function(){
+    var t = current() === 'light' ? 'dark' : 'light';
+    root.setAttribute('data-theme', t);
+    try{ localStorage.setItem('theme', t); }catch(e){}
+    sync();
+  });
+})();
+
+const NS = 'http://www.w3.org/2000/svg';
+const MONO = "'JetBrains Mono', monospace";
+
+function elNS(tag, attrs) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  return e;
+}
+
+function alleleBadge(letter) {
+  const cls = letter === 'A' ? 'dom' : 'rec';
+  return `<span class="allele-badge ${cls}">${letter}</span>`;
+}
+
+const ALLELES = ['A', 'a'];
+let selectedY = null;
+let explored = new Set();
+
+const gridWrap = document.getElementById('gridWrap');
+const sumRow = document.getElementById('sumRow');
+const statArea = document.getElementById('statArea');
+const chart = document.getElementById('chart');
+
+function outcomes() {
+  const out = [];
+  ALLELES.forEach(a1 => ALLELES.forEach(a2 => out.push([a1, a2])));
+  return out; // [(A,A),(A,a),(a,A),(a,a)]
+}
+function yValue(pair) { return pair.filter(a => a === 'A').length; }
+function countForY(y) { return outcomes().filter(p => yValue(p) === y).length; }
+function outcomesForY(y) { return outcomes().filter(p => yValue(p) === y); }
+
+function buildGrid() {
+  gridWrap.innerHTML = '';
+  gridWrap.appendChild(document.createElement('div')).className = 'grid-label';
+  ALLELES.forEach(a2 => {
+    const lab = document.createElement('div');
+    lab.className = 'grid-label';
+    lab.innerHTML = alleleBadge(a2);
+    gridWrap.appendChild(lab);
+  });
+  ALLELES.forEach(a1 => {
+    const rowLab = document.createElement('div');
+    rowLab.className = 'grid-label';
+    rowLab.innerHTML = alleleBadge(a1);
+    gridWrap.appendChild(rowLab);
+    ALLELES.forEach(a2 => {
+      const y = yValue([a1, a2]);
+      const cell = document.createElement('button');
+      cell.type = 'button';
+      cell.className = 'cell';
+      cell.id = `cell-${a1}-${a2}`;
+      cell.setAttribute('aria-label', `Genotype ${a1}${a2}, Y = ${y}`);
+      cell.innerHTML = `<span class="cell-pair">${a1}${a2}</span><span class="cell-count">Y = ${y}</span>`;
+      cell.addEventListener('click', () => selectY(y));
+      gridWrap.appendChild(cell);
+    });
+  });
+}
+
+function updateGridHighlight() {
+  ALLELES.forEach(a1 => ALLELES.forEach(a2 => {
+    const cell = document.getElementById(`cell-${a1}-${a2}`);
+    cell.classList.remove('match', 'muted');
+    if (selectedY !== null) {
+      if (yValue([a1, a2]) === selectedY) cell.classList.add('match');
+      else cell.classList.add('muted');
+    }
+  }));
+}
+
+function buildSumRow() {
+  sumRow.innerHTML = '';
+  [0, 1, 2].forEach(y => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'sum-btn';
+    btn.textContent = y;
+    btn.id = `sumbtn-${y}`;
+    btn.addEventListener('click', () => selectY(y));
+    sumRow.appendChild(btn);
+  });
+}
+
+function updateSumRow() {
+  [0, 1, 2].forEach(y => {
+    const btn = document.getElementById(`sumbtn-${y}`);
+    btn.classList.toggle('active', y === selectedY);
+    btn.classList.toggle('explored', explored.has(y));
+  });
+}
+
+function renderStats() {
+  if (selectedY === null) {
+    statArea.innerHTML = '<p class="placeholder-note">Click a value above, or any cell in the grid.</p>';
+    return;
+  }
+  const pairs = outcomesForY(selectedY);
+  const count = pairs.length;
+  const prob = count / 4;
+  const functionNotation = pairs.map(p => `Y(${p[0]},${p[1]})`).join(' = ') + ` = ${selectedY}`;
+  statArea.innerHTML = `
+    <div class="stat-box">
+      <p class="stat-line map">${functionNotation}</p>
+      <p class="stat-line">${count} outcome${count === 1 ? '' : 's'} in O map to this value of Y, out of 4 equally likely outcomes</p>
+      <p class="stat-value">Pr(Y = ${selectedY}) = ${count}/4 = ${prob.toFixed(2)}</p>
+    </div>
+  `;
+}
+
+function renderChart() {
+  chart.innerHTML = '';
+
+  // on narrow screens the SVG is scaled down a long way, so the type is sized up
+  // in user units to keep the axis labels legible on a phone
+  const small = window.innerWidth < 560;
+  const FS = small ? 17 : 12;
+
+  const W = 400, H = small ? 250 : 220;
+  const ML = 24, MR = 16, MT = small ? 26 : 20, MB = small ? 56 : 44;
+  const plotW = W - ML - MR, plotH = H - MT - MB;
+  chart.setAttribute('viewBox', `0 0 ${W} ${H}`);
+
+  const ys = [0, 1, 2];
+  const gap = 28;
+  const barW = (plotW - gap * (ys.length - 1)) / ys.length;
+  const maxProb = 0.5 * 1.3;
+  const yScale = v => MT + plotH - (v / maxProb) * plotH;
+  const baseline = MT + plotH;
+
+  chart.appendChild(elNS('line', { x1: ML, x2: W - MR, y1: baseline, y2: baseline, stroke: 'var(--haze-dim)', 'stroke-width': 1.4 }));
+
+  ys.forEach((y, idx) => {
+    const x = ML + idx * (barW + gap);
+    const isExplored = explored.has(y);
+    const count = countForY(y);
+    const prob = count / 4;
+
+    if (isExplored) {
+      const yy = yScale(prob);
+      chart.appendChild(elNS('rect', {
+        x, y: yy, width: barW, height: baseline - yy, rx: 2,
+        fill: y === selectedY ? 'var(--amber)' : 'var(--amber-soft)',
+        stroke: 'var(--amber)', 'stroke-width': 1.2
+      }));
+      const probLab = elNS('text', {
+        x: x + barW / 2, y: yy - 9, 'text-anchor': 'middle',
+        'font-size': FS, 'letter-spacing': '.04em', 'font-family': MONO, fill: 'var(--amber)'
+      });
+      probLab.textContent = `${count}/4`;
+      chart.appendChild(probLab);
+    } else {
+      const stubY = baseline - 8;
+      chart.appendChild(elNS('rect', { x, y: stubY, width: barW, height: 8, rx: 2, fill: 'var(--line-2)' }));
+      const q = elNS('text', {
+        x: x + barW / 2, y: stubY - 9, 'text-anchor': 'middle',
+        'font-size': FS, 'font-family': MONO, fill: 'var(--mute)'
+      });
+      q.textContent = '?';
+      chart.appendChild(q);
+    }
+
+    const lab = elNS('text', {
+      x: x + barW / 2, y: baseline + FS + 9, 'text-anchor': 'middle',
+      'font-size': FS, 'letter-spacing': '.04em', 'font-family': MONO,
+      fill: y === selectedY ? 'var(--amber)' : 'var(--mute)'
+    });
+    lab.textContent = `Y=${y}`;
+    chart.appendChild(lab);
+  });
+
+  const axisLabel = elNS('text', {
+    x: (ML + W - MR) / 2, y: H - 4, 'text-anchor': 'middle',
+    'font-size': FS - 2, 'letter-spacing': '.14em', 'font-family': MONO, fill: 'var(--mute-2)'
+  });
+  axisLabel.textContent = 'Y = NUMBER OF DOMINANT (A) ALLELES';
+  chart.appendChild(axisLabel);
+}
+
+function selectY(y) {
+  selectedY = y;
+  explored.add(y);
+  updateGridHighlight();
+  updateSumRow();
+  renderStats();
+  renderChart();
+}
+
+function setEmphasis(mode) {
+  gridWrap.classList.toggle('emphasize-count', mode === 'count');
+  document.getElementById('emphasizePairBtn').classList.toggle('active', mode === 'pair');
+  document.getElementById('emphasizeCountBtn').classList.toggle('active', mode === 'count');
+}
+document.getElementById('emphasizePairBtn').addEventListener('click', () => setEmphasis('pair'));
+document.getElementById('emphasizeCountBtn').addEventListener('click', () => setEmphasis('count'));
+
+document.getElementById('revealAll').addEventListener('click', () => {
+  [0, 1, 2].forEach(y => explored.add(y));
+  renderChart();
+  updateSumRow();
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  selectedY = null;
+  explored = new Set();
+  updateGridHighlight();
+  updateSumRow();
+  renderStats();
+  renderChart();
+});
+
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(renderChart, 150);
+});
+
+buildGrid();
+buildSumRow();
+updateGridHighlight();
+updateSumRow();
+renderStats();
+renderChart();
+</script>
+
+</body>
+</html>

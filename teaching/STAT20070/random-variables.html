@@ -1,0 +1,113 @@
+---
+---
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<script>(function(){try{var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark"){t=(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+<title>Random Variables — Uche Mbaka</title>
+<meta name="description" content="Two interactive explorers for STAT 20070: how an outcome space becomes a distribution, with dice and with a Punnett square." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../styles.css?v={{ site.time | date: '%s' }}">
+</head>
+<body>
+
+{% include header.html active="teaching" base="../../" %}
+
+<main class="page">
+  <div class="wrap">
+    <a class="crumb mono" href="../STAT20070.html">← STAT 20070</a>
+
+    <div class="pagehead">
+      <div class="eyebrow">Section 2 · Lecture 05 · Intro to Probability</div>
+      <h1>Random Variables</h1>
+    </div>
+
+    <p class="lede" style="margin-bottom:46px">A random variable assigns a number to every outcome of an experiment, and its distribution follows from how many outcomes map to each value. Both explorers below work through that construction in full, one with dice, one with inheritance.</p>
+
+    <div class="games-grid">
+
+      <a class="game-card" href="two-dice.html">
+        <div class="game-thumb">
+          <svg viewBox="0 0 100 80" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <g stroke="var(--haze-dim)" stroke-width="2.4" stroke-linejoin="round">
+              <rect x="8" y="6" width="34" height="34" rx="7"/>
+              <rect x="56" y="6" width="34" height="34" rx="7"/>
+            </g>
+            <g fill="var(--steel)">
+              <circle cx="17" cy="15" r="3.2"/><circle cx="33" cy="15" r="3.2"/>
+              <circle cx="17" cy="31" r="3.2"/><circle cx="33" cy="31" r="3.2"/>
+              <circle cx="65" cy="14" r="3.2"/><circle cx="81" cy="14" r="3.2"/>
+              <circle cx="65" cy="23" r="3.2"/><circle cx="81" cy="23" r="3.2"/>
+              <circle cx="65" cy="32" r="3.2"/><circle cx="81" cy="32" r="3.2"/>
+            </g>
+            <g fill="var(--amber)">
+              <rect x="10" y="68" width="9" height="6" rx="1.5"/>
+              <rect x="22" y="63" width="9" height="11" rx="1.5"/>
+              <rect x="34" y="57" width="9" height="17" rx="1.5"/>
+              <rect x="46" y="50" width="9" height="24" rx="1.5"/>
+              <rect x="58" y="57" width="9" height="17" rx="1.5"/>
+              <rect x="70" y="63" width="9" height="11" rx="1.5"/>
+              <rect x="82" y="68" width="9" height="6" rx="1.5"/>
+            </g>
+            <line x1="6" y1="75" x2="94" y2="75" stroke="var(--haze-dim)" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="game-info">
+          <span class="tile-code">S2 · L05 · Tool</span>
+          <h2>Two Dice</h2>
+          <p>All 36 outcomes are equally likely, yet the sum is anything but. Click a value of Y to see exactly which outcomes map to it.</p>
+          <span class="play">Open →</span>
+        </div>
+      </a>
+
+      <a class="game-card" href="punnett-square.html">
+        <div class="game-thumb">
+          <svg viewBox="0 0 100 80" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <g stroke="var(--amber)" stroke-width="1.6">
+              <circle cx="40" cy="9" r="7"/>
+              <circle cx="9" cy="40" r="7"/>
+            </g>
+            <g stroke="var(--line-2)" stroke-width="1.6">
+              <circle cx="70" cy="9" r="7"/>
+              <circle cx="9" cy="70" r="7"/>
+            </g>
+            <g font-family="'Space Grotesk',sans-serif" font-size="8" font-weight="500" text-anchor="middle">
+              <text x="40" y="12" fill="var(--amber)">A</text>
+              <text x="70" y="12" fill="var(--mute)">a</text>
+              <text x="9" y="43" fill="var(--amber)">A</text>
+              <text x="9" y="73" fill="var(--mute)">a</text>
+            </g>
+            <g stroke="var(--haze-dim)" stroke-width="1.8">
+              <rect x="24" y="24" width="32" height="32" rx="5"/>
+              <rect x="56" y="24" width="32" height="32" rx="5"/>
+              <rect x="24" y="56" width="32" height="24" rx="5"/>
+              <rect x="56" y="56" width="32" height="24" rx="5"/>
+            </g>
+            <g font-family="'Space Grotesk',sans-serif" font-size="11" font-weight="500" text-anchor="middle">
+              <text x="40" y="44" fill="var(--amber)">AA</text>
+              <text x="72" y="44" fill="var(--amber)">Aa</text>
+              <text x="40" y="73" fill="var(--amber)">aA</text>
+              <text x="72" y="73" fill="var(--haze-dim)">aa</text>
+            </g>
+          </svg>
+        </div>
+        <div class="game-info">
+          <span class="tile-code">S2 · L05 · Tool</span>
+          <h2>Punnett Square</h2>
+          <p>The same machinery with chromosomes instead of dice faces, four outcomes, three values of Y, and the 1 : 2 : 1 ratio it produces.</p>
+          <span class="play">Open →</span>
+        </div>
+      </a>
+
+    </div>
+  </div>
+</main>
+
+{% include footer.html base="../../" %}
+
+</body>
+</html>

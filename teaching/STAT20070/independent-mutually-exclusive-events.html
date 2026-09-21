@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>(function(){try{var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark"){t=(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+<title>Independent and Mutually Exclusive Events — Uche Mbaka</title>
+<meta name="description" content="A companion drill for STAT 20070: classify pairs of events as independent, mutually exclusive, or neither.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#080A0F;
+    --ink-rgb:8,10,15;
+    --ink-2:#0D1017;
+    --haze:#E9E6DF;
+    --haze-dim:#B9B6AE;
+    --mute:#6A7180;
+    --mute-2:#454B58;
+    --line:rgba(233,230,223,.09);
+    --line-2:rgba(233,230,223,.16);
+    --amber:#CFA15F;
+    --steel:#5C7585;
+    --ok:#7E9E82;
+    --ok-soft:rgba(126,158,130,.14);
+    --err:#D98A72;
+    --err-soft:rgba(217,138,114,.14);
+    --on-accent:#080A0F;
+  }
+  [data-theme="light"]{
+    --ink:#F3F0E9;
+    --ink-rgb:243,240,233;
+    --ink-2:#FBFAF5;
+    --haze:#1B1C20;
+    --haze-dim:#4A4C54;
+    --mute:#6E727D;
+    --mute-2:#9A9DA6;
+    --line:rgba(20,21,26,.10);
+    --line-2:rgba(20,21,26,.18);
+    --amber:#9E6B22;
+    --steel:#4A6377;
+    --ok:#3F6B4F;
+    --ok-soft:rgba(63,107,79,.10);
+    --err:#B3442E;
+    --err-soft:rgba(179,68,46,.10);
+    --on-accent:#FBFAF5;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    min-height:100vh;
+    background:var(--ink);
+    color:var(--haze);
+    font-family:"Newsreader",Georgia,serif;
+    font-weight:300;
+    font-size:18px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    display:flex;
+    justify-content:center;
+    padding:44px 22px 72px;
+    transition:background .35s ease, color .35s ease;
+  }
+  ::selection{background:rgba(207,161,95,.22);color:var(--haze)}
+  a{color:inherit;text-decoration:none}
+
+  .stage{width:100%;max-width:760px}
+
+  .mono{
+    font-family:"JetBrains Mono",ui-monospace,monospace;
+    font-weight:400;font-size:11px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--mute);
+  }
+
+  /* ---------- top row ---------- */
+  .toprow{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:34px}
+  .back{transition:color .25s}
+  .back:hover{color:var(--amber)}
+
+  .theme-toggle{display:inline-flex;align-items:center;gap:10px;background:none;border:0;padding:0;cursor:pointer;font:inherit;line-height:1}
+  .theme-toggle .tmode{color:var(--mute);transition:color .25s}
+  .theme-toggle:hover .tmode{color:var(--amber)}
+  .theme-toggle .track{width:40px;height:21px;border-radius:999px;border:1px solid var(--line-2);position:relative;transition:border-color .25s;flex:0 0 auto}
+  .theme-toggle:hover .track{border-color:var(--amber)}
+  .theme-toggle .knob{position:absolute;top:50%;left:3px;transform:translateY(-50%);width:13px;height:13px;border-radius:50%;background:var(--mute);transition:left .28s cubic-bezier(.4,0,.2,1),background .25s}
+  [data-theme="light"] .theme-toggle .knob{left:22px;background:var(--amber)}
+  .theme-toggle:focus-visible{outline:none}
+  .theme-toggle:focus-visible .track{outline:2px solid var(--amber);outline-offset:3px}
+
+  /* ---------- header ---------- */
+  header{margin-bottom:30px}
+  .eyebrow{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--mute-2);margin:0 0 16px;
+  }
+  h1{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;
+    font-size:clamp(29px,5vw,42px);line-height:1.04;letter-spacing:-.025em;
+    color:var(--haze);margin:0 0 16px;
+  }
+  .sub{font-size:17px;line-height:1.6;color:var(--haze-dim);font-weight:300;margin:0;max-width:60ch}
+  .sub b{color:var(--amber);font-weight:400}
+
+  /* ---------- card ---------- */
+  .card{
+    background:linear-gradient(160deg, var(--ink-2), rgba(var(--ink-rgb),0));
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:28px 30px 26px;
+  }
+  @media (max-width:480px){.card{padding:22px 18px 20px}}
+
+  /* ---------- tally ---------- */
+  .tally{display:flex;gap:5px}
+  .tick{flex:1;height:3px;border-radius:2px;background:var(--line-2);transition:background .25s ease}
+  .tick.current{background:var(--haze-dim)}
+  .tick.correct{background:var(--ok)}
+  .tick.incorrect{background:var(--err)}
+  .tally-label{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute);margin:12px 0 26px}
+
+  /* ---------- scenario ---------- */
+  .scenario-box{
+    border-left:2px solid var(--amber);
+    padding:2px 0 2px 20px;
+    margin-bottom:24px;
+  }
+  .scenario-line{margin:0 0 8px;font-size:16.5px;line-height:1.5;color:var(--haze-dim)}
+  .scenario-line:last-child{margin-bottom:0}
+  .scenario-term{
+    display:block;
+    font-family:"JetBrains Mono",monospace;font-size:10.5px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--mute);margin-bottom:2px;
+  }
+  .scenario-line.ev-a .scenario-term{color:var(--amber)}
+  .scenario-line.ev-b .scenario-term{color:var(--steel)}
+  .scenario-line.ev-a,.scenario-line.ev-b{color:var(--haze)}
+
+  /* ---------- visual area ---------- */
+  .deck-caption{font-size:15.5px;line-height:1.55;color:var(--haze-dim);font-weight:300;margin:0 0 14px;font-style:italic}
+
+  .pill{
+    display:inline-block;background:none;cursor:pointer;
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--haze);
+    border:1px solid var(--line-2);border-radius:999px;padding:10px 20px;
+    transition:.25s;
+  }
+  .pill:hover{border-color:var(--amber);color:var(--amber)}
+  .pill:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+  .pill.active{background:var(--amber);border-color:var(--amber);color:var(--on-accent)}
+
+  .marker-toggle{margin-bottom:16px}
+
+  /* deck: suits as rows, ranks as columns */
+  .deck-grid{display:grid;grid-template-columns:30px repeat(13,1fr);gap:5px}
+  .deck-col-label{
+    display:flex;align-items:flex-end;justify-content:center;padding-bottom:6px;
+    font-family:"JetBrains Mono",monospace;font-weight:500;font-size:13px;
+    letter-spacing:.04em;color:var(--amber);
+  }
+  .deck-row-label{display:flex;align-items:center;justify-content:center;font-size:22px;line-height:1}
+  .deck-row-label.red{color:var(--err)}
+  .deck-row-label.black{color:var(--haze)}
+
+  .card-cell{
+    position:relative;aspect-ratio:.82;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(var(--ink-rgb),.5);
+    border:1px solid var(--line-2);border-radius:5px;
+    font-family:"JetBrains Mono",monospace;font-weight:500;font-size:14px;letter-spacing:-.02em;
+    transition:border-color .2s ease, opacity .2s ease;
+  }
+  .card-cell.red{color:var(--err)}
+  .card-cell.black{color:var(--haze)}
+  .card-cell.tagged{border-color:var(--line-2);opacity:1}
+  .card-cell.untagged{opacity:.32}
+
+  .tag-a,.tag-b{
+    position:absolute;width:14px;height:14px;border-radius:50%;
+    font-family:"JetBrains Mono",monospace;font-size:8px;font-weight:500;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .tag-a{top:-6px;left:-6px;background:var(--amber);color:var(--on-accent)}
+  .tag-b{bottom:-6px;right:-6px;background:var(--steel);color:#F3F0E9}
+
+  .deck-legend{
+    display:flex;flex-wrap:wrap;gap:8px 22px;margin-top:16px;
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--mute);
+  }
+  .deck-legend span{display:inline-flex;align-items:center;gap:7px}
+  .legend-dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+
+  /* coin + die */
+  .icon-row{display:flex;gap:22px;align-items:center}
+  .die-face,.coin-face{width:70px;height:70px}
+
+  /* Punnett square */
+  .gen-grid{display:grid;grid-template-columns:44px repeat(2,1fr);gap:7px;max-width:250px}
+  .gen-label{display:flex;align-items:center;justify-content:center}
+  .allele-badge{
+    width:30px;height:30px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;font-size:15px;
+    border:1px solid;
+  }
+  .allele-badge.dom{border-color:var(--amber);color:var(--amber)}
+  .allele-badge.rec{border-color:var(--line-2);color:var(--mute)}
+  .gen-cell{
+    aspect-ratio:1;display:flex;align-items:center;justify-content:center;
+    background:rgba(var(--ink-rgb),.5);
+    border:1px solid var(--line-2);border-radius:8px;
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;font-size:16px;
+    letter-spacing:-.01em;
+  }
+
+  .ask{font-size:16.5px;line-height:1.5;color:var(--haze-dim);font-weight:300;margin:26px 0 14px}
+
+  /* ---------- options ---------- */
+  .option-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  @media (max-width:560px){.option-grid{grid-template-columns:1fr}}
+
+  .option{
+    text-align:center;padding:15px 12px;
+    background:transparent;border:1px solid var(--line-2);border-radius:10px;
+    font-family:"Space Grotesk",system-ui,sans-serif;
+    font-weight:400;font-size:15px;letter-spacing:-.005em;line-height:1.3;
+    color:var(--haze);cursor:pointer;
+    transition:border-color .25s ease, color .25s ease, background .25s ease, opacity .25s ease;
+  }
+  .option:hover:not(:disabled){border-color:var(--amber);color:var(--amber)}
+  .option:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+  .option:disabled{cursor:default}
+  .option.is-correct{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
+  .option.is-wrong{background:var(--err-soft);border-color:var(--err);color:var(--err)}
+  .option.is-muted{opacity:.35}
+
+  /* ---------- feedback ---------- */
+  .feedback{margin-top:22px;padding-top:22px;border-top:1px solid var(--line);display:none}
+  .feedback.shown{display:block}
+  .verdict{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;margin:0 0 10px}
+  .verdict.correct{color:var(--ok)}
+  .verdict.wrong{color:var(--err)}
+  .explanation{font-size:16.5px;line-height:1.62;color:var(--haze-dim);font-weight:300;margin:0 0 22px}
+
+  .btn{
+    display:inline-block;background:none;cursor:pointer;
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--haze);
+    border:1px solid var(--line-2);border-radius:999px;padding:11px 22px;
+    transition:.25s;
+  }
+  .btn:hover{border-color:var(--amber);color:var(--amber)}
+  .btn:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+  .btn.primary{border-color:var(--amber);color:var(--amber)}
+  .btn.primary:hover{background:var(--amber);color:var(--on-accent)}
+
+  /* ---------- results ---------- */
+  .score{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;
+    font-size:clamp(26px,4.4vw,36px);line-height:1.05;letter-spacing:-.025em;
+    color:var(--haze);margin:0 0 26px;
+  }
+  .score b{color:var(--amber);font-weight:500}
+  .result-actions{display:flex;flex-wrap:wrap;gap:12px}
+
+  @media (max-width:560px){
+    .deck-grid{grid-template-columns:18px repeat(13,1fr);gap:3px}
+    .card-cell{font-size:9.5px;border-radius:3px}
+    .deck-row-label{font-size:14px}
+    .deck-col-label{font-size:10px;padding-bottom:3px}
+    .tag-a,.tag-b{width:11px;height:11px;font-size:6.5px;top:-4px;left:-4px}
+    .tag-b{top:auto;left:auto;bottom:-4px;right:-4px}
+  }
+
+  @media (prefers-reduced-motion:reduce){*{transition:none !important}}
+</style>
+</head>
+<body>
+
+<div class="stage">
+
+  <div class="toprow">
+    <a class="back mono" href="../STAT20070.html">← STAT 20070</a>
+    <button class="theme-toggle" id="themeToggle" aria-label="Switch between light and dark theme" aria-pressed="false"><span class="tmode mono" id="tmode">Dark</span><span class="track"><span class="knob"></span></span></button>
+  </div>
+
+  <header>
+    <p class="eyebrow">Section 2 · Lecture 05 · Intro to Probability</p>
+    <h1>Independent and Mutually<br>Exclusive Events</h1>
+    <p class="sub">Card questions show the full 52-card deck, reveal the <b>A</b> and <b>B</b> markers whenever you want to check the counts yourself.</p>
+  </header>
+
+  <div class="card">
+    <div class="tally" id="tally"></div>
+    <p class="tally-label" id="tallyLabel"></p>
+    <div id="roundArea"></div>
+  </div>
+</div>
+
+<script>
+/* ---------- theme toggle (shares the site's stored preference) ---------- */
+(function(){
+  var root = document.documentElement;
+  var btn  = document.getElementById('themeToggle');
+  function current(){ return root.getAttribute('data-theme') === 'light' ? 'light' : 'dark'; }
+  function sync(){
+    var t = current();
+    btn.setAttribute('aria-pressed', t === 'light' ? 'true' : 'false');
+    document.getElementById('tmode').textContent = t === 'light' ? 'Light' : 'Dark';
+  }
+  sync();
+  btn.addEventListener('click', function(){
+    var t = current() === 'light' ? 'dark' : 'light';
+    root.setAttribute('data-theme', t);
+    try{ localStorage.setItem('theme', t); }catch(e){}
+    sync();
+  });
+})();
+
+const SUITS = [
+  { key: 'S', symbol: '♠', color: 'black' },
+  { key: 'H', symbol: '♥', color: 'red' },
+  { key: 'D', symbol: '♦', color: 'red' },
+  { key: 'C', symbol: '♣', color: 'black' }
+];
+const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+
+function renderDeck(container, matchA, matchB, showMarkers) {
+  const grid = document.createElement('div');
+  grid.className = 'deck-grid';
+
+  // corner + rank headers across the top
+  grid.appendChild(document.createElement('div'));
+  RANKS.forEach(rank => {
+    const lab = document.createElement('div');
+    lab.className = 'deck-col-label';
+    lab.textContent = rank;
+    grid.appendChild(lab);
+  });
+
+  // one row per suit, suit symbol as the row header on the left
+  SUITS.forEach(s => {
+    const rowLab = document.createElement('div');
+    rowLab.className = 'deck-row-label ' + s.color;
+    rowLab.textContent = s.symbol;
+    grid.appendChild(rowLab);
+
+    RANKS.forEach(rank => {
+      const c = { rank, suit: s.key };
+      const inA = matchA(c), inB = matchB(c);
+      const cell = document.createElement('div');
+      cell.className = 'card-cell ' + s.color;
+      if (showMarkers) cell.classList.add(inA || inB ? 'tagged' : 'untagged');
+      cell.textContent = `${rank}${s.symbol}`;
+      if (showMarkers && inA) {
+        const t = document.createElement('span');
+        t.className = 'tag-a';
+        t.textContent = 'A';
+        cell.appendChild(t);
+      }
+      if (showMarkers && inB) {
+        const t = document.createElement('span');
+        t.className = 'tag-b';
+        t.textContent = 'B';
+        cell.appendChild(t);
+      }
+      grid.appendChild(cell);
+    });
+  });
+  container.appendChild(grid);
+
+  const legend = document.createElement('div');
+  legend.className = 'deck-legend';
+  legend.innerHTML = `
+    <span><span class="legend-dot" style="background:var(--amber);"></span>Event A</span>
+    <span><span class="legend-dot" style="background:var(--steel);"></span>Event B</span>
+  `;
+  container.appendChild(legend);
+}
+
+const PIP_LAYOUTS = {
+  1: [[50,50]], 2: [[28,28],[72,72]], 3: [[28,28],[50,50],[72,72]],
+  4: [[28,28],[72,28],[28,72],[72,72]], 5: [[28,28],[72,28],[50,50],[28,72],[72,72]],
+  6: [[28,25],[72,25],[28,50],[72,50],[28,75],[72,75]]
+};
+function dieFaceHTML(value) {
+  let pips = '';
+  (PIP_LAYOUTS[value] || []).forEach(([cx, cy]) => { pips += `<circle cx="${cx}" cy="${cy}" r="8" fill="var(--steel)"/>`; });
+  return `<svg class="die-face" viewBox="0 0 100 100" aria-hidden="true"><rect x="4" y="4" width="92" height="92" rx="16" fill="none" stroke="var(--haze-dim)" stroke-width="3"/>${pips}</svg>`;
+}
+function coinFaceHTML() {
+  return `<svg class="coin-face" viewBox="0 0 100 100" aria-hidden="true">
+    <circle cx="50" cy="50" r="46" fill="none" stroke="var(--amber)" stroke-width="3"/>
+    <text x="50" y="62" text-anchor="middle" font-family="'Space Grotesk',sans-serif" font-weight="500" font-size="36" fill="var(--amber)">H</text>
+  </svg>`;
+}
+
+function alleleBadge(letter) {
+  const cls = letter === 'A' ? 'dom' : 'rec';
+  return `<span class="allele-badge ${cls}">${letter}</span>`;
+}
+function renderGenetics(container, eventAOf, eventBOf) {
+  const grid = document.createElement('div');
+  grid.className = 'gen-grid';
+  grid.appendChild(document.createElement('div')).className = 'gen-label';
+  ['A','a'].forEach(a2 => {
+    const lab = document.createElement('div'); lab.className = 'gen-label'; lab.innerHTML = alleleBadge(a2);
+    grid.appendChild(lab);
+  });
+  ['A','a'].forEach(a1 => {
+    const rowLab = document.createElement('div'); rowLab.className = 'gen-label'; rowLab.innerHTML = alleleBadge(a1);
+    grid.appendChild(rowLab);
+    ['A','a'].forEach(a2 => {
+      const genotype = a1 + a2;
+      const cell = document.createElement('div');
+      cell.className = 'gen-cell';
+      const inA = eventAOf(genotype), inB = eventBOf(genotype);
+      cell.style.color = inA ? 'var(--amber)' : inB ? 'var(--steel)' : 'var(--haze)';
+      cell.style.borderColor = inA ? 'var(--amber)' : inB ? 'var(--steel)' : 'var(--line-2)';
+      cell.textContent = genotype;
+      grid.appendChild(cell);
+    });
+  });
+  container.appendChild(grid);
+  const legend = document.createElement('div');
+  legend.className = 'deck-legend';
+  legend.innerHTML = `<span><span class="legend-dot" style="background:var(--amber);"></span>Event A</span><span><span class="legend-dot" style="background:var(--steel);"></span>Event B</span>`;
+  container.appendChild(legend);
+}
+
+const OPTIONS = [
+  { id: 'indep', label: 'Independent' },
+  { id: 'me', label: 'Mutually exclusive' },
+  { id: 'dep', label: 'Neither' }
+];
+
+const QUESTIONS = [
+  {
+    type: 'card',
+    experiment: 'Draw one card at random from a standard 52-card deck.',
+    eventA: 'the card is a Heart (♥)',
+    eventB: 'the card is a Spade (♠)',
+    matchA: c => c.suit === 'H', matchB: c => c.suit === 'S',
+    correct: 'me',
+    explanation: 'No card is both a Heart and a Spade, so P(A ∩ B) = 0 — mutually exclusive. Events with positive probability that are mutually exclusive can never be independent.'
+  },
+  {
+    type: 'card',
+    experiment: 'Draw one card at random from a standard 52-card deck.',
+    eventA: 'the card is a King',
+    eventB: 'the card is a Heart (♥)',
+    matchA: c => c.rank === 'K', matchB: c => c.suit === 'H',
+    correct: 'indep',
+    explanation: 'P(King) = 1/13, P(Heart) = 1/4, and P(King ∩ Heart) = P(King of Hearts) = 1/52 = 1/13 × 1/4. The multiplication check holds exactly, so rank and suit are independent — even though they clearly overlap on the deck above.'
+  },
+  {
+    type: 'card',
+    experiment: 'Draw one card at random from a standard 52-card deck.',
+    eventA: 'the card is red (♥ or ♦)',
+    eventB: 'the card is black (♠ or ♣)',
+    matchA: c => c.suit === 'H' || c.suit === 'D', matchB: c => c.suit === 'S' || c.suit === 'C',
+    correct: 'me',
+    explanation: 'Every card is exactly one colour, so A ∩ B = ∅. Mutually exclusive, and therefore not independent.'
+  },
+  {
+    type: 'card',
+    experiment: 'Draw one card at random from a standard 52-card deck.',
+    eventA: 'the card is a face card (J, Q, or K)',
+    eventB: 'the card is a Queen',
+    matchA: c => ['J','Q','K'].includes(c.rank), matchB: c => c.rank === 'Q',
+    correct: 'dep',
+    explanation: 'Every Queen is a face card, so B is entirely contained in A — clearly not mutually exclusive. Knowing a card is a Queen makes it certain it’s a face card (P(A|B) = 1), which is far from P(A) = 3/13, so the events are strongly dependent.'
+  },
+  {
+    type: 'card',
+    experiment: 'Draw two cards from the deck below, one at a time, without putting the first one back.',
+    eventA: 'the first card drawn is an Ace',
+    eventB: 'the second card drawn is also an Ace',
+    matchA: c => c.rank === 'A', matchB: c => c.rank === 'A',
+    note: 'All 4 Aces are marked below. Event A concerns the first draw; Event B concerns the second draw from the 51 cards remaining afterward.',
+    correct: 'dep',
+    explanation: 'Both events can happen together (draw an Ace, then draw another Ace), so they’re not mutually exclusive. But P(B | A) = 3/51 while P(B) = 4/52 — removing a card without replacement changes the odds, so the events are dependent.'
+  },
+  {
+    type: 'dice',
+    experiment: 'Flip a coin and, separately, roll a six-sided die.',
+    eventA: 'the coin lands heads',
+    eventB: 'the die shows a 6',
+    correct: 'indep',
+    explanation: 'The coin and the die are unconnected physical processes. P(A ∩ B) = 1/2 × 1/6 = 1/12 = P(A) × P(B), confirming independence.'
+  },
+  {
+    type: 'plain',
+    experiment: 'Two patients at different, unconnected clinics are each tested for a virus.',
+    eventA: 'Patient 1 tests positive',
+    eventB: 'Patient 2 tests positive',
+    correct: 'indep',
+    explanation: 'With no contact or shared exposure between the patients, one result carries no information about the other, so the events are treated as independent. (This would break down if the patients shared a household or exposure source.)'
+  },
+  {
+    type: 'plain',
+    experiment: 'A single patient’s blood sample is run through one diagnostic test, producing one result.',
+    eventA: 'the result is positive',
+    eventB: 'the result is negative',
+    correct: 'me',
+    explanation: 'One test produces exactly one outcome — positive or negative, never both — so P(A ∩ B) = 0. Mutually exclusive, and therefore not independent.'
+  },
+  {
+    type: 'genetics',
+    experiment: 'Two pea plants, each heterozygous (Aa) for flower colour, are crossed. One offspring is produced.',
+    eventA: 'the offspring has at least one dominant allele (genotype AA or Aa — purple flowers)',
+    eventB: 'the offspring is homozygous recessive (genotype aa — white flowers)',
+    eventAOf: g => g !== 'aa', eventBOf: g => g === 'aa',
+    correct: 'me',
+    explanation: 'Every genotype is either “has at least one A” or “aa” — never both, and together they cover all 4 outcomes. A and B are complements of each other, which makes them mutually exclusive (and exhaustive) by definition.'
+  },
+  {
+    type: 'plain',
+    experiment: 'In a large population, researchers study a gene variant known to be a risk factor for a disease.',
+    eventA: 'a randomly selected person carries the gene variant',
+    eventB: 'that same person develops the disease',
+    correct: 'dep',
+    explanation: 'A person can certainly carry the variant and develop the disease, so the events are not mutually exclusive. Because the variant is a risk factor, carrying it changes the probability of developing the disease — P(B | A) ≠ P(B) — so the events are dependent.'
+  }
+];
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+let quizOrder = shuffle(QUESTIONS);
+let current = 0;
+let answers = new Array(QUESTIONS.length).fill(null);
+let showMarkers = false;
+
+const tallyEl = document.getElementById('tally');
+const tallyLabelEl = document.getElementById('tallyLabel');
+const roundArea = document.getElementById('roundArea');
+
+function renderTally() {
+  tallyEl.innerHTML = '';
+  quizOrder.forEach((_, i) => {
+    const t = document.createElement('div');
+    t.className = 'tick';
+    if (answers[i] === true) t.className += ' correct';
+    else if (answers[i] === false) t.className += ' incorrect';
+    else if (i === current && current < quizOrder.length) t.className += ' current';
+    tallyEl.appendChild(t);
+  });
+  const correctSoFar = answers.filter(a => a === true).length;
+  tallyLabelEl.textContent = current < quizOrder.length
+    ? `Question ${current + 1} of ${quizOrder.length} · ${correctSoFar} correct so far`
+    : `Complete · ${correctSoFar} of ${quizOrder.length} correct`;
+}
+
+function renderDeckSection(q) {
+  const visualArea = document.getElementById('visualArea');
+  visualArea.innerHTML = '';
+
+  const cap = document.createElement('p');
+  cap.className = 'deck-caption';
+  cap.textContent = q.note || 'The full deck is shown below — rows are suits, columns are ranks.';
+  visualArea.appendChild(cap);
+
+  const toggleBtn = document.createElement('button');
+  toggleBtn.type = 'button';
+  toggleBtn.className = 'pill marker-toggle' + (showMarkers ? ' active' : '');
+  toggleBtn.setAttribute('aria-pressed', showMarkers ? 'true' : 'false');
+  toggleBtn.textContent = showMarkers ? 'Hide A / B markers' : 'Show A / B markers';
+  toggleBtn.addEventListener('click', () => {
+    showMarkers = !showMarkers;
+    renderDeckSection(q);
+  });
+  visualArea.appendChild(toggleBtn);
+
+  renderDeck(visualArea, q.matchA, q.matchB, showMarkers);
+}
+
+function renderRound() {
+  const q = quizOrder[current];
+  showMarkers = false;
+
+  roundArea.innerHTML = `
+    <div class="scenario-box">
+      <p class="scenario-line"><span class="scenario-term">Experiment</span>${q.experiment}</p>
+      <p class="scenario-line ev-a"><span class="scenario-term">Event A</span>${q.eventA}</p>
+      <p class="scenario-line ev-b"><span class="scenario-term">Event B</span>${q.eventB}</p>
+    </div>
+    <div id="visualArea"></div>
+    <p class="ask">How would you classify the relationship between A and B?</p>
+    <div class="option-grid" id="optionGrid"></div>
+    <div class="feedback" id="feedback">
+      <p class="verdict" id="verdict"></p>
+      <p class="explanation" id="explanation"></p>
+      <button class="btn primary" id="nextBtn" type="button"></button>
+    </div>
+  `;
+
+  if (q.type === 'card') {
+    renderDeckSection(q);
+  } else if (q.type === 'dice') {
+    const visualArea = document.getElementById('visualArea');
+    const row = document.createElement('div');
+    row.className = 'icon-row';
+    row.innerHTML = coinFaceHTML() + dieFaceHTML(6);
+    visualArea.appendChild(row);
+  } else if (q.type === 'genetics') {
+    renderGenetics(document.getElementById('visualArea'), q.eventAOf, q.eventBOf);
+  }
+
+  const grid = document.getElementById('optionGrid');
+  OPTIONS.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'option';
+    btn.type = 'button';
+    btn.textContent = opt.label;
+    btn.addEventListener('click', () => selectAnswer(opt.id));
+    grid.appendChild(btn);
+  });
+
+  renderTally();
+}
+
+function selectAnswer(chosenId) {
+  const q = quizOrder[current];
+  const isCorrect = chosenId === q.correct;
+  answers[current] = isCorrect;
+
+  document.querySelectorAll('#optionGrid .option').forEach((btn, idx) => {
+    btn.disabled = true;
+    const optId = OPTIONS[idx].id;
+    if (optId === q.correct) btn.classList.add('is-correct');
+    else if (optId === chosenId) btn.classList.add('is-wrong');
+    else btn.classList.add('is-muted');
+  });
+
+  const verdictEl = document.getElementById('verdict');
+  verdictEl.textContent = isCorrect ? 'Correct' : 'Not quite';
+  verdictEl.className = 'verdict ' + (isCorrect ? 'correct' : 'wrong');
+  document.getElementById('explanation').textContent = q.explanation;
+
+  const nextBtn = document.getElementById('nextBtn');
+  nextBtn.textContent = current === quizOrder.length - 1 ? 'See results →' : 'Next question →';
+  nextBtn.addEventListener('click', () => {
+    current++;
+    if (current < quizOrder.length) renderRound();
+    else renderResults();
+  });
+
+  document.getElementById('feedback').classList.add('shown');
+  renderTally();
+}
+
+function renderResults() {
+  const correctCount = answers.filter(a => a === true).length;
+  roundArea.innerHTML = `
+    <p class="score">You scored <b>${correctCount}</b> out of ${quizOrder.length}</p>
+    <div class="result-actions">
+      <button class="btn primary" id="restartBtn" type="button">Try again — new order</button>
+      <a class="btn" href="../STAT20070.html">More drills</a>
+    </div>
+  `;
+  document.getElementById('restartBtn').addEventListener('click', () => {
+    quizOrder = shuffle(QUESTIONS);
+    current = 0;
+    answers = new Array(QUESTIONS.length).fill(null);
+    renderRound();
+  });
+  renderTally();
+}
+
+renderRound();
+</script>
+
+</body>
+</html>
