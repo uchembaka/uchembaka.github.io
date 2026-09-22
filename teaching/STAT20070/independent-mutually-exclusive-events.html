@@ -454,7 +454,7 @@ const QUESTIONS = [
     eventB: 'the card is a Heart (♥)',
     matchA: c => c.rank === 'K', matchB: c => c.suit === 'H',
     correct: 'indep',
-    explanation: 'P(King) = 1/13, P(Heart) = 1/4, and P(King ∩ Heart) = P(King of Hearts) = 1/52 = 1/13 × 1/4. The multiplication check holds exactly, so rank and suit are independent — even though they clearly overlap on the deck above.'
+    explanation: 'There are 4 Kings, so P(King) = 4/52 = 1/13, and 13 Hearts, so P(Heart) = 13/52 = 1/4. Exactly one card is both, so P(King ∩ Heart) = 1/52, which is precisely 1/13 × 1/4. The multiplication check holds, so rank and suit are independent — even though they clearly overlap on the deck above.'
   },
   {
     type: 'card',
@@ -472,7 +472,7 @@ const QUESTIONS = [
     eventB: 'the card is a Queen',
     matchA: c => ['J','Q','K'].includes(c.rank), matchB: c => c.rank === 'Q',
     correct: 'dep',
-    explanation: 'Every Queen is a face card, so B is entirely contained in A — clearly not mutually exclusive. Knowing a card is a Queen makes it certain it’s a face card (P(A|B) = 1), which is far from P(A) = 3/13, so the events are strongly dependent.'
+    explanation: 'Every Queen is a face card, so B is entirely contained in A — clearly not mutually exclusive. Knowing a card is a Queen makes it certain it’s a face card (P(A|B) = 1), which is far from P(A) = 12/52 = 3/13, so the events are strongly dependent.'
   },
   {
     type: 'card',
