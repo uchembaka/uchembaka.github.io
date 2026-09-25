@@ -60,13 +60,14 @@
   ::selection{background:rgba(207,161,95,.22);color:var(--haze)}
   a{color:inherit;text-decoration:none}
 
-  .stage{width:100%;max-width:740px}
+  .stage{width:100%;max-width:760px}
 
   .mono{
     font-family:"JetBrains Mono",ui-monospace,monospace;
     font-weight:400;font-size:11px;letter-spacing:.18em;
     text-transform:uppercase;color:var(--mute);
   }
+  .m{font-family:"JetBrains Mono",monospace;font-size:13.5px;color:var(--haze)}
 
   /* ---------- top row ---------- */
   .toprow{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:34px}
@@ -113,13 +114,33 @@
   }
   .panel-title{
     font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;
-    font-size:21px;letter-spacing:-.02em;color:var(--haze);margin:0 0 20px;
+    font-size:21px;letter-spacing:-.02em;color:var(--haze);margin:0 0 18px;
   }
   .panel-title span{color:var(--haze-dim);font-weight:400}
+  .dataset-desc{font-size:16px;line-height:1.58;color:var(--haze-dim);margin:0 0 18px}
   .panel-note{font-size:16px;line-height:1.58;color:var(--haze-dim);margin:18px 0 0}
   .panel-note strong{color:var(--haze);font-weight:400}
 
   svg.chart{width:100%;height:auto;display:block;overflow:visible}
+
+  /* ---------- pills ---------- */
+  .seg{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+  .pill,.btn{
+    background:none;cursor:pointer;
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--haze);
+    border:1px solid var(--line-2);border-radius:999px;padding:11px 20px;
+    transition:.25s;
+  }
+  .pill:hover,.btn:hover:not(:disabled){border-color:var(--amber);color:var(--amber)}
+  .pill:focus-visible,.btn:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+  .pill.active{background:var(--amber);border-color:var(--amber);color:var(--on-accent)}
+  .btn:disabled{opacity:.35;cursor:default}
+  .btn.primary{border-color:var(--amber);color:var(--amber)}
+  .btn.primary:hover:not(:disabled){background:var(--amber);color:var(--on-accent)}
+  .btn.quiet{color:var(--mute)}
+  .btn.quiet:hover:not(:disabled){color:var(--amber)}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
 
   /* discrete bars */
   .bar{fill:var(--mute-2);cursor:pointer;transition:fill .18s ease}
@@ -132,51 +153,49 @@
     text-transform:uppercase;color:var(--mute);margin:16px 0 0;text-align:center;
   }
 
-  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
-  .btn{
-    display:inline-block;background:none;cursor:pointer;
-    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.14em;
-    text-transform:uppercase;color:var(--haze);
-    border:1px solid var(--line-2);border-radius:999px;padding:11px 20px;
-    transition:.25s;
-  }
-  .btn:hover:not(:disabled){border-color:var(--amber);color:var(--amber)}
-  .btn:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
-  .btn:disabled{opacity:.35;cursor:default}
-  .btn.primary{border-color:var(--amber);color:var(--amber)}
-  .btn.primary:hover:not(:disabled){background:var(--amber);color:var(--on-accent)}
-  .btn.quiet{color:var(--mute)}
-  .btn.quiet:hover:not(:disabled){color:var(--amber)}
-
-  /* handles: touch-action none so a drag on a phone moves the handle, not the page */
+  /* drag handles: touch-action none on the handles only, so the rest of each chart still scrolls the page */
   .handle{cursor:grab;touch-action:none}
   .handle:active{cursor:grabbing}
   .handle-hit{fill:transparent}
   .handle-hit:focus{outline:none}
 
-  /* ---------- derivation (same layout as the other worked examples) ---------- */
+  .zoom-flag{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--amber);margin:0 0 8px;min-height:16px;
+  }
+
+  /* ---------- readout ---------- */
+  .readout{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:16px 28px;
+    margin-top:22px;padding-top:20px;border-top:1px solid var(--line);
+  }
+  @media (max-width:560px){.readout{grid-template-columns:1fr;gap:14px}}
+  /* no uppercase: "b − a" names the interval ends */
+  .ro-label{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.02em;color:var(--mute);margin:0 0 6px}
+  .ro-value{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;font-size:22px;
+    letter-spacing:-.02em;color:var(--haze);margin:0;
+  }
+  .ro-value.accent{color:var(--amber)}
+
+  /* ---------- derivation: stacked, so long sums wrap instead of overflowing ---------- */
   .deriv{margin-top:22px;border-left:2px solid var(--amber);padding:6px 0 6px 20px}
   .d-grid{
-    display:grid;grid-template-columns:max-content max-content minmax(0,1fr);
-    column-gap:10px;row-gap:9px;align-items:baseline;
+    display:grid;grid-template-columns:max-content minmax(0,1fr);
+    column-gap:10px;row-gap:6px;align-items:baseline;
   }
-  .d-l,.d-r{font-family:"JetBrains Mono",monospace;font-size:13.5px;letter-spacing:.01em;color:var(--haze);white-space:nowrap}
-  .d-l{text-align:right}
+  .d-l,.d-r{font-family:"JetBrains Mono",monospace;font-size:13.5px;letter-spacing:.01em;color:var(--haze)}
+  .d-l{text-align:right;white-space:nowrap}
+  .d-r{overflow-wrap:anywhere}
   .d-r.res{color:var(--amber);font-weight:500;font-size:17px}
-  .d-w{font-size:15px;line-height:1.4;font-style:italic;color:var(--haze-dim);padding-left:16px}
+  .d-w{grid-column:2;margin:-2px 0 6px;font-size:15px;line-height:1.4;font-style:italic;color:var(--haze-dim)}
+  .d-w:empty{display:none}
   .d-empty{font-size:16px;font-style:italic;color:var(--mute);margin:0}
   sub,sup{font-size:.7em;line-height:0}
-  @media (max-width:640px){
-    .d-grid{grid-template-columns:max-content minmax(0,1fr);row-gap:4px}
-    .d-r{white-space:normal}
-    .d-w{grid-column:1 / -1;padding:0 0 8px;font-size:14.5px}
-    .d-w:empty{display:none}
-  }
 
   .callout{
     margin:16px 0 0;padding:4px 0 4px 18px;border-left:2px solid var(--amber);
-    font-family:"JetBrains Mono",monospace;font-size:12.5px;letter-spacing:.02em;
-    line-height:1.6;color:var(--amber);
+    font-size:16px;line-height:1.58;color:var(--haze-dim);
   }
   .callout:empty{display:none}
 
@@ -198,39 +217,58 @@
     <p class="sub">For a discrete random variable, probability is the <b>height</b> of a bar. For a continuous random variable, probability is the <b>area</b> under a curve between two points, and never the height of the curve at a single point. Both are shown below.</p>
   </header>
 
+  <!-- ===================== DISCRETE ===================== -->
   <div class="card">
-    <p class="panel-kicker">Discrete</p>
-    <p class="panel-title">Probability mass function <span>· a fair die</span></p>
+    <p class="panel-kicker">Discrete / categorical</p>
+    <p class="panel-title">Probability mass function <span>· pmf</span></p>
 
-    <svg id="pmfChart" class="chart" viewBox="0 0 560 240" role="img" aria-label="Bar chart of a fair die's probability mass function"></svg>
-    <p class="hint">Click one or more bars</p>
+    <div class="seg" id="dataSeg">
+      <button class="pill active" data-set="die" type="button">Fair die</button>
+      <button class="pill" data-set="snap" type="button">Snapdragon colour</button>
+      <button class="pill" data-set="seiz" type="button">Epileptic seizures</button>
+    </div>
+    <p class="dataset-desc" id="datasetDesc"></p>
+
+    <svg id="pmfChart" class="chart" role="img" aria-label="Bar chart of the probability mass function"></svg>
+    <p class="hint">Click one or more bars to add up their probabilities</p>
 
     <div class="btn-row">
+      <button class="btn primary" id="selectAll" type="button">Select all bars</button>
       <button class="btn quiet" id="clearBars" type="button">Clear selection</button>
     </div>
 
     <div class="deriv" id="pmfDeriv"></div>
 
-    <p class="panel-note">Here the height of each bar <em>is</em> the probability. Select several bars and, because the outcomes are mutually exclusive, their heights simply add up.</p>
+    <p class="panel-note">Each bar&rsquo;s height <strong>is</strong> a probability: <span class="m">Pr(Y = y) = p(y)</span>. Every bar lies between 0 and 1, and all the bars add up to 1. Try <em>Select all bars</em>.</p>
   </div>
 
+  <!-- ===================== CONTINUOUS ===================== -->
   <div class="card">
     <p class="panel-kicker">Continuous</p>
-    <p class="panel-title">Probability density function <span>· the standard normal curve</span></p>
+    <p class="panel-title">Probability density function <span>· student height</span></p>
+    <p class="dataset-desc">Y = the height (cm) of a randomly selected student. The curve is a density curve for height.</p>
 
-    <svg id="pdfChart" class="chart" viewBox="0 0 560 280" role="img" aria-label="Density curve with draggable boundaries a and b"></svg>
-    <p class="hint">Drag either handle, or click one and use the arrow keys</p>
+    <p class="zoom-flag" id="zoomFlag"></p>
+    <svg id="pdfChart" class="chart" role="img" aria-label="Density curve for height with draggable boundaries a and b"></svg>
+    <p class="hint">Drag the handles to set the interval from a to b, or click one and use the arrow keys</p>
 
     <div class="btn-row">
-      <button class="btn primary" id="shrinkBtn" type="button">Shrink the interval to a point</button>
+      <button class="btn primary" id="shrinkBtn" type="button">Shrink to a single point</button>
+      <button class="btn" id="exactBtn" type="button">What does &ldquo;Y = 145.6 cm&rdquo; mean?</button>
+      <button class="btn" id="zoomBtn" type="button">Zoom in</button>
       <button class="btn quiet" id="resetPdf" type="button">Reset</button>
+    </div>
+
+    <div class="readout">
+      <div><p class="ro-label">Interval</p><p class="ro-value" id="roInterval"></p></div>
+      <div><p class="ro-label">Width, b − a</p><p class="ro-value" id="roWidth"></p></div>
+      <div><p class="ro-label">Area = probability</p><p class="ro-value accent" id="roArea"></p></div>
     </div>
 
     <div class="deriv" id="pdfDeriv"></div>
     <p class="callout" id="pdfCallout"></p>
-
-    <p class="panel-note">The height of the curve is a <em>density</em>, not a probability. Only the area under it between two points is a probability. Shrink the interval and the area, and with it the probability, vanishes: <strong>Pr(Y = y) = 0</strong> for any single point y.</p>
   </div>
+
 </div>
 
 <script>
@@ -255,10 +293,9 @@
 
 const NS = 'http://www.w3.org/2000/svg';
 const MONO = "'JetBrains Mono', monospace";
-
 function el(tag, attrs, text) {
   const e = document.createElementNS(NS, tag);
-  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  for (const k in attrs) if (attrs[k] !== undefined && attrs[k] !== null) e.setAttribute(k, attrs[k]);
   if (text !== undefined) e.textContent = text;
   return e;
 }
@@ -275,265 +312,298 @@ function derivHTML(rows) {
     `<span class="d-l">${d.l || ''}</span><span class="d-r${d.res ? ' res' : ''}">${d.r}</span><span class="d-w">${d.w || ''}</span>`
   ).join('') + '</div>';
 }
-const fmtY = v => (v < 0 ? '−' : '') + Math.abs(v).toFixed(2);
 
 /* ============================= DISCRETE PANEL ============================= */
+const DATASETS = {
+  die: {
+    desc: 'Y = the number rolled on a fair six-sided die. Every outcome is equally likely, so all the bars have the same height.',
+    axis: 'Y = NUMBER ROLLED',
+    labels: ['1', '2', '3', '4', '5', '6'],
+    probs: [1 / 6, 1 / 6, 1 / 6, 1 / 6, 1 / 6, 1 / 6],
+    fmt: p => p.toFixed(3),
+    exact: () => '1/6'
+  },
+  snap: {
+    desc: 'Y = the flower colour of an offspring from crossing two pink snapdragons. A categorical random variable with unequal probabilities.',
+    axis: 'Y = FLOWER COLOUR',
+    labels: ['red', 'pink', 'white'],
+    probs: [0.25, 0.5, 0.25],
+    fmt: p => p.toFixed(2)
+  },
+  seiz: {
+    desc: 'Y = the number of epileptic seizures in the past 7 days for a randomly selected patient (relative frequencies from 181 patients). A count with very different bar heights.',
+    axis: 'Y = NUMBER OF SEIZURES IN THE PAST 7 DAYS',
+    labels: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
+    probs: [0.13, 0.09, 0.11, 0.18, 0.16, 0.09, 0.08, 0.07, 0.06, 0.03],
+    fmt: p => p.toFixed(2)
+  }
+};
 
+let dataKey = 'die';
+let selected = new Set();
 const pmfChart = document.getElementById('pmfChart');
-const pmfDeriv = document.getElementById('pmfDeriv');
-
-const DIE_LABELS = [1, 2, 3, 4, 5, 6];
-const DIE_PROB = 1 / 6;
-let selectedBars = new Set();
 
 function renderPMF() {
+  const d = DATASETS[dataKey];
   const { small, FS } = chartScale();
-  const W = 560, H = small ? 270 : 240;
-  const ML = small ? 70 : 52, MR = 16, MT = small ? 30 : 24, MB = small ? 60 : 44;
-  const plotW = W - ML - MR, plotH = H - MT - MB;
+  const W = 560, H = small ? 280 : 240;
+  const ML = small ? 70 : 52, MR = 14, MT = small ? 30 : 24, MB = small ? 62 : 46;
   pmfChart.setAttribute('viewBox', `0 0 ${W} ${H}`);
   pmfChart.innerHTML = '';
+  const plotW = W - ML - MR, plotH = H - MT - MB, base = MT + plotH;
+  const n = d.labels.length;
+  const gap = n > 6 ? 8 : 14;
+  const barW = (plotW - gap * (n - 1)) / n;
+  const yMax = 0.6;
+  const y = v => MT + plotH - (v / yMax) * plotH;
 
-  const nb = DIE_LABELS.length;
-  const gap = 14;
-  const barW = (plotW - gap * (nb - 1)) / nb;
-  const maxProb = 0.2;
-  const yScale = v => MT + plotH - (v / maxProb) * plotH;
-  const base = MT + plotH;
-
-  [0, 0.05, 0.10, 0.15, 0.20].forEach(v => {
-    const y = yScale(v);
-    pmfChart.appendChild(el('line', { x1: ML, x2: W - MR, y1: y, y2: y, stroke: 'var(--line-2)', 'stroke-width': 1 }));
-    pmfChart.appendChild(el('text', { x: ML - 10, y: y + FS * 0.35, 'text-anchor': 'end', 'font-size': FS, 'letter-spacing': '.04em', 'font-family': MONO, fill: 'var(--mute)' }, v.toFixed(2)));
-  });
+  for (let v = 0; v <= yMax + 1e-9; v += 0.1) {
+    pmfChart.appendChild(el('line', { x1: ML, x2: W - MR, y1: y(v), y2: y(v), stroke: 'var(--line-2)', 'stroke-width': 1 }));
+    pmfChart.appendChild(el('text', { x: ML - 10, y: y(v) + FS * 0.35, 'text-anchor': 'end', 'font-size': FS, 'letter-spacing': '.04em', 'font-family': MONO, fill: 'var(--mute)' }, v.toFixed(1)));
+  }
   pmfChart.appendChild(el('line', { x1: ML, x2: W - MR, y1: base, y2: base, stroke: 'var(--haze-dim)', 'stroke-width': 1.4 }));
 
-  DIE_LABELS.forEach((label, i) => {
+  d.labels.forEach((lab, i) => {
     const x = ML + i * (barW + gap);
-    const y = yScale(DIE_PROB);
-    const sel = selectedBars.has(i);
+    const p = d.probs[i];
+    const isSel = selected.has(i);
     const rect = el('rect', {
-      x, y, width: barW, height: base - y, rx: 2,
-      class: 'bar' + (sel ? ' selected' : ''),
-      tabindex: '0', role: 'button',
-      'aria-pressed': sel ? 'true' : 'false',
-      'aria-label': `Y = ${label}, probability 1/6`
+      x, y: y(p), width: barW, height: base - y(p), rx: 2,
+      class: 'bar' + (isSel ? ' selected' : ''),
+      tabindex: '0', role: 'button', 'aria-pressed': isSel ? 'true' : 'false',
+      'aria-label': `Y = ${lab}, probability ${d.fmt(p)}`
     });
     rect.addEventListener('click', () => toggleBar(i));
-    rect.addEventListener('keydown', e => {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleBar(i); }
-    });
+    rect.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleBar(i); } });
     pmfChart.appendChild(rect);
-
-    pmfChart.appendChild(el('text', { x: x + barW / 2, y: base + FS + 9, 'text-anchor': 'middle', 'font-size': FS + 1, 'font-family': MONO, fill: sel ? 'var(--amber)' : 'var(--haze-dim)' }, label));
-    pmfChart.appendChild(el('text', { x: x + barW / 2, y: y - 9, 'text-anchor': 'middle', 'font-size': FS - 0.5, 'letter-spacing': '.04em', 'font-family': MONO, fill: sel ? 'var(--amber)' : 'var(--mute)' }, '1/6'));
+    // with 10 narrow bars on a phone, the value labels would collide, so show them only when selected
+    if (!(small && n > 6) || isSel) {
+      pmfChart.appendChild(el('text', { x: x + barW / 2, y: y(p) - 8, 'text-anchor': 'middle', 'font-size': FS - 0.5, 'letter-spacing': '.02em', 'font-family': MONO, fill: isSel ? 'var(--amber)' : 'var(--mute)' }, d.fmt(p)));
+    }
+    pmfChart.appendChild(el('text', { x: x + barW / 2, y: base + FS + 9, 'text-anchor': 'middle', 'font-size': FS + 0.5, 'font-family': MONO, fill: isSel ? 'var(--amber)' : 'var(--haze-dim)' }, lab));
   });
-
-  pmfChart.appendChild(el('text', { x: (ML + W - MR) / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': FS - 1, 'letter-spacing': '.14em', 'font-family': MONO, fill: 'var(--mute-2)' }, 'Y = OUTCOME OF ROLLING A FAIR DIE'));
+  pmfChart.appendChild(el('text', { x: (ML + W - MR) / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': FS - 1, 'letter-spacing': '.14em', 'font-family': MONO, fill: 'var(--mute-2)' }, d.axis));
 }
 
 function renderPMFFormula() {
-  if (selectedBars.size === 0) {
-    pmfDeriv.innerHTML = '<p class="d-empty">Select a bar to begin.</p>';
+  const d = DATASETS[dataKey];
+  const box = document.getElementById('pmfDeriv');
+  if (selected.size === 0) {
+    box.innerHTML = '<p class="d-empty">Select a bar to begin.</p>';
     return;
   }
-  const idx = [...selectedBars].sort((a, b) => a - b);
-  const m = idx.length;
-  const vals = idx.map(i => DIE_LABELS[i]);
-  if (m === 1) {
-    pmfDeriv.innerHTML = derivHTML([
-      { l: `Pr(Y = ${vals[0]})`, r: '= height of the bar', w: 'for a PMF, the height is the probability' },
-      { r: `= 1/6 ≈ ${DIE_PROB.toFixed(3)}`, res: true }
+  const idx = [...selected].sort((a, b) => a - b);
+  const total = idx.reduce((s, i) => s + d.probs[i], 0);
+  const totalStr = Math.abs(total - 1) < 1e-9 ? '1' : d.fmt(total);
+  const vals = idx.map(i => d.fmt(d.probs[i])).join(' + ');
+
+  if (idx.length === 1) {
+    const lab = d.labels[idx[0]];
+    box.innerHTML = derivHTML([
+      { l: `Pr(Y = ${lab})`, r: `= p(${lab})`, w: 'for a pmf, the height of the bar is the probability' },
+      { r: `= ${d.fmt(d.probs[idx[0]])}`, res: true }
     ]);
-    return;
+  } else if (idx.length === d.labels.length) {
+    box.innerHTML = derivHTML([
+      { l: 'Σ p(y)', r: `= ${vals}`, w: 'the sum over every possible value of Y' },
+      { r: `= ${totalStr}`, res: true, w: 'every pmf sums to 1' }
+    ]);
+  } else {
+    const set = `{${idx.map(i => d.labels[i]).join(', ')}}`;
+    box.innerHTML = derivHTML([
+      { l: `Pr(Y ∈ ${set})`, r: '= ' + idx.map(i => `Pr(Y = ${d.labels[i]})`).join(' + '), w: 'the values are mutually exclusive, so their probabilities add' },
+      { r: `= ${vals}` },
+      { r: `= ${totalStr}`, res: true }
+    ]);
   }
-  const set = `{${vals.join(', ')}}`;
-  pmfDeriv.innerHTML = derivHTML([
-    { l: `Pr(Y ∈ ${set})`, r: '= ' + vals.map(v => `Pr(Y = ${v})`).join(' + '), w: 'mutually exclusive outcomes, so add' },
-    { r: '= ' + vals.map(() => '1/6').join(' + ') },
-    { r: `= ${m}/6 ≈ ${(m * DIE_PROB).toFixed(3)}`, res: true }
-  ]);
 }
 
 function toggleBar(i) {
-  if (selectedBars.has(i)) selectedBars.delete(i);
-  else selectedBars.add(i);
-  renderPMF();
-  renderPMFFormula();
+  if (selected.has(i)) selected.delete(i); else selected.add(i);
+  renderPMF(); renderPMFFormula();
 }
 
-document.getElementById('clearBars').addEventListener('click', () => {
-  selectedBars = new Set();
-  renderPMF();
-  renderPMFFormula();
+function setDataset(key) {
+  dataKey = key;
+  selected = new Set();
+  document.querySelectorAll('#dataSeg .pill').forEach(b => b.classList.toggle('active', b.dataset.set === key));
+  document.getElementById('datasetDesc').textContent = DATASETS[key].desc;
+  renderPMF(); renderPMFFormula();
+}
+
+document.querySelectorAll('#dataSeg .pill').forEach(b => b.addEventListener('click', () => setDataset(b.dataset.set)));
+document.getElementById('selectAll').addEventListener('click', () => {
+  selected = new Set(DATASETS[dataKey].labels.map((_, i) => i));
+  renderPMF(); renderPMFFormula();
 });
+document.getElementById('clearBars').addEventListener('click', () => { selected = new Set(); renderPMF(); renderPMFFormula(); });
 
 /* ============================= CONTINUOUS PANEL ============================= */
-
-const pdfChart = document.getElementById('pdfChart');
-const pdfDeriv = document.getElementById('pdfDeriv');
-const pdfCalloutEl = document.getElementById('pdfCallout');
-
-const DOMAIN_MIN = -4, DOMAIN_MAX = 4;
-let G = null; // current chart geometry, rebuilt on resize
-
-function density(x) {
-  return (1 / Math.sqrt(2 * Math.PI)) * Math.exp(-(x * x) / 2);
+const MU = 170, SD = 9;
+function density(y) { return Math.exp(-((y - MU) ** 2) / (2 * SD * SD)) / (SD * Math.sqrt(2 * Math.PI)); }
+function areaBetween(lo, hi) {
+  if (hi <= lo) return 0;
+  const steps = 600, w = (hi - lo) / steps;
+  let s = 0;
+  for (let i = 0; i < steps; i++) s += 0.5 * (density(lo + i * w) + density(lo + (i + 1) * w)) * w;
+  return s;
 }
-const MAX_DENSITY = 0.45;
 
-function xScale(v) { return G.ML + ((v - DOMAIN_MIN) / (DOMAIN_MAX - DOMAIN_MIN)) * G.plotW; }
-function xInvert(px) {
-  const v = DOMAIN_MIN + ((px - G.ML) / G.plotW) * (DOMAIN_MAX - DOMAIN_MIN);
-  return Math.max(DOMAIN_MIN, Math.min(DOMAIN_MAX, v));
-}
-function yScale(v) { return G.MT + G.plotH - (v / MAX_DENSITY) * G.plotH; }
-
-let a = -1, b = 1;
-const MIN_GAP = 0.02;
-
-let areaPolygon, guideA, guideB, handleA, handleB, hitA, hitB, labelA, labelB;
+const FULL = [140, 200];
+let view = FULL.slice();
+let zoomed = false;
+let a = 160, b = 180;
 let animating = false;
 
-function svgPointFromEvent(evt) {
-  const pt = pdfChart.createSVGPoint();
-  pt.x = evt.clientX;
-  pt.y = evt.clientY;
-  return pt.matrixTransform(pdfChart.getScreenCTM().inverse());
+const pdfChart = document.getElementById('pdfChart');
+const Y_MAX = 0.05;
+let G = null; // current chart geometry, rebuilt on resize
+
+function xScale(v) { return G.ML + ((v - view[0]) / (view[1] - view[0])) * G.plotW; }
+function xInvert(px) {
+  const v = view[0] + ((px - G.ML) / G.plotW) * (view[1] - view[0]);
+  return Math.max(view[0], Math.min(view[1], v));
 }
+function yScale(v) { return G.MT + G.plotH - (v / Y_MAX) * G.plotH; }
+
+let areaPoly, guideA, guideB, handleA, handleB, hitA, hitB, labelA, labelB;
 
 function buildStaticPDF() {
   const { small, FS } = chartScale();
-  const W = 560, H = small ? 320 : 280;
-  const ML = small ? 62 : 48, MR = 16, MT = small ? 22 : 18;
-  const MB = small ? 92 : 66; // room for axis ticks plus the a / b labels beneath the handles
+  const W = 560, H = small ? 310 : 270;
+  // left margin leaves room for 4-character tick labels plus the rotated axis title
+  const ML = small ? 88 : 70, MR = 16, MT = small ? 40 : 32, MB = small ? 64 : 48;
   G = { W, H, ML, MR, MT, MB, FS, small, plotW: W - ML - MR, plotH: H - MT - MB };
   G.base = MT + G.plotH;
   pdfChart.setAttribute('viewBox', `0 0 ${W} ${H}`);
   pdfChart.innerHTML = '';
 
-  [0, 0.1, 0.2, 0.3, 0.4].forEach(v => {
-    const y = yScale(v);
-    pdfChart.appendChild(el('line', { x1: ML, x2: W - MR, y1: y, y2: y, stroke: 'var(--line-2)', 'stroke-width': 1 }));
-    pdfChart.appendChild(el('text', { x: ML - 10, y: y + FS * 0.35, 'text-anchor': 'end', 'font-size': FS, 'letter-spacing': '.04em', 'font-family': MONO, fill: 'var(--mute)' }, v.toFixed(1)));
+  [0, 0.01, 0.02, 0.03, 0.04, 0.05].forEach(v => {
+    pdfChart.appendChild(el('line', { x1: ML, x2: W - MR, y1: yScale(v), y2: yScale(v), stroke: 'var(--line-2)', 'stroke-width': 1 }));
+    pdfChart.appendChild(el('text', { x: ML - 10, y: yScale(v) + FS * 0.35, 'text-anchor': 'end', 'font-size': FS, 'letter-spacing': '.04em', 'font-family': MONO, fill: 'var(--mute)' }, v.toFixed(2)));
   });
-
   pdfChart.appendChild(el('line', { x1: ML, x2: W - MR, y1: G.base, y2: G.base, stroke: 'var(--haze-dim)', 'stroke-width': 1.4 }));
-  for (let v = DOMAIN_MIN; v <= DOMAIN_MAX; v++) {
+
+  const span = view[1] - view[0];
+  const step = span <= 8 ? 1 : 10;
+  for (let v = Math.ceil(view[0] / step) * step; v <= view[1] + 1e-9; v += step) {
     const x = xScale(v);
     pdfChart.appendChild(el('line', { x1: x, x2: x, y1: G.base, y2: G.base + 5, stroke: 'var(--haze-dim)', 'stroke-width': 1 }));
-    pdfChart.appendChild(el('text', { x, y: G.base + FS + 9, 'text-anchor': 'middle', 'font-size': FS, 'letter-spacing': '.04em', 'font-family': MONO, fill: 'var(--mute)' }, v < 0 ? '−' + Math.abs(v) : v));
+    pdfChart.appendChild(el('text', { x, y: G.base + FS + 9, 'text-anchor': 'middle', 'font-size': FS, 'letter-spacing': '.04em', 'font-family': MONO, fill: 'var(--mute)' }, v));
   }
+  pdfChart.appendChild(el('text', { x: (ML + W - MR) / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': FS - 1, 'letter-spacing': '.14em', 'font-family': MONO, fill: 'var(--mute-2)' }, 'y = HEIGHT (CM)'));
+  pdfChart.appendChild(el('text', { x: 14, y: G.MT + G.plotH / 2, 'text-anchor': 'middle', 'font-size': FS - 1, 'letter-spacing': '.1em', 'font-family': MONO, fill: 'var(--mute-2)', transform: `rotate(-90 14 ${G.MT + G.plotH / 2})` }, 'DENSITY f(y), PER CM'));
 
-  // shaded area, drawn before the curve so the curve sits on top
-  areaPolygon = el('polygon', { points: '', fill: 'var(--amber)', 'fill-opacity': 0.42, stroke: 'none' });
-  pdfChart.appendChild(areaPolygon);
+  areaPoly = el('polygon', { points: '', fill: 'var(--amber)', 'fill-opacity': 0.42 });
+  pdfChart.appendChild(areaPoly);
 
-  const steps = 200;
-  let curvePts = '';
-  for (let i = 0; i <= steps; i++) {
-    const x = DOMAIN_MIN + (i / steps) * (DOMAIN_MAX - DOMAIN_MIN);
-    curvePts += `${xScale(x)},${yScale(density(x))} `;
+  let pts = '';
+  for (let i = 0; i <= 300; i++) {
+    const v = view[0] + (i / 300) * span;
+    pts += `${xScale(v)},${yScale(density(v))} `;
   }
-  pdfChart.appendChild(el('polyline', { points: curvePts.trim(), fill: 'none', stroke: 'var(--haze)', 'stroke-width': 2, 'stroke-linejoin': 'round' }));
+  pdfChart.appendChild(el('polyline', { points: pts.trim(), fill: 'none', stroke: 'var(--haze)', 'stroke-width': 2, 'stroke-linejoin': 'round' }));
 
-  guideA = el('line', { y1: G.base, y2: MT, stroke: 'var(--amber)', 'stroke-width': 1.4, 'stroke-dasharray': '4,4' });
-  guideB = el('line', { y1: G.base, y2: MT, stroke: 'var(--amber)', 'stroke-width': 1.4, 'stroke-dasharray': '4,4' });
-  pdfChart.appendChild(guideA);
-  pdfChart.appendChild(guideB);
+  guideA = el('line', { y1: G.base, y2: MT - 4, stroke: 'var(--amber)', 'stroke-width': 1.4, 'stroke-dasharray': '4,4' });
+  guideB = el('line', { y1: G.base, y2: MT - 4, stroke: 'var(--amber)', 'stroke-width': 1.4, 'stroke-dasharray': '4,4' });
+  pdfChart.appendChild(guideA); pdfChart.appendChild(guideB);
 
-  // visible handle plus a larger invisible hit area that is easier to grab, especially by finger
-  const hitR = small ? 26 : 18;
-  const common = { cy: G.base, r: hitR, class: 'handle-hit handle', tabindex: '0', role: 'slider', 'aria-valuemin': DOMAIN_MIN, 'aria-valuemax': DOMAIN_MAX };
-  hitA = el('circle', { ...common, 'aria-label': 'Lower boundary a' });
-  hitB = el('circle', { ...common, 'aria-label': 'Upper boundary b' });
-  const handleR = small ? 11 : 8;
+  // labels sit either side of their guide (a to the left, b to the right) so they never overlap
+  labelA = el('text', { y: MT - 11, 'text-anchor': 'end', 'font-size': FS + 0.5, 'font-family': MONO, 'font-weight': 500, fill: 'var(--amber)' });
+  labelB = el('text', { y: MT - 11, 'text-anchor': 'start', 'font-size': FS + 0.5, 'font-family': MONO, 'font-weight': 500, fill: 'var(--amber)' });
+  pdfChart.appendChild(labelA); pdfChart.appendChild(labelB);
+
+  const handleR = small ? 11 : 8, hitR = small ? 26 : 18;
   handleA = el('circle', { cy: G.base, r: handleR, fill: 'var(--amber)', stroke: 'var(--ink)', 'stroke-width': 3, class: 'handle' });
   handleB = el('circle', { cy: G.base, r: handleR, fill: 'var(--amber)', stroke: 'var(--ink)', 'stroke-width': 3, class: 'handle' });
-
-  const labelY = G.base + FS * 2 + 22;
-  labelA = el('text', { y: labelY, 'font-size': FS + 0.5, 'font-family': MONO, 'font-weight': 500, fill: 'var(--amber)' });
-  labelB = el('text', { y: labelY, 'font-size': FS + 0.5, 'font-family': MONO, 'font-weight': 500, fill: 'var(--amber)' });
-
-  [handleA, handleB, labelA, labelB, hitA, hitB].forEach(n => pdfChart.appendChild(n));
+  const common = { cy: G.base, r: hitR, class: 'handle-hit handle', tabindex: '0', role: 'slider', 'aria-valuemin': FULL[0], 'aria-valuemax': FULL[1] };
+  hitA = el('circle', { ...common, 'aria-label': 'Lower boundary a' });
+  hitB = el('circle', { ...common, 'aria-label': 'Upper boundary b' });
+  [handleA, handleB, hitA, hitB].forEach(e => pdfChart.appendChild(e));
 
   hitA.addEventListener('pointerdown', e => onHandleDown(e, 'a'));
   hitB.addEventListener('pointerdown', e => onHandleDown(e, 'b'));
   hitA.addEventListener('keydown', e => onHandleKey(e, 'a'));
   hitB.addEventListener('keydown', e => onHandleKey(e, 'b'));
-
-  // the hit circles are invisible, so show focus on the visible handle instead
+  // the hit circles are invisible, so show keyboard focus on the visible handle instead
   [[hitA, handleA], [hitB, handleB]].forEach(([hit, handle]) => {
     hit.addEventListener('focus', () => handle.setAttribute('stroke', 'var(--haze)'));
     hit.addEventListener('blur', () => handle.setAttribute('stroke', 'var(--ink)'));
   });
+
+  document.getElementById('zoomFlag').textContent = zoomed ? `Zoomed in: showing ${view[0].toFixed(1)} to ${view[1].toFixed(1)} cm` : '';
+  document.getElementById('zoomBtn').textContent = zoomed ? 'Zoom out' : 'Zoom in';
 }
 
-function areaBetween(lo, hi) {
-  const steps = 400;
-  const w = (hi - lo) / steps;
-  let sum = 0;
-  for (let i = 0; i < steps; i++) {
-    const x0 = lo + i * w;
-    const x1 = lo + (i + 1) * w;
-    sum += 0.5 * (density(x0) + density(x1)) * w;
-  }
-  return sum;
+function fmtArea(p) {
+  if (p === 0) return '0';
+  if (p < 0.001) return p.toFixed(6);
+  return p.toFixed(4);
 }
+function fmtCm(v) { return String(parseFloat(v.toFixed(3))); }
 
 function updatePDF() {
   const lo = Math.min(a, b), hi = Math.max(a, b);
-
-  const steps = 80;
-  const pts = [`${xScale(lo)},${G.base}`];
-  for (let i = 0; i <= steps; i++) {
-    const x = lo + (i / steps) * (hi - lo);
-    pts.push(`${xScale(x)},${yScale(density(x))}`);
+  const vlo = Math.max(lo, view[0]), vhi = Math.min(hi, view[1]);
+  if (vhi > vlo) {
+    const pts = [`${xScale(vlo)},${G.base}`];
+    for (let i = 0; i <= 80; i++) {
+      const v = vlo + (i / 80) * (vhi - vlo);
+      pts.push(`${xScale(v)},${yScale(density(v))}`);
+    }
+    pts.push(`${xScale(vhi)},${G.base}`);
+    areaPoly.setAttribute('points', pts.join(' '));
+  } else {
+    areaPoly.setAttribute('points', '');
   }
-  pts.push(`${xScale(hi)},${G.base}`);
-  areaPolygon.setAttribute('points', pts.join(' '));
 
-  const xa = xScale(a), xb = xScale(b);
+  const clampX = v => Math.max(G.ML, Math.min(G.W - G.MR, xScale(v)));
+  const xa = clampX(a), xb = clampX(b);
   guideA.setAttribute('x1', xa); guideA.setAttribute('x2', xa);
   guideB.setAttribute('x1', xb); guideB.setAttribute('x2', xb);
-  handleA.setAttribute('cx', xa);
-  handleB.setAttribute('cx', xb);
-  hitA.setAttribute('cx', xa);
-  hitB.setAttribute('cx', xb);
-
-  // when the handles get close, push the labels apart so they never print on top of each other
-  const apart = (xb - xa) < (G.small ? 150 : 110);
-  labelA.setAttribute('x', apart ? xa - 6 : xa);
-  labelB.setAttribute('x', apart ? xb + 6 : xb);
-  labelA.setAttribute('text-anchor', apart ? 'end' : 'middle');
-  labelB.setAttribute('text-anchor', apart ? 'start' : 'middle');
-  labelA.textContent = `a = ${fmtY(a)}`;
-  labelB.textContent = `b = ${fmtY(b)}`;
-  hitA.setAttribute('aria-valuenow', a.toFixed(2));
-  hitB.setAttribute('aria-valuenow', b.toFixed(2));
-
-  const area = areaBetween(lo, hi);
-  pdfDeriv.innerHTML = derivHTML([
-    { l: `Pr(${fmtY(lo)} < Y < ${fmtY(hi)})`, r: `= ∫<sub>${fmtY(lo)}</sub><sup>${fmtY(hi)}</sup> f(y) dy`, w: 'the area under the density curve' },
-    { r: `= ${area.toFixed(4)}`, res: true }
-  ]);
+  [handleA, hitA].forEach(e => e.setAttribute('cx', xa));
+  [handleB, hitB].forEach(e => e.setAttribute('cx', xb));
+  labelA.setAttribute('x', xa - 6); labelA.textContent = `a = ${fmtCm(a)}`;
+  labelB.setAttribute('x', xb + 6); labelB.textContent = `b = ${fmtCm(b)}`;
+  hitA.setAttribute('aria-valuenow', a.toFixed(3));
+  hitB.setAttribute('aria-valuenow', b.toFixed(3));
 
   const width = hi - lo;
-  pdfCalloutEl.textContent = width < 0.08
-    ? `The interval has shrunk to width ${width.toFixed(3)}. The area, and so the probability, is essentially zero, even though the curve is still ${density((lo + hi) / 2).toFixed(3)} high there.`
-    : '';
+  const area = areaBetween(lo, hi);
+  document.getElementById('roInterval').textContent = `${fmtCm(lo)} to ${fmtCm(hi)}`;
+  document.getElementById('roWidth').textContent = `${fmtCm(width)} cm`;
+  document.getElementById('roArea').textContent = fmtArea(area);
+
+  const integral = `∫<sub>${fmtCm(lo)}</sub><sup>${fmtCm(hi)}</sup> f(y) dy`;
+  document.getElementById('pdfDeriv').innerHTML = width === 0
+    ? derivHTML([
+        { l: `Pr(Y = ${fmtCm(lo)})`, r: `= ${integral}`, w: 'an interval with no width' },
+        { r: '= 0', res: true, w: 'no width, so no area' }
+      ])
+    : derivHTML([
+        { l: `Pr(${fmtCm(lo)} ≤ Y ≤ ${fmtCm(hi)})`, r: `= ${integral}`, w: 'the area under the density curve between a and b' },
+        { r: `= ${fmtArea(area)}`, res: true }
+      ]);
+
+  const callout = document.getElementById('pdfCallout');
+  if (width === 0) {
+    callout.textContent = `The interval has shrunk to a single point: width 0, so area 0. For a continuous random variable Pr(Y = ${fmtCm(lo)}) = 0, and the same is true for every single value, even though the curve is ${density(lo).toFixed(4)} high there.`;
+  } else if (Math.abs(lo - 145.55) < 1e-9 && Math.abs(hi - 145.65) < 1e-9) {
+    callout.textContent = 'A height recorded as 145.6 cm really means somewhere between 145.55 and 145.65 cm. That interval has a small but positive probability. Now press “Shrink to a single point” to see what happens to an exact value.';
+  } else if (width < 0.5) {
+    callout.textContent = 'A very narrow interval has a very small area. Keep shrinking and the area heads towards 0.';
+  } else {
+    callout.textContent = '';
+  }
 }
 
-function setA(v) {
-  a = Math.max(DOMAIN_MIN, Math.min(DOMAIN_MAX, v));
-  if (a > b - MIN_GAP) a = b - MIN_GAP;
-  updatePDF();
+function svgPointFromEvent(evt) {
+  const pt = pdfChart.createSVGPoint();
+  pt.x = evt.clientX; pt.y = evt.clientY;
+  return pt.matrixTransform(pdfChart.getScreenCTM().inverse());
 }
-function setB(v) {
-  b = Math.max(DOMAIN_MIN, Math.min(DOMAIN_MAX, v));
-  if (b < a + MIN_GAP) b = a + MIN_GAP;
-  updatePDF();
-}
+function setA(v) { if (animating) return; a = Math.min(v, b); updatePDF(); }
+function setB(v) { if (animating) return; b = Math.max(v, a); updatePDF(); }
 
 function onHandleDown(evt, which) {
   if (animating) return;
@@ -541,70 +611,70 @@ function onHandleDown(evt, which) {
   const hit = which === 'a' ? hitA : hitB;
   hit.setPointerCapture(evt.pointerId);
   hit.focus();
-
-  function onMove(e) {
-    const sp = svgPointFromEvent(e);
-    const v = xInvert(sp.x);
-    if (which === 'a') setA(v); else setB(v);
-  }
-  function onUp() {
+  const onMove = e => { const v = xInvert(svgPointFromEvent(e).x); if (which === 'a') setA(v); else setB(v); };
+  const onUp = () => {
     hit.removeEventListener('pointermove', onMove);
     hit.removeEventListener('pointerup', onUp);
     hit.removeEventListener('pointercancel', onUp);
-  }
+  };
   hit.addEventListener('pointermove', onMove);
   hit.addEventListener('pointerup', onUp);
   hit.addEventListener('pointercancel', onUp);
 }
-
 function onHandleKey(evt, which) {
   if (evt.key !== 'ArrowLeft' && evt.key !== 'ArrowRight') return;
-  const step = evt.shiftKey ? 0.5 : 0.1;
-  const delta = (evt.key === 'ArrowRight' ? step : -step);
-  if (which === 'a') setA(a + delta); else setB(b + delta);
+  const step = (zoomed ? 0.05 : 0.5) * (evt.shiftKey ? 5 : 1);
+  const delta = evt.key === 'ArrowRight' ? step : -step;
+  const v = Math.max(FULL[0], Math.min(FULL[1], (which === 'a' ? a : b) + delta));
+  if (which === 'a') setA(v); else setB(v);
   evt.preventDefault();
 }
 
-function resetPDF() {
-  if (animating) return;
-  a = -1; b = 1;
+function setZoom(on) {
+  zoomed = on;
+  if (on) {
+    const mid = (a + b) / 2;
+    const half = Math.max(3, (b - a) / 2 + 1);
+    view = [Math.max(FULL[0], mid - half), Math.min(FULL[1], mid + half)];
+  } else {
+    view = FULL.slice();
+  }
+  buildStaticPDF();
   updatePDF();
 }
 
-document.getElementById('resetPdf').addEventListener('click', resetPDF);
+function setButtonsDisabled(d) {
+  ['shrinkBtn', 'exactBtn', 'zoomBtn', 'resetPdf'].forEach(id => { document.getElementById(id).disabled = d; });
+}
+
+document.getElementById('zoomBtn').addEventListener('click', () => setZoom(!zoomed));
+
+document.getElementById('resetPdf').addEventListener('click', () => {
+  a = 160; b = 180;
+  setZoom(false);
+});
+
+document.getElementById('exactBtn').addEventListener('click', () => {
+  a = 145.55; b = 145.65;
+  setZoom(true);
+});
 
 document.getElementById('shrinkBtn').addEventListener('click', () => {
   if (animating) return;
-  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const startA = a, startB = b;
-  const mid = (a + b) / 2;
-  const endA = mid - MIN_GAP / 2, endB = mid + MIN_GAP / 2;
-
-  if (reduceMotion) {
-    a = endA; b = endB;
-    updatePDF();
-    return;
-  }
-
+  const startA = a, startB = b, mid = (a + b) / 2;
+  const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const finish = () => { a = mid; b = mid; animating = false; setButtonsDisabled(false); if (!zoomed) setZoom(true); else updatePDF(); };
+  if (reduceMotion || typeof requestAnimationFrame === 'undefined') { finish(); return; }
   animating = true;
-  document.getElementById('shrinkBtn').disabled = true;
-  document.getElementById('resetPdf').disabled = true;
-  const duration = 900;
-  const startTime = performance.now();
-
+  setButtonsDisabled(true);
+  const duration = 1100, t0 = performance.now();
   function step(now) {
-    const t = Math.min(1, (now - startTime) / duration);
-    const eased = 1 - Math.pow(1 - t, 3);
-    a = startA + (endA - startA) * eased;
-    b = startB + (endB - startB) * eased;
+    const t = Math.min(1, (now - t0) / duration);
+    const e = 1 - Math.pow(1 - t, 3);
+    a = startA + (mid - startA) * e;
+    b = startB + (mid - startB) * e;
     updatePDF();
-    if (t < 1) {
-      requestAnimationFrame(step);
-    } else {
-      animating = false;
-      document.getElementById('shrinkBtn').disabled = false;
-      document.getElementById('resetPdf').disabled = false;
-    }
+    if (t < 1) requestAnimationFrame(step); else finish();
   }
   requestAnimationFrame(step);
 });
@@ -612,15 +682,10 @@ document.getElementById('shrinkBtn').addEventListener('click', () => {
 let resizeTimer;
 window.addEventListener('resize', () => {
   clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(() => {
-    renderPMF();
-    buildStaticPDF();
-    updatePDF();
-  }, 150);
+  resizeTimer = setTimeout(() => { renderPMF(); buildStaticPDF(); updatePDF(); }, 150);
 });
 
-renderPMF();
-renderPMFFormula();
+setDataset('die');
 buildStaticPDF();
 updatePDF();
 </script>

@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>(function(){try{var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark"){t=(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+<title>The Sampling Table — Uche Mbaka</title>
+<meta name="description" content="A companion tool for STAT 20070: the four ways to choose k items from n, depending on whether order matters and whether repeats are allowed.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#080A0F;
+    --ink-rgb:8,10,15;
+    --ink-2:#0D1017;
+    --haze:#E9E6DF;
+    --haze-dim:#B9B6AE;
+    --mute:#6A7180;
+    --mute-2:#454B58;
+    --line:rgba(233,230,223,.09);
+    --line-2:rgba(233,230,223,.16);
+    --amber:#CFA15F;
+    --amber-soft:rgba(207,161,95,.16);
+    --steel:#5C7585;
+    --on-accent:#080A0F;
+  }
+  [data-theme="light"]{
+    --ink:#F3F0E9;
+    --ink-rgb:243,240,233;
+    --ink-2:#FBFAF5;
+    --haze:#1B1C20;
+    --haze-dim:#4A4C54;
+    --mute:#6E727D;
+    --mute-2:#9A9DA6;
+    --line:rgba(20,21,26,.10);
+    --line-2:rgba(20,21,26,.18);
+    --amber:#9E6B22;
+    --amber-soft:rgba(158,107,34,.12);
+    --steel:#4A6377;
+    --on-accent:#FBFAF5;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    min-height:100vh;
+    background:var(--ink);
+    color:var(--haze);
+    font-family:"Newsreader",Georgia,serif;
+    font-weight:300;
+    font-size:18px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    display:flex;
+    justify-content:center;
+    padding:44px 22px 72px;
+    transition:background .35s ease, color .35s ease;
+  }
+  ::selection{background:rgba(207,161,95,.22);color:var(--haze)}
+  a{color:inherit;text-decoration:none}
+
+  .stage{width:100%;max-width:740px}
+
+  .mono{
+    font-family:"JetBrains Mono",ui-monospace,monospace;
+    font-weight:400;font-size:11px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--mute);
+  }
+
+  /* ---------- top row ---------- */
+  .toprow{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:34px}
+  .back{transition:color .25s}
+  .back:hover{color:var(--amber)}
+
+  .theme-toggle{display:inline-flex;align-items:center;gap:10px;background:none;border:0;padding:0;cursor:pointer;font:inherit;line-height:1}
+  .theme-toggle .tmode{color:var(--mute);transition:color .25s}
+  .theme-toggle:hover .tmode{color:var(--amber)}
+  .theme-toggle .track{width:40px;height:21px;border-radius:999px;border:1px solid var(--line-2);position:relative;transition:border-color .25s;flex:0 0 auto}
+  .theme-toggle:hover .track{border-color:var(--amber)}
+  .theme-toggle .knob{position:absolute;top:50%;left:3px;transform:translateY(-50%);width:13px;height:13px;border-radius:50%;background:var(--mute);transition:left .28s cubic-bezier(.4,0,.2,1),background .25s}
+  [data-theme="light"] .theme-toggle .knob{left:22px;background:var(--amber)}
+  .theme-toggle:focus-visible{outline:none}
+  .theme-toggle:focus-visible .track{outline:2px solid var(--amber);outline-offset:3px}
+
+  /* ---------- header ---------- */
+  header{margin-bottom:28px}
+  .eyebrow{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--mute-2);margin:0 0 16px;
+  }
+  h1{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;
+    font-size:clamp(30px,5.4vw,44px);line-height:1.02;letter-spacing:-.025em;
+    color:var(--haze);margin:0 0 16px;
+  }
+  .sub{font-size:17px;line-height:1.6;color:var(--haze-dim);font-weight:300;margin:0;max-width:58ch}
+  .sub b{color:var(--amber);font-weight:400}
+
+  /* ---------- cards ---------- */
+  .card{
+    background:linear-gradient(160deg, var(--ink-2), rgba(var(--ink-rgb),0));
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:26px 28px 24px;
+    margin-bottom:18px;
+  }
+  @media (max-width:480px){.card{padding:22px 18px 20px}}
+
+  .card-title{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;
+    font-size:21px;letter-spacing:-.02em;color:var(--haze);margin:0 0 18px;
+  }
+  .kicker{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--amber);margin:0 0 8px;
+  }
+
+  /* ---------- steppers ---------- */
+  .control-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+  /* no uppercase: these labels name the variables n and k */
+  .control label{
+    display:block;margin-bottom:12px;
+    font-family:"JetBrains Mono",monospace;font-size:12.5px;letter-spacing:.02em;color:var(--mute);
+  }
+  .stepper{display:flex;align-items:center;gap:12px}
+  .step-btn{
+    width:34px;height:34px;border-radius:50%;
+    border:1px solid var(--line-2);background:none;color:var(--haze);
+    font-family:"JetBrains Mono",monospace;font-size:16px;line-height:1;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;transition:.25s;
+  }
+  .step-btn:hover:not(:disabled){border-color:var(--amber);color:var(--amber)}
+  .step-btn:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+  .step-btn:disabled{opacity:.3;cursor:default}
+  .step-value{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;font-size:24px;
+    letter-spacing:-.02em;color:var(--haze);min-width:22px;text-align:center;
+  }
+  .items-line{
+    margin:18px 0 0;padding-top:16px;border-top:1px solid var(--line);
+    font-family:"JetBrains Mono",monospace;font-size:12.5px;letter-spacing:.02em;color:var(--mute);
+  }
+  .items-line b{color:var(--haze);font-weight:500;letter-spacing:.12em}
+
+  /* ---------- the 2 x 2 table ---------- */
+  .table2{
+    display:grid;grid-template-columns:auto 1fr 1fr;gap:10px;align-items:stretch;
+  }
+  .axis{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--mute);
+    display:flex;align-items:center;
+  }
+  .axis.col{justify-content:center;text-align:center;padding:0 4px 4px}
+  .axis.row{padding-right:6px;line-height:1.4}
+  .axis .q{display:block;color:var(--mute-2);font-size:10px;margin-bottom:3px}
+  .axis .a{color:var(--haze-dim)}
+
+  .tile{
+    text-align:left;padding:16px 18px;border-radius:12px;
+    border:1px solid var(--line-2);background:rgba(var(--ink-rgb),.5);
+    cursor:pointer;transition:.25s;color:inherit;
+  }
+  .tile:hover{border-color:var(--amber)}
+  .tile:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+  .tile-name{
+    display:none;margin:0 0 8px;
+    font-family:"JetBrains Mono",monospace;font-size:10.5px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--mute);
+  }
+  .tile-formula{
+    font-family:"JetBrains Mono",monospace;font-size:13px;letter-spacing:.01em;
+    color:var(--haze-dim);margin:0 0 6px;
+  }
+  .tile-count{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;font-size:28px;
+    letter-spacing:-.025em;color:var(--haze);margin:0;
+  }
+  .tile.active{border-color:var(--amber);background:var(--amber-soft)}
+  .tile.active .tile-count,.tile.active .tile-formula{color:var(--amber)}
+  sup{font-size:.7em;line-height:0}
+
+  /* on a phone the table becomes a list, so each tile carries its own name */
+  @media (max-width:560px){
+    .table2{grid-template-columns:1fr}
+    .axis{display:none}
+    .tile-name{display:block}
+  }
+
+  /* ---------- detail ---------- */
+  .detail-example{font-size:16.5px;line-height:1.62;color:var(--haze-dim);margin:0}
+
+  .deriv{margin:20px 0 22px;border-left:2px solid var(--amber);padding:6px 0 6px 20px}
+  .d-grid{
+    display:grid;grid-template-columns:max-content max-content minmax(0,1fr);
+    column-gap:10px;row-gap:9px;align-items:baseline;
+  }
+  .d-l,.d-r{font-family:"JetBrains Mono",monospace;font-size:13.5px;letter-spacing:.01em;color:var(--haze);white-space:nowrap}
+  .d-l{text-align:right}
+  .d-r.res{color:var(--amber);font-weight:500;font-size:17px}
+  .d-w{font-size:15px;line-height:1.4;font-style:italic;color:var(--haze-dim);padding-left:16px}
+  @media (max-width:640px){
+    .d-grid{grid-template-columns:max-content minmax(0,1fr);row-gap:4px}
+    .d-r{white-space:normal}
+    .d-w{grid-column:1 / -1;padding:0 0 8px;font-size:14.5px}
+    .d-w:empty{display:none}
+  }
+
+  .outcome-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:7px}
+  .outcome-pill{
+    font-family:"JetBrains Mono",monospace;font-size:12.5px;letter-spacing:.06em;
+    padding:6px 10px;border-radius:8px;border:1px solid var(--line-2);color:var(--haze);
+  }
+  .sample-row{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:12px 16px;margin-top:16px}
+  .sample-note{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--mute);margin:0;text-align:center;
+  }
+  .btn{
+    display:inline-block;background:none;cursor:pointer;
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--mute);
+    border:1px solid var(--line-2);border-radius:999px;padding:9px 18px;
+    transition:.25s;
+  }
+  .btn:hover{border-color:var(--amber);color:var(--amber)}
+  .btn:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+  .btn[hidden]{display:none}
+
+  svg.chart{width:100%;height:auto;display:block;overflow:visible}
+
+  @media (prefers-reduced-motion:reduce){*{transition:none !important}}
+</style>
+</head>
+<body>
+
+<div class="stage">
+
+  <div class="toprow">
+    <a class="back mono" href="../STAT20070.html">← STAT 20070</a>
+    <button class="theme-toggle" id="themeToggle" aria-label="Switch between light and dark theme" aria-pressed="false"><span class="tmode mono" id="tmode">Dark</span><span class="track"><span class="knob"></span></span></button>
+  </div>
+
+  <header>
+    <p class="eyebrow">Section 2 · Lecture 06 · Binomial Distribution</p>
+    <h1>The Sampling Table</h1>
+    <p class="sub">Every counting problem turns on two questions: does the <b>order</b> of selection matter, and can the same item be chosen <b>more than once</b>? Together they give four cases, each with its own formula.</p>
+  </header>
+
+  <div class="card">
+    <div class="control-grid">
+      <div class="control">
+        <label>Items to choose from, n</label>
+        <div class="stepper">
+          <button class="step-btn" id="nMinus" type="button" aria-label="Decrease n">&minus;</button>
+          <span class="step-value" id="nValue">5</span>
+          <button class="step-btn" id="nPlus" type="button" aria-label="Increase n">+</button>
+        </div>
+      </div>
+      <div class="control">
+        <label>Number chosen, k</label>
+        <div class="stepper">
+          <button class="step-btn" id="kMinus" type="button" aria-label="Decrease k">&minus;</button>
+          <span class="step-value" id="kValue">3</span>
+          <button class="step-btn" id="kPlus" type="button" aria-label="Increase k">+</button>
+        </div>
+      </div>
+    </div>
+    <p class="items-line" id="itemsLine"></p>
+  </div>
+
+  <div class="card">
+    <p class="kicker">The four cases</p>
+    <div class="table2" id="tileGrid"></div>
+  </div>
+
+  <div class="card">
+    <p class="kicker" id="detailKicker"></p>
+    <p class="card-title" id="detailTitle"></p>
+    <p class="detail-example" id="detailExample"></p>
+    <div class="deriv" id="detailDeriv"></div>
+    <div class="outcome-grid" id="outcomeGrid"></div>
+    <div class="sample-row">
+      <p class="sample-note" id="sampleNote"></p>
+      <button class="btn" id="resampleBtn" type="button" hidden>New sample</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="card-title">All four counts, side by side</p>
+    <svg id="compareChart" class="chart" viewBox="0 0 560 230" role="img" aria-label="Bar chart comparing the four counting formulas"></svg>
+  </div>
+</div>
+
+<script>
+/* ---------- theme toggle (shares the site's stored preference) ---------- */
+(function(){
+  var root = document.documentElement;
+  var btn  = document.getElementById('themeToggle');
+  function current(){ return root.getAttribute('data-theme') === 'light' ? 'light' : 'dark'; }
+  function sync(){
+    var t = current();
+    btn.setAttribute('aria-pressed', t === 'light' ? 'true' : 'false');
+    document.getElementById('tmode').textContent = t === 'light' ? 'Light' : 'Dark';
+  }
+  sync();
+  btn.addEventListener('click', function(){
+    var t = current() === 'light' ? 'dark' : 'light';
+    root.setAttribute('data-theme', t);
+    try{ localStorage.setItem('theme', t); }catch(e){}
+    sync();
+  });
+})();
+
+function factorial(x) { let r = 1; for (let i = 2; i <= x; i++) r *= i; return r; }
+function permCount(n, k) {
+  let r = 1;
+  for (let i = 0; i < k; i++) r *= (n - i);
+  return r;
+}
+function choose(n, k) {
+  if (k < 0 || k > n) return 0;
+  let r = 1;
+  for (let i = 0; i < k; i++) r = r * (n - i) / (i + 1);
+  return Math.round(r);
+}
+const ORDINALS = ['1st', '2nd', '3rd', '4th', '5th'];
+const ITEM_LETTERS = ['A', 'B', 'C', 'D', 'E'];
+
+function itemsForN(n) { return ITEM_LETTERS.slice(0, n); }
+
+function genOrderedWithReplacement(items, k) {
+  const results = [];
+  function rec(prefix) {
+    if (prefix.length === k) { results.push(prefix); return; }
+    for (const it of items) rec(prefix.concat([it]));
+  }
+  rec([]);
+  return results;
+}
+function genOrderedWithoutReplacement(items, k) {
+  const results = [];
+  function rec(prefix, remaining) {
+    if (prefix.length === k) { results.push(prefix); return; }
+    for (let i = 0; i < remaining.length; i++) {
+      const nextRemaining = remaining.slice(0, i).concat(remaining.slice(i + 1));
+      rec(prefix.concat([remaining[i]]), nextRemaining);
+    }
+  }
+  rec([], items);
+  return results;
+}
+function genUnorderedWithoutReplacement(items, k) {
+  const results = [];
+  function rec(start, prefix) {
+    if (prefix.length === k) { results.push(prefix); return; }
+    for (let i = start; i < items.length; i++) rec(i + 1, prefix.concat([items[i]]));
+  }
+  rec(0, []);
+  return results;
+}
+function genUnorderedWithReplacement(items, k) {
+  const results = [];
+  function rec(start, prefix) {
+    if (prefix.length === k) { results.push(prefix); return; }
+    for (let i = start; i < items.length; i++) rec(i, prefix.concat([items[i]]));
+  }
+  rec(0, []);
+  return results;
+}
+
+// descending product n × (n − 1) × … with k terms, for the derivations
+function fallingTerms(n, k) { return Array.from({ length: k }, (_, i) => n - i).join(' × '); }
+
+const CASES = [
+  {
+    id: 'ow', title: 'Ordered, with replacement', short: ['Ordered', 'with repl.'],
+    formulaTpl: (n, k) => `n<sup>k</sup> = ${n}<sup>${k}</sup>`,
+    count: (n, k) => Math.pow(n, k),
+    generate: (items, k) => genOrderedWithReplacement(items, k),
+    join: seq => seq.join(' '),
+    example: (n, k) => `Like choosing a ${k}-character code from ${n} allowed letters, where repeats are fine (“${ITEM_LETTERS[0].repeat(k)}” is allowed) and the order of the letters matters.`,
+    deriv: (n, k) => [
+      { l: 'Count', r: '= n<sup>k</sup>', w: `${n} choices for each of the ${k} positions` },
+      { r: `= ${n}<sup>${k}</sup> = ${Array(k).fill(n).join(' × ')}` },
+      { r: `= ${Math.pow(n, k).toLocaleString()}`, res: true }
+    ]
+  },
+  {
+    id: 'on', title: 'Ordered, without replacement', short: ['Ordered', 'no repl.'],
+    formulaTpl: (n, k) => `n! / (n − k)! = ${n}! / ${n - k}!`,
+    count: (n, k) => permCount(n, k),
+    generate: (items, k) => genOrderedWithoutReplacement(items, k),
+    join: seq => seq.join(' → '),
+    example: (n, k) => `Like awarding ${ORDINALS.slice(0, k).join(', ')} place among ${n} racers: no repeats, and which racer gets which place matters.`,
+    deriv: (n, k) => [
+      { l: 'Count', r: '= n! / (n − k)!', w: `${n} choices first, then one fewer each time` },
+      { r: `= ${n}! / ${n - k}! = ${fallingTerms(n, k)}` },
+      { r: `= ${permCount(n, k).toLocaleString()}`, res: true }
+    ]
+  },
+  {
+    id: 'un', title: 'Unordered, without replacement', short: ['Unordered', 'no repl.'],
+    formulaTpl: (n, k) => `C(n, k) = C(${n}, ${k})`,
+    count: (n, k) => choose(n, k),
+    generate: (items, k) => genUnorderedWithoutReplacement(items, k),
+    join: seq => '{' + seq.join(', ') + '}',
+    example: (n, k) => `Like choosing a ${k}-person committee from ${n} people: no repeats, and the order you pick them in doesn’t matter.`,
+    deriv: (n, k) => [
+      { l: 'Count', r: '= C(n, k) = n! / (k! (n − k)!)', w: 'the binomial coefficient, read “n choose k”' },
+      { r: `= (ordered count) / ${k}!`, w: `each group of ${k} appears in ${k}! = ${factorial(k)} different orders` },
+      { r: `= ${permCount(n, k).toLocaleString()} / ${factorial(k)}` },
+      { r: `= ${choose(n, k).toLocaleString()}`, res: true }
+    ]
+  },
+  {
+    id: 'uw', title: 'Unordered, with replacement', short: ['Unordered', 'with repl.'],
+    formulaTpl: (n, k) => `C(n + k − 1, k) = C(${n + k - 1}, ${k})`,
+    count: (n, k) => choose(n + k - 1, k),
+    generate: (items, k) => genUnorderedWithReplacement(items, k),
+    join: seq => '{' + seq.join(', ') + '}',
+    example: (n, k) => `Like choosing ${k} scoops of ice cream from ${n} flavours: repeats are fine (a double scoop), and the order you pick them in doesn’t matter.`,
+    deriv: (n, k) => [
+      { l: 'Count', r: '= C(n + k − 1, k)', w: `“stars and bars”: ${k} picks shared out among ${n} items` },
+      { r: `= C(${n + k - 1}, ${k}) = ${n + k - 1}! / (${k}! × ${n - 1}!)` },
+      { r: `= ${choose(n + k - 1, k).toLocaleString()}`, res: true }
+    ]
+  }
+];
+const byId = Object.fromEntries(CASES.map(c => [c.id, c]));
+
+let n = 5, k = 3, activeCaseId = 'un';
+
+const nValueEl = document.getElementById('nValue');
+const kValueEl = document.getElementById('kValue');
+const tileGrid = document.getElementById('tileGrid');
+const outcomeGrid = document.getElementById('outcomeGrid');
+const sampleNote = document.getElementById('sampleNote');
+const resampleBtn = document.getElementById('resampleBtn');
+
+const NS = 'http://www.w3.org/2000/svg';
+const MONO = "'JetBrains Mono', monospace";
+function el(tag, attrs, text) {
+  const e = document.createElementNS(NS, tag);
+  for (const at in attrs) e.setAttribute(at, attrs[at]);
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+
+function renderControls() {
+  nValueEl.textContent = n;
+  kValueEl.textContent = k;
+  document.getElementById('nMinus').disabled = n <= 2;
+  document.getElementById('nPlus').disabled = n >= 5;
+  document.getElementById('kMinus').disabled = k <= 1;
+  document.getElementById('kPlus').disabled = k >= n;
+  document.getElementById('itemsLine').innerHTML = `Choosing ${k} from the ${n} items <b>${itemsForN(n).join(' ')}</b>`;
+}
+
+function tileHTML(c) {
+  return `<p class="tile-name">${c.title}</p>
+    <p class="tile-formula">${c.formulaTpl(n, k)}</p>
+    <p class="tile-count">${c.count(n, k).toLocaleString()}</p>`;
+}
+
+// laid out as a real 2 x 2 table: rows ask "does order matter?", columns ask "can items repeat?"
+function renderTiles() {
+  tileGrid.innerHTML = '';
+  const cell = (html, cls) => {
+    const d = document.createElement('div');
+    d.className = cls;
+    d.innerHTML = html;
+    tileGrid.appendChild(d);
+  };
+  const tile = id => {
+    const c = byId[id];
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'tile' + (id === activeCaseId ? ' active' : '');
+    btn.setAttribute('aria-pressed', id === activeCaseId ? 'true' : 'false');
+    btn.setAttribute('aria-label', `${c.title}: ${c.count(n, k)} outcomes`);
+    btn.innerHTML = tileHTML(c);
+    btn.addEventListener('click', () => { activeCaseId = id; renderAll(); });
+    tileGrid.appendChild(btn);
+  };
+
+  cell('', 'axis');
+  cell('<span><span class="q">Repeats allowed?</span><span class="a">Yes · with replacement</span></span>', 'axis col');
+  cell('<span><span class="q">Repeats allowed?</span><span class="a">No · without replacement</span></span>', 'axis col');
+  cell('<span><span class="q">Order matters?</span><span class="a">Yes · ordered</span></span>', 'axis row');
+  tile('ow'); tile('on');
+  cell('<span><span class="q">Order matters?</span><span class="a">No · unordered</span></span>', 'axis row');
+  tile('uw'); tile('un');
+}
+
+function renderDetail(resample) {
+  const c = byId[activeCaseId];
+  const items = itemsForN(n);
+
+  document.getElementById('detailKicker').textContent = c.title;
+  document.getElementById('detailTitle').textContent = `Choosing ${k} from ${n}, ${c.title.toLowerCase()}`;
+  document.getElementById('detailExample').textContent = c.example(n, k);
+  document.getElementById('detailDeriv').innerHTML = '<div class="d-grid">' + c.deriv(n, k).map(d =>
+    `<span class="d-l">${d.l || ''}</span><span class="d-r${d.res ? ' res' : ''}">${d.r}</span><span class="d-w">${d.w || ''}</span>`
+  ).join('') + '</div>';
+
+  const outcomes = c.generate(items, k);
+  outcomeGrid.innerHTML = '';
+  const CAP = 150, SAMPLE = 40;
+  let toShow = outcomes;
+  if (outcomes.length > CAP) {
+    // a random sample, but listed in its natural order so patterns stay visible
+    const used = new Set();
+    while (used.size < SAMPLE) used.add(Math.floor(Math.random() * outcomes.length));
+    toShow = [...used].sort((x, y) => x - y).map(i => outcomes[i]);
+    sampleNote.textContent = `A random sample of ${SAMPLE} from all ${outcomes.length.toLocaleString()} outcomes`;
+    resampleBtn.hidden = false;
+  } else {
+    sampleNote.textContent = `All ${outcomes.length} outcomes shown`;
+    resampleBtn.hidden = true;
+  }
+  toShow.forEach(seq => {
+    const pill = document.createElement('span');
+    pill.className = 'outcome-pill';
+    pill.textContent = c.join(seq);
+    outcomeGrid.appendChild(pill);
+  });
+}
+
+function renderCompareChart() {
+  const chart = document.getElementById('compareChart');
+  chart.innerHTML = '';
+  const small = window.innerWidth < 560;
+  const FS = small ? 17 : 11;
+  const W = 560, H = small ? 290 : 230;
+  const ML = 16, MR = 16, MT = small ? 32 : 26, MB = small ? 70 : 52;
+  const plotW = W - ML - MR, plotH = H - MT - MB;
+  chart.setAttribute('viewBox', `0 0 ${W} ${H}`);
+
+  const gap = 24;
+  const barW = (plotW - gap * 3) / 4;
+  const counts = CASES.map(c => c.count(n, k));
+  const maxCount = Math.max(...counts) * 1.12;
+  const yScale = v => MT + plotH - (v / maxCount) * plotH;
+  const baseline = MT + plotH;
+  const MIN_H = 3; // counts span 1 to 3,125, so keep even the smallest bar visible
+
+  chart.appendChild(el('line', { x1: ML, x2: W - MR, y1: baseline, y2: baseline, stroke: 'var(--haze-dim)', 'stroke-width': 1.4 }));
+
+  CASES.forEach((c, i) => {
+    const x = ML + i * (barW + gap);
+    const h = Math.max(baseline - yScale(counts[i]), MIN_H);
+    const y = baseline - h;
+    const isActive = c.id === activeCaseId;
+    chart.appendChild(el('rect', {
+      x, y, width: barW, height: h, rx: 2,
+      fill: isActive ? 'var(--amber)' : 'var(--mute-2)'
+    }));
+    chart.appendChild(el('text', { x: x + barW / 2, y: y - 9, 'text-anchor': 'middle', 'font-size': FS + 2, 'font-family': MONO, 'font-weight': 500, fill: isActive ? 'var(--amber)' : 'var(--haze-dim)' }, counts[i].toLocaleString()));
+    c.short.forEach((line, li) => {
+      chart.appendChild(el('text', { x: x + barW / 2, y: baseline + FS + 8 + li * (FS + 5), 'text-anchor': 'middle', 'font-size': FS, 'letter-spacing': '.06em', 'font-family': MONO, fill: isActive ? 'var(--amber)' : 'var(--mute)' }, line));
+    });
+  });
+}
+
+function renderAll() {
+  renderControls();
+  renderTiles();
+  renderDetail();
+  renderCompareChart();
+}
+
+document.getElementById('nMinus').addEventListener('click', () => { if (n > 2) { n--; if (k > n) k = n; renderAll(); } });
+document.getElementById('nPlus').addEventListener('click', () => { if (n < 5) { n++; renderAll(); } });
+document.getElementById('kMinus').addEventListener('click', () => { if (k > 1) { k--; renderAll(); } });
+document.getElementById('kPlus').addEventListener('click', () => { if (k < n) { k++; renderAll(); } });
+resampleBtn.addEventListener('click', () => renderDetail());
+
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(renderCompareChart, 150);
+});
+
+renderAll();
+</script>
+
+</body>
+</html>
