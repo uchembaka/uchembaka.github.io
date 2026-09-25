@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>(function(){try{var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark"){t=(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+<title>Snapdragon and Class Height Example — Uche Mbaka</title>
+<meta name="description" content="A worked example for STAT 20070: a snapdragon cross and a class of 150 heights, set out in the same probability framework, with questions.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#080A0F;
+    --ink-rgb:8,10,15;
+    --ink-2:#0D1017;
+    --haze:#E9E6DF;
+    --haze-dim:#B9B6AE;
+    --mute:#6A7180;
+    --mute-2:#454B58;
+    --line:rgba(233,230,223,.09);
+    --line-2:rgba(233,230,223,.16);
+    --amber:#CFA15F;
+    --amber-soft:rgba(207,161,95,.16);
+    --steel:#5C7585;
+    --steel-soft:rgba(92,117,133,.24);
+    --on-accent:#080A0F;
+    /* flower colours are literal, not decorative: keep them recognisable in both themes */
+    --fl-red:#D46A5F;
+    --fl-red-soft:rgba(212,106,95,.18);
+    --fl-pink:#E39BB6;
+    --fl-pink-soft:rgba(227,155,182,.16);
+    --fl-white:#F2EFE8;
+    --fl-white-soft:rgba(242,239,232,.07);
+  }
+  [data-theme="light"]{
+    --ink:#F3F0E9;
+    --ink-rgb:243,240,233;
+    --ink-2:#FBFAF5;
+    --haze:#1B1C20;
+    --haze-dim:#4A4C54;
+    --mute:#6E727D;
+    --mute-2:#9A9DA6;
+    --line:rgba(20,21,26,.10);
+    --line-2:rgba(20,21,26,.18);
+    --amber:#9E6B22;
+    --amber-soft:rgba(158,107,34,.12);
+    --steel:#4A6377;
+    --steel-soft:rgba(74,99,119,.14);
+    --on-accent:#FBFAF5;
+    --fl-red:#B8403F;
+    --fl-red-soft:rgba(184,64,63,.11);
+    --fl-pink:#D17A9C;
+    --fl-pink-soft:rgba(209,122,156,.14);
+    --fl-white:#FFFFFF;
+    --fl-white-soft:#FFFFFF;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    min-height:100vh;
+    background:var(--ink);
+    color:var(--haze);
+    font-family:"Newsreader",Georgia,serif;
+    font-weight:300;
+    font-size:18px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    display:flex;
+    justify-content:center;
+    padding:44px 22px 72px;
+    transition:background .35s ease, color .35s ease;
+  }
+  ::selection{background:rgba(207,161,95,.22);color:var(--haze)}
+  a{color:inherit;text-decoration:none}
+
+  .stage{width:100%;max-width:780px}
+
+  .mono{
+    font-family:"JetBrains Mono",ui-monospace,monospace;
+    font-weight:400;font-size:11px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--mute);
+  }
+  .m{font-family:"JetBrains Mono",monospace;font-size:13.5px;letter-spacing:.01em;color:var(--haze)}
+
+  /* ---------- top row ---------- */
+  .toprow{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:34px}
+  .back{transition:color .25s}
+  .back:hover{color:var(--amber)}
+
+  .theme-toggle{display:inline-flex;align-items:center;gap:10px;background:none;border:0;padding:0;cursor:pointer;font:inherit;line-height:1}
+  .theme-toggle .tmode{color:var(--mute);transition:color .25s}
+  .theme-toggle:hover .tmode{color:var(--amber)}
+  .theme-toggle .track{width:40px;height:21px;border-radius:999px;border:1px solid var(--line-2);position:relative;transition:border-color .25s;flex:0 0 auto}
+  .theme-toggle:hover .track{border-color:var(--amber)}
+  .theme-toggle .knob{position:absolute;top:50%;left:3px;transform:translateY(-50%);width:13px;height:13px;border-radius:50%;background:var(--mute);transition:left .28s cubic-bezier(.4,0,.2,1),background .25s}
+  [data-theme="light"] .theme-toggle .knob{left:22px;background:var(--amber)}
+  .theme-toggle:focus-visible{outline:none}
+  .theme-toggle:focus-visible .track{outline:2px solid var(--amber);outline-offset:3px}
+
+  /* ---------- header ---------- */
+  header{margin-bottom:28px}
+  .eyebrow{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--mute-2);margin:0 0 16px;
+  }
+  h1{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;
+    font-size:clamp(29px,5vw,42px);line-height:1.04;letter-spacing:-.025em;
+    color:var(--haze);margin:0 0 16px;
+  }
+  .sub{font-size:17px;line-height:1.6;color:var(--haze-dim);font-weight:300;margin:0;max-width:60ch}
+
+  h2{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;
+    font-size:26px;letter-spacing:-.02em;color:var(--haze);margin:44px 0 16px;
+  }
+
+  /* ---------- tabs ---------- */
+  .tabs{
+    display:flex;gap:10px;margin-bottom:22px;
+    position:sticky;top:0;z-index:5;
+    background:var(--ink);padding:12px 0;
+    transition:background .35s ease;
+  }
+  .tab{
+    flex:1;background:none;cursor:pointer;
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--haze);
+    border:1px solid var(--line-2);border-radius:999px;padding:13px 16px;
+    transition:.25s;
+  }
+  .tab:hover{border-color:var(--amber);color:var(--amber)}
+  .tab:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+  .tab.active{background:var(--amber);border-color:var(--amber);color:var(--on-accent)}
+  .section{display:none}
+  .section.active{display:block}
+
+  /* ---------- cards ---------- */
+  .card{
+    background:linear-gradient(160deg, var(--ink-2), rgba(var(--ink-rgb),0));
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:26px 28px 24px;
+    margin-bottom:18px;
+  }
+  @media (max-width:480px){.card{padding:22px 18px 20px}}
+
+  .card-title{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;
+    font-size:21px;letter-spacing:-.02em;color:var(--haze);margin:0 0 14px;
+  }
+  p.body{font-size:16.5px;line-height:1.62;color:var(--haze-dim);margin:0}
+  p.body strong{color:var(--haze);font-weight:400}
+  .note{font-size:16px;line-height:1.58;color:var(--haze-dim);margin:16px 0 0}
+  .note strong{color:var(--haze);font-weight:400}
+
+  /* ---------- definitions ---------- */
+  .def-row{
+    display:grid;grid-template-columns:186px 1fr;gap:16px;
+    padding:14px 0;border-top:1px solid var(--line);align-items:baseline;
+  }
+  .def-row:first-of-type{border-top:none;padding-top:2px}
+  .def-term{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--amber);
+  }
+  .def-body{font-size:16.5px;line-height:1.55;color:var(--haze-dim)}
+  @media (max-width:560px){.def-row{grid-template-columns:1fr;gap:5px}}
+
+  /* ---------- Punnett grid ---------- */
+  .pgrid{display:grid;grid-template-columns:52px repeat(2,1fr);gap:9px;max-width:420px;margin:6px auto 0}
+  .phead{display:flex;align-items:center;justify-content:center}
+  .allele{
+    width:36px;height:36px;border-radius:50%;
+    display:inline-flex;align-items:center;justify-content:center;
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;font-size:17px;border:1px solid;
+  }
+  .allele.aR{border-color:var(--fl-red);color:var(--fl-red);background:var(--fl-red-soft)}
+  .allele.aW{border-color:var(--line-2);color:var(--haze-dim)}
+  .pcell{
+    position:relative;aspect-ratio:1.35;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;
+    border:1px solid var(--line-2);border-radius:12px;
+    transition:opacity .2s ease, box-shadow .2s ease;
+  }
+  .pcell.red{background:var(--fl-red-soft)}
+  .pcell.pink{background:var(--fl-pink-soft)}
+  .pcell.white{background:var(--fl-white-soft)}
+  .ppair{font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;font-size:19px;letter-spacing:-.01em;color:var(--haze)}
+  .py{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.04em;color:var(--haze-dim);display:inline-flex;align-items:center;gap:7px}
+  .fdot{width:12px;height:12px;border-radius:50%;border:1px solid var(--mute);display:inline-block;flex:0 0 auto;vertical-align:-1px}
+  .fdot.red{background:var(--fl-red)}
+  .fdot.pink{background:var(--fl-pink)}
+  .fdot.white{background:var(--fl-white)}
+  .pcell.hl{box-shadow:inset 0 0 0 2px var(--haze)}
+  .pcell.hlA{box-shadow:inset 0 0 0 2px var(--amber)}
+  .pcell.dim{opacity:.25}
+  .ptag{
+    position:absolute;top:8px;right:8px;
+    font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+    padding:3px 8px;border-radius:999px;background:var(--steel);color:#F3F0E9;
+  }
+  .pcap{
+    text-align:center;font-family:"JetBrains Mono",monospace;font-size:10.5px;
+    letter-spacing:.12em;text-transform:uppercase;color:var(--mute);margin:16px 0 0;
+  }
+  .plegend{
+    display:flex;gap:10px 22px;justify-content:center;flex-wrap:wrap;margin-top:14px;
+    font-family:"JetBrains Mono",monospace;font-size:10.5px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--mute);
+  }
+  .plegend span{display:inline-flex;align-items:center;gap:8px}
+  .lg-box{width:16px;height:12px;border-radius:3px;display:inline-block;flex:0 0 auto}
+  @media (max-width:520px){.ppair{font-size:16px}.py{font-size:11px}}
+
+  /* ---------- data tables ---------- */
+  .table-wrap{overflow-x:auto}
+  table.data{width:100%;border-collapse:collapse;margin:4px 0 0}
+  table.data th{
+    text-align:left;font-family:"JetBrains Mono",monospace;font-weight:400;
+    font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute);
+    padding:8px 10px;border-bottom:1px solid var(--line-2);vertical-align:bottom;
+  }
+  table.data td{
+    padding:10px;border-bottom:1px solid var(--line);
+    font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--haze-dim);
+  }
+  table.data td.lab{font-family:"Space Grotesk",system-ui,sans-serif;font-size:15px;color:var(--haze)}
+  table.data td.hl{background:var(--amber-soft);color:var(--amber);font-weight:500}
+  table.data tr.total td{border-top:1px solid var(--line-2);border-bottom:none;color:var(--haze)}
+  table.data.grid td,table.data.grid th{text-align:center}
+  table.data.grid td.lab,table.data.grid th.lab{text-align:left}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+  @media (max-width:620px){.two-col{grid-template-columns:1fr}}
+  .table-title{
+    font-family:"JetBrains Mono",monospace;font-size:10.5px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--amber);margin:0 0 6px;
+  }
+
+  svg.chart{width:100%;height:auto;display:block;overflow:visible}
+  .legend{
+    display:flex;gap:10px 22px;flex-wrap:wrap;margin-top:14px;
+    font-family:"JetBrains Mono",monospace;font-size:10.5px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--mute);
+  }
+  .legend span{display:inline-flex;align-items:center;gap:8px}
+  .swatch{width:16px;height:12px;display:inline-block;border-radius:3px;flex:0 0 auto}
+
+  /* ---------- pills ---------- */
+  .seg{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:22px}
+  .pill{
+    background:none;cursor:pointer;
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--haze);
+    border:1px solid var(--line-2);border-radius:999px;padding:11px 22px;
+    transition:.25s;
+  }
+  .pill:hover{border-color:var(--amber);color:var(--amber)}
+  .pill:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+  .pill.active{background:var(--amber);border-color:var(--amber);color:var(--on-accent)}
+  .pill.primary{border-color:var(--amber);color:var(--amber)}
+  .pill.primary:hover{background:var(--amber);color:var(--on-accent)}
+  .seg-label{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--mute);margin:0 0 12px;
+  }
+
+  /* ---------- questions ---------- */
+  .context{
+    border-left:2px solid var(--amber);padding:2px 0 2px 20px;margin-bottom:22px;
+    font-size:16.5px;line-height:1.62;color:var(--haze-dim);
+  }
+  .context strong{color:var(--haze);font-weight:400}
+  .context em{color:var(--haze-dim)}
+  .qkicker{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--amber);margin:0 0 10px;
+  }
+  .qtext{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:400;
+    font-size:clamp(17px,2.8vw,20px);line-height:1.42;letter-spacing:-.01em;
+    color:var(--haze);margin:0 0 20px;
+  }
+  .qtext em{font-style:italic}
+  .qpart{display:block;margin-top:10px}
+  .qvisual{margin-bottom:20px}
+  .answer{display:none;margin-top:22px;padding-top:22px;border-top:1px solid var(--line)}
+  .answer.shown{display:block}
+  .badge{
+    display:inline-block;margin-bottom:14px;
+    font-family:"JetBrains Mono",monospace;font-size:10.5px;letter-spacing:.14em;
+    text-transform:uppercase;padding:5px 12px;border-radius:999px;border:1px solid;
+  }
+  .badge.me{border-color:var(--amber);color:var(--amber)}
+  .badge.indep{border-color:var(--steel);color:var(--steel)}
+  [data-theme="dark"] .badge.indep{color:#8FA6B5;border-color:#8FA6B5}
+  .badge.neither{border-color:var(--haze-dim);color:var(--haze-dim)}
+  .badge.other{border-color:var(--line-2);color:var(--mute)}
+  .work{font-size:16.5px;line-height:1.62;color:var(--haze-dim);margin:0 0 12px}
+  .work strong{color:var(--haze);font-weight:400}
+  .events{display:flex;flex-direction:column;gap:7px;margin:0 0 18px}
+  .ev{display:flex;align-items:baseline;gap:12px;font-size:16px;line-height:1.5;color:var(--haze-dim)}
+  .ev b{
+    flex:0 0 auto;font-family:"JetBrains Mono",monospace;font-weight:500;font-size:12px;
+    color:var(--haze);border:1px solid var(--line-2);border-radius:6px;padding:1px 8px;
+  }
+
+  /* derivation: one grid per part so the = signs align */
+  .deriv{margin:22px 0 12px;border-left:2px solid var(--amber);padding:6px 0 6px 20px}
+  /* no uppercase here: it would turn part (a) into (A) and clash with event A */
+  .d-part{
+    font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.04em;
+    color:var(--amber);margin:20px 0 10px;
+  }
+  .d-part:first-child{margin-top:4px}
+  .d-grid{
+    display:grid;grid-template-columns:max-content max-content minmax(0,1fr);
+    column-gap:10px;row-gap:8px;align-items:baseline;
+  }
+  .d-l,.d-r{font-family:"JetBrains Mono",monospace;font-size:13.5px;letter-spacing:.01em;color:var(--haze);white-space:nowrap}
+  .d-l{text-align:right}
+  .d-r.res{color:var(--amber);font-weight:500}
+  .d-w{font-size:15px;line-height:1.4;font-style:italic;color:var(--haze-dim);padding-left:16px}
+  @media (max-width:640px){
+    .d-grid{grid-template-columns:max-content minmax(0,1fr);row-gap:4px}
+    .d-r{white-space:normal}
+    .d-w{grid-column:1 / -1;padding:0 0 8px;font-size:14.5px}
+    .d-w:empty{display:none}
+  }
+  .simcheck{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.04em;
+    color:var(--mute);margin:8px 0 0;
+  }
+  .ans-plot{margin:4px 0 18px}
+
+  /* ---------- class roster ---------- */
+  .roster{display:grid;grid-template-columns:repeat(15,1fr);gap:4px}
+  .rtile{
+    aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:rgba(var(--ink-rgb),.5);border:1px solid var(--line-2);border-radius:5px;
+    font-family:"JetBrains Mono",monospace;font-size:12px;font-weight:500;line-height:1.05;
+    color:var(--haze);transition:background .2s ease, border-color .2s ease;
+  }
+  .rtile .rid{font-size:7.5px;font-weight:400;color:var(--mute);margin-bottom:2px}
+  .rtile.picked{background:var(--amber);border-color:var(--amber);color:var(--on-accent)}
+  .rtile.picked .rid{color:var(--on-accent)}
+  @media (max-width:700px){.rtile{font-size:10.5px}.rtile .rid{display:none}}
+  @media (max-width:560px){.roster{grid-template-columns:repeat(10,1fr)}.rtile{font-size:11px}}
+
+  .pick-row{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin-top:20px}
+  .pick-readout{
+    font-family:"JetBrains Mono",monospace;font-size:12.5px;letter-spacing:.02em;
+    color:var(--amber);border-left:2px solid var(--amber);padding:4px 0 4px 14px;
+  }
+  .pick-readout:empty{display:none}
+  .binwidth{
+    display:inline-block;margin:0 0 14px;
+    font-family:"JetBrains Mono",monospace;font-size:10.5px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--amber);
+    border:1px solid var(--amber);border-radius:999px;padding:5px 12px;
+  }
+
+  @media (prefers-reduced-motion:reduce){*{transition:none !important}}
+</style>
+</head>
+<body>
+
+<div class="stage">
+
+  <div class="toprow">
+    <a class="back mono" href="../STAT20070.html">← STAT 20070</a>
+    <button class="theme-toggle" id="themeToggle" aria-label="Switch between light and dark theme" aria-pressed="false"><span class="tmode mono" id="tmode">Dark</span><span class="track"><span class="knob"></span></span></button>
+  </div>
+
+  <header>
+    <p class="eyebrow">Section 2 · Lecture 05 · Intro to Probability</p>
+    <h1>Snapdragon and<br>Class Height Example</h1>
+    <p class="sub">Two experiments described in a common framework: the variable, its data type, the outcome space, the random variable and the measurement space. The first experiment has four possible outcomes, and the second has 150, one for each student in the class.</p>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button class="tab active" data-tab="snap" type="button" role="tab">Snapdragon flower colour</button>
+    <button class="tab" data-tab="height" type="button" role="tab">Class height</button>
+  </div>
+
+  <!-- ======================= SNAPDRAGON ======================= -->
+  <div class="section active" id="section-snap">
+    <div class="card">
+      <p class="card-title">The experiment</p>
+      <p class="body">In snapdragons, flower colour shows <strong>incomplete dominance</strong>: RR plants are red, WW plants are white and RW plants are pink. A lab student crosses two pink (RW) plants, grows the seeds, and records the flower colour of each offspring plant. Which allele each parent passes on is random &mdash; it happens out of sight, during meiosis and fertilisation.</p>
+    </div>
+
+    <div class="card">
+      <p class="card-title">The setup</p>
+      <div class="def-row"><span class="def-term">Observational unit</span><span class="def-body">One offspring plant</span></div>
+      <div class="def-row"><span class="def-term">Variable</span><span class="def-body">Flower colour</span></div>
+      <div class="def-row"><span class="def-term">Data type</span><span class="def-body">Categorical (nominal)</span></div>
+      <div class="def-row"><span class="def-term">Outcome space O</span><span class="def-body"><span class="m">{(R,R), (R,W), (W,R), (W,W)}</span><br>written as (allele from parent 1, allele from parent 2) &mdash; 4 equally likely outcomes</span></div>
+      <div class="def-row"><span class="def-term">Random variable Y</span><span class="def-body">Y = the flower colour of the offspring plant<br><span class="m">Y(R,R) = red, Y(R,W) = Y(W,R) = pink, Y(W,W) = white</span></span></div>
+      <div class="def-row"><span class="def-term">Measurement space</span><span class="def-body"><span class="m">{red, pink, white}</span> &mdash; 3 possible values</span></div>
+    </div>
+
+    <div class="card">
+      <p class="card-title">From outcome space to random variable</p>
+      <div id="snapSetupGrid"></div>
+      <p class="note"><strong>4 outcomes, but only 3 values.</strong> (R,W) and (W,R) both give a pink plant. In the greenhouse the student can't tell them apart &mdash; they only ever record the value of Y, never the outcome itself.</p>
+    </div>
+
+    <div class="card">
+      <p class="card-title">The distribution of the random variable Y</p>
+      <div class="table-wrap">
+        <table class="data">
+          <tr><th>Value of Y</th><th>Outcomes that give it</th><th>Pr(Y = y)</th></tr>
+          <tr><td class="lab"><span class="fdot red"></span> red</td><td>(R,R)</td><td>1/4 = 0.25</td></tr>
+          <tr><td class="lab"><span class="fdot pink"></span> pink</td><td>(R,W), (W,R)</td><td>2/4 = 0.50</td></tr>
+          <tr><td class="lab"><span class="fdot white"></span> white</td><td>(W,W)</td><td>1/4 = 0.25</td></tr>
+          <tr class="total"><td class="lab">Total</td><td>4 outcomes</td><td>1</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <p class="card-title">Run the experiment</p>
+      <p class="seg-label">Number of offspring plants grown</p>
+      <div class="seg" id="snapSeg">
+        <button class="pill" data-n="20" type="button">20</button>
+        <button class="pill active" data-n="200" type="button">200</button>
+        <button class="pill" data-n="2000" type="button">2,000</button>
+        <button class="pill" data-n="20000" type="button">20,000</button>
+      </div>
+      <div class="two-col">
+        <div>
+          <p class="table-title">Outcomes (hidden biology)</p>
+          <div class="table-wrap" id="snapOutcomeTable"></div>
+        </div>
+        <div>
+          <p class="table-title">Values of Y (what the student records)</p>
+          <div class="table-wrap" id="snapColourTable"></div>
+        </div>
+      </div>
+      <svg id="snapChart" class="chart" role="img" aria-label="Observed and theoretical proportions of flower colours" style="margin-top:22px;"></svg>
+      <div class="legend">
+        <span><span class="swatch" style="border:1.5px dashed var(--haze-dim);"></span>Theoretical</span>
+        <span><span class="swatch" style="background:var(--fl-pink);"></span>Observed</span>
+      </div>
+      <p class="note">Grow more plants and the observed proportions settle towards 1/4, 1/2, 1/4.</p>
+    </div>
+
+    <h2>Questions</h2>
+    <div class="context">In snapdragons, flower colour shows incomplete dominance: plants with two R alleles have red flowers, plants with two W alleles have white flowers, and plants with one of each have pink flowers. A student crosses two pink-flowered plants and grows the resulting seeds. Each offspring receives one allele at random from each parent.<br><br><em>For each question, work out the answer first and say which probability rule you used and why. Then reveal the answer.</em></div>
+    <div id="snapQuestions"></div>
+  </div>
+
+  <!-- ======================= CLASS HEIGHT ======================= -->
+  <div class="section" id="section-height">
+    <div class="card">
+      <p class="card-title">The experiment</p>
+      <p class="body">Assume a class has <strong>150 students</strong>, and each student&rsquo;s height has been measured to the nearest cm. One student is chosen at random &mdash; every student is equally likely to be picked &mdash; and their height is recorded.</p>
+    </div>
+
+    <div class="card">
+      <p class="card-title">The setup</p>
+      <div class="def-row"><span class="def-term">Observational unit</span><span class="def-body">One student</span></div>
+      <div class="def-row"><span class="def-term">Variable</span><span class="def-body">Height</span></div>
+      <div class="def-row"><span class="def-term">Data type</span><span class="def-body">Numerical (continuous) &mdash; height is a measurement; here it is recorded to the nearest cm</span></div>
+      <div class="def-row"><span class="def-term">Outcome space O</span><span class="def-body"><span class="m">{Student 1, Student 2, &hellip;, Student 150}</span><br>the 150 students in the class &mdash; 150 equally likely outcomes</span></div>
+      <div class="def-row"><span class="def-term">Random variable Y</span><span class="def-body">Y = the height (cm) of the chosen student<br><span class="m" id="ryExample"></span></span></div>
+      <div class="def-row"><span class="def-term">Measurement space</span><span class="def-body" id="measSpace"></span></div>
+    </div>
+
+    <div class="card">
+      <p class="card-title">The class: outcome space and random variable</p>
+      <p class="note" style="margin:0 0 18px;">Each tile is one <strong>outcome</strong> (a student). The large number is the <strong>value of Y</strong> for that outcome &mdash; the student&rsquo;s height in cm.</p>
+      <div id="classRoster"></div>
+      <div class="pick-row">
+        <button class="pill primary" id="pickBtn" type="button">Pick a student at random</button>
+        <span class="pick-readout" id="pickReadout"></span>
+      </div>
+      <p class="note">Every student has probability 1/150 of being chosen. So the probability of any event is simply <strong>the number of students in the event &divide; 150</strong>.</p>
+    </div>
+
+    <div class="card">
+      <p class="card-title">Summary of the class heights</p>
+      <div class="table-wrap" id="classSummaryTable"></div>
+    </div>
+
+    <div class="card">
+      <p class="card-title">Frequency distribution of Y</p>
+      <span class="binwidth">Bin width = 10 cm</span>
+      <div class="table-wrap" id="classFreqTable"></div>
+      <p class="note">Each interval includes its lower boundary but not its upper one: for example, <span class="m">150 &ndash; 160</span> means 150 &le; height &lt; 160.</p>
+      <svg id="classFreqChart" class="chart" role="img" aria-label="Histogram of class heights with bin width 10 cm" style="margin-top:20px;"></svg>
+      <p class="note">Because every student is equally likely to be chosen, the <strong>relative frequency</strong> of an interval is exactly the probability that Y falls in it.</p>
+    </div>
+
+    <h2>Questions</h2>
+    <div class="context">Assume a class has 150 students whose heights are summarised in the frequency distribution table above (bin width 10 cm). A student is chosen at random, so every student is equally likely to be picked. <strong>Use only the frequency table to answer these questions.</strong><br><br><em>For each question, work out the answer first and say which probability rule you used and why. Then reveal the answer.</em></div>
+    <div id="heightQuestions"></div>
+  </div>
+</div>
+
+<script>
+/* ---------- theme toggle (shares the site's stored preference) ---------- */
+(function(){
+  var root = document.documentElement;
+  var btn  = document.getElementById('themeToggle');
+  function current(){ return root.getAttribute('data-theme') === 'light' ? 'light' : 'dark'; }
+  function sync(){
+    var t = current();
+    btn.setAttribute('aria-pressed', t === 'light' ? 'true' : 'false');
+    document.getElementById('tmode').textContent = t === 'light' ? 'Light' : 'Dark';
+  }
+  sync();
+  btn.addEventListener('click', function(){
+    var t = current() === 'light' ? 'dark' : 'light';
+    root.setAttribute('data-theme', t);
+    try{ localStorage.setItem('theme', t); }catch(e){}
+    sync();
+  });
+})();
+
+/* ======================= helpers ======================= */
+const NS = 'http://www.w3.org/2000/svg';
+const MONO = "'JetBrains Mono', monospace";
+
+function el(tag, attrs, text) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) {
+    if (attrs[k] !== undefined && attrs[k] !== null) e.setAttribute(k, attrs[k]);
+  }
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+function newSvg(container) {
+  const s = document.createElementNS(NS, 'svg');
+  s.setAttribute('class', 'chart');
+  container.appendChild(s);
+  return s;
+}
+function fSim(x) { return x < 0.01 ? x.toFixed(4) : x.toFixed(3); }
+function f2(x) { return x.toFixed(2); }
+function f3(x) { return x.toFixed(3); }
+
+// on narrow screens the SVGs are scaled down a long way, so chart type is sized
+// up in user units to keep axis labels legible on a phone
+function chartScale() {
+  const small = window.innerWidth < 560;
+  return { small, FS: small ? 17 : 11 };
+}
+
+function colourOf(a1, a2) {
+  const n = (a1 === 'R') + (a2 === 'R');
+  return n === 2 ? 'red' : n === 1 ? 'pink' : 'white';
+}
+function randAllele() { return Math.random() < 0.5 ? 'R' : 'W'; }
+function alleleBadge(a) { return `<span class="allele ${a === 'R' ? 'aR' : 'aW'}">${a}</span>`; }
+const FLOWER_FILL = { red: 'var(--fl-red)', pink: 'var(--fl-pink)', white: 'var(--fl-white)' };
+
+/* ======================= the class ======================= */
+/* 150 recorded heights (cm) */
+const CLASS = [179, 184, 164, 162, 172, 164, 178, 161, 177, 173, 174, 184, 149, 183, 168, 176, 191, 169, 185, 172, 176, 158, 178, 160, 175, 173, 167, 178, 180, 156, 182, 168, 176, 159, 163, 170, 178, 170, 164, 172, 162, 160, 157, 156, 157, 173, 155, 160, 168, 159, 162, 160, 177, 171, 166, 180, 181, 190, 181, 192, 145, 171, 175, 187, 184, 167, 167, 175, 187, 163, 173, 161, 174, 173, 168, 157, 171, 168, 169, 187, 168, 186, 179, 176, 170, 159, 168, 168, 169, 168, 195, 182, 167, 179, 185, 171, 172, 178, 167, 149, 192, 158, 174, 164, 165, 178, 171, 188, 149, 162, 175, 194, 151, 180, 179, 175, 174, 168, 168, 161, 155, 171, 177, 155, 183, 176, 171, 169, 185, 172, 172, 174, 166, 158, 163, 165, 184, 182, 171, 166, 177, 181, 155, 160, 182, 145, 157, 169, 149, 156];
+const N_CLASS = CLASS.length;
+function countClass(fn) { return CLASS.filter(fn).length; }
+function randIdx() { return Math.floor(Math.random() * N_CLASS); }
+
+/* frequency distribution, bin width 10 cm: [lower, upper) */
+const EDGES = [140, 150, 160, 170, 180, 190, 200];
+const FREQ = EDGES.slice(0, -1).map((lo, i) => countClass(v => v >= lo && v < EDGES[i + 1]));
+function binLabel(i) { return `${EDGES[i]} – ${EDGES[i + 1]}`; }
+function sumBins(idx) { return idx.reduce((s, i) => s + FREQ[i], 0); }
+
+/* ======================= simulation data for answer checks ======================= */
+const SIM_N = 10000;
+const sim = { p1: [], p2: [], col: [], col2: [], one: [], two: [] };
+for (let i = 0; i < SIM_N; i++) {
+  const a = randAllele(), b = randAllele();
+  sim.p1.push(a); sim.p2.push(b); sim.col.push(colourOf(a, b));
+  sim.col2.push(colourOf(randAllele(), randAllele()));
+  sim.one.push(CLASS[randIdx()]);
+  const s1 = randIdx();
+  let s2 = randIdx();
+  while (s2 === s1) s2 = randIdx();
+  sim.two.push([CLASS[s1], CLASS[s2]]);
+}
+function simMean(fn) { let c = 0; for (let i = 0; i < SIM_N; i++) if (fn(i)) c++; return c / SIM_N; }
+function simLine(text) { return `<p class="simcheck">Simulation check (${SIM_N.toLocaleString()} repetitions): ${text}</p>`; }
+
+/* ======================= Punnett grid ======================= */
+function punnettHTML(mark, legend) {
+  let h = '<div class="pgrid"><div></div>';
+  ['R', 'W'].forEach(a => { h += `<div class="phead">${alleleBadge(a)}</div>`; });
+  ['R', 'W'].forEach(a1 => {
+    h += `<div class="phead">${alleleBadge(a1)}</div>`;
+    ['R', 'W'].forEach(a2 => {
+      const c = colourOf(a1, a2);
+      const m = mark ? mark(a1, a2) : null;
+      const cls = m && m.cls ? m.cls : '';
+      const tags = m && m.tags ? m.tags.map(t => `<span class="ptag">${t}</span>`).join('') : '';
+      h += `<div class="pcell ${c} ${cls}"><span class="ppair">(${a1}, ${a2})</span><span class="py"><span class="fdot ${c}"></span>Y = ${c}</span>${tags}</div>`;
+    });
+  });
+  h += '</div><p class="pcap">Rows: allele from parent 1 &nbsp;&middot;&nbsp; Columns: allele from parent 2</p>';
+  if (legend) h += `<div class="plegend">${legend}</div>`;
+  return h;
+}
+
+/* ======================= charts ======================= */
+function groupedBars(svg, labels, series, opts) {
+  const { small, FS } = chartScale();
+  const W = 560, H = small ? 280 : 240;
+  const ML = small ? 62 : 48, MR = 14, MT = small ? 28 : 22, MB = small ? 60 : 44;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.innerHTML = '';
+  const plotW = W - ML - MR, plotH = H - MT - MB, base = MT + plotH;
+  const yMax = opts.yMax;
+  const y = v => MT + plotH - (v / yMax) * plotH;
+
+  const ticks = opts.ticks || 4;
+  for (let i = 0; i <= ticks; i++) {
+    const v = yMax * i / ticks;
+    svg.appendChild(el('line', { x1: ML, x2: W - MR, y1: y(v), y2: y(v), stroke: 'var(--line-2)', 'stroke-width': 1 }));
+    svg.appendChild(el('text', { x: ML - 10, y: y(v) + FS * 0.35, 'text-anchor': 'end', 'font-size': FS, 'letter-spacing': '.04em', 'font-family': MONO, fill: 'var(--mute)' }, v.toFixed(2)));
+  }
+
+  const groupW = plotW / labels.length;
+  const inner = groupW * 0.72;
+  const barW = inner / series.length;
+  labels.forEach((lab, i) => {
+    const gx = ML + i * groupW + (groupW - inner) / 2;
+    series.forEach((s, j) => {
+      const v = s.values[i];
+      const bx = gx + j * barW;
+      const by = y(v);
+      svg.appendChild(el('rect', {
+        x: bx + 3, y: by, width: Math.max(barW - 6, 1), height: base - by, rx: 2,
+        fill: s.fill(i), stroke: s.stroke(i), 'stroke-width': s.dash ? 1.4 : 1,
+        'stroke-dasharray': s.dash ? '4,3' : null
+      }));
+      svg.appendChild(el('text', { x: bx + barW / 2, y: by - 8, 'text-anchor': 'middle', 'font-size': FS - 0.5, 'letter-spacing': '.04em', 'font-family': MONO, fill: 'var(--haze-dim)' }, opts.fmt(v)));
+    });
+    svg.appendChild(el('text', { x: ML + i * groupW + groupW / 2, y: base + FS + 9, 'text-anchor': 'middle', 'font-size': FS + 1, 'letter-spacing': '.04em', 'font-family': MONO, fill: 'var(--haze-dim)' }, lab));
+  });
+  svg.appendChild(el('line', { x1: ML, x2: W - MR, y1: base, y2: base, stroke: 'var(--haze-dim)', 'stroke-width': 1.4 }));
+  if (opts.xTitle) svg.appendChild(el('text', { x: (ML + W - MR) / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': FS - 1, 'letter-spacing': '.14em', 'font-family': MONO, fill: 'var(--mute-2)' }, opts.xTitle));
+}
+
+function histPlot(svg, mark) {
+  const { small, FS } = chartScale();
+  const W = 560, H = small ? 290 : 250;
+  const ML = small ? 60 : 50, MR = 14, MT = small ? 26 : 22, MB = small ? 62 : 48;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.innerHTML = '';
+  const plotW = W - ML - MR, plotH = H - MT - MB, base = MT + plotH;
+  const xmin = EDGES[0], xmax = EDGES[EDGES.length - 1];
+  const yMax = Math.ceil(Math.max(...FREQ) * 1.2 / 10) * 10;
+  const x = v => ML + ((v - xmin) / (xmax - xmin)) * plotW;
+  const y = v => MT + plotH - (v / yMax) * plotH;
+
+  for (let v = 0; v <= yMax; v += 10) {
+    svg.appendChild(el('line', { x1: ML, x2: W - MR, y1: y(v), y2: y(v), stroke: 'var(--line-2)', 'stroke-width': 1 }));
+    svg.appendChild(el('text', { x: ML - 10, y: y(v) + FS * 0.35, 'text-anchor': 'end', 'font-size': FS, 'letter-spacing': '.04em', 'font-family': MONO, fill: 'var(--mute)' }, v));
+  }
+  // A = amber, B = steel, AB (inside A) = solid amber, everything else dimmed
+  const STYLE = {
+    none: { fill: 'var(--amber-soft)', stroke: 'var(--amber)', w: 1.2, text: 'var(--amber)' },
+    A:    { fill: 'var(--amber-soft)', stroke: 'var(--amber)', w: 2.2, text: 'var(--amber)' },
+    B:    { fill: 'var(--steel-soft)', stroke: 'var(--steel)', w: 2.2, text: 'var(--haze-dim)' },
+    AB:   { fill: 'var(--amber)',      stroke: 'var(--amber)', w: 2.2, text: 'var(--amber)' },
+    dim:  { fill: 'none',              stroke: 'var(--line-2)', w: 1, text: 'var(--mute)' }
+  };
+  FREQ.forEach((f, i) => {
+    const key = mark ? (mark(i) || 'dim') : 'none';
+    const st = STYLE[key];
+    svg.appendChild(el('rect', { x: x(EDGES[i]) + 1, y: y(f), width: x(EDGES[i + 1]) - x(EDGES[i]) - 2, height: base - y(f), rx: 2, fill: st.fill, stroke: st.stroke, 'stroke-width': st.w }));
+    svg.appendChild(el('text', { x: (x(EDGES[i]) + x(EDGES[i + 1])) / 2, y: y(f) - 8, 'text-anchor': 'middle', 'font-size': FS + 0.5, 'font-family': MONO, 'font-weight': 500, fill: st.text }, f));
+  });
+  svg.appendChild(el('line', { x1: ML, x2: W - MR, y1: base, y2: base, stroke: 'var(--haze-dim)', 'stroke-width': 1.4 }));
+  EDGES.forEach(v => {
+    svg.appendChild(el('line', { x1: x(v), x2: x(v), y1: base, y2: base + 4, stroke: 'var(--haze-dim)', 'stroke-width': 1 }));
+    svg.appendChild(el('text', { x: x(v), y: base + FS + 8, 'text-anchor': 'middle', 'font-size': FS, 'letter-spacing': '.04em', 'font-family': MONO, fill: 'var(--mute)' }, v));
+  });
+  svg.appendChild(el('text', { x: (ML + W - MR) / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': FS - 1, 'letter-spacing': '.14em', 'font-family': MONO, fill: 'var(--mute-2)' }, 'HEIGHT (CM) · BIN WIDTH 10 CM'));
+  svg.appendChild(el('text', { x: 12, y: MT + plotH / 2, 'text-anchor': 'middle', 'font-size': FS - 1, 'letter-spacing': '.14em', 'font-family': MONO, fill: 'var(--mute-2)', transform: `rotate(-90 12 ${MT + plotH / 2})` }, 'FREQUENCY'));
+}
+
+/* ======================= tables used by questions ======================= */
+function twoPlantTable(revealed) {
+  const w = { red: 1, pink: 2, white: 1 };
+  const lab = { red: '1/4', pink: '1/2', white: '1/4' };
+  let h = '<p class="table-title">Two plants: colour of plant 1 (rows) and plant 2 (columns)</p><div class="table-wrap"><table class="data grid"><tr><th class="lab"></th>';
+  ['red', 'pink', 'white'].forEach(c => { h += `<th><span class="fdot ${c}"></span> ${c} (${lab[c]})</th>`; });
+  h += '</tr>';
+  ['red', 'pink', 'white'].forEach(r => {
+    h += `<tr><td class="lab"><span class="fdot ${r}"></span> ${r} (${lab[r]})</td>`;
+    ['red', 'pink', 'white'].forEach(c => {
+      const isHl = revealed && r === 'red' && c === 'red';
+      h += `<td class="${isHl ? 'hl' : ''}">${revealed ? `${w[r] * w[c]}/16` : '?'}</td>`;
+    });
+    h += '</tr>';
+  });
+  h += '</table></div>';
+  return h;
+}
+
+/* ======================= answer builder ======================= */
+// events: [['A', 'description'], ...]
+// deriv:  a list of { part: 'label' } headers and { l, r, w, res } rows.
+//         Each part is one grid, so the = signs line up down the derivation.
+function derivHTML(deriv) {
+  let h = '<div class="deriv">';
+  let open = false;
+  const close = () => { if (open) { h += '</div>'; open = false; } };
+  deriv.forEach(d => {
+    if (d.part !== undefined) {
+      close();
+      h += `<p class="d-part">${d.part}</p>`;
+      return;
+    }
+    if (!open) { h += '<div class="d-grid">'; open = true; }
+    h += `<span class="d-l">${d.l || ''}</span><span class="d-r${d.res ? ' res' : ''}">${d.r}</span><span class="d-w">${d.w || ''}</span>`;
+  });
+  close();
+  return h + '</div>';
+}
+function answerHTML(o) {
+  const ev = o.events.map(([k, t]) => `<span class="ev"><b>${k}</b><span>${t}</span></span>`).join('');
+  return `<span class="badge ${o.cls}">${o.badge}</span>` +
+    `<p class="events">${ev}</p>` +
+    o.work.map(l => `<p class="work">${l}</p>`).join('') +
+    derivHTML(o.deriv) + simLine(o.sim);
+}
+
+/* ======================= snapdragon questions ======================= */
+const SNAP_QS = [
+  {
+    id: 'Question 1',
+    text: 'One offspring plant is chosen at random. What is the probability that its flowers are either red or white?',
+    visual: (c, rev) => {
+      c.innerHTML = punnettHTML(rev ? (a1, a2) => {
+        const col = colourOf(a1, a2);
+        return (col === 'red' || col === 'white') ? { cls: 'hl' } : { cls: 'dim' };
+      } : null);
+    },
+    answer: c => {
+      const s = simMean(i => sim.col[i] === 'red' || sim.col[i] === 'white');
+      c.innerHTML = answerHTML({
+        badge: 'Mutually exclusive', cls: 'me',
+        events: [['A', 'the plant has red flowers'], ['B', 'the plant has white flowers']],
+        work: ['A plant can’t be both red and white — no cell in the grid is both. So A and B are <strong>mutually exclusive</strong>, and the overlap term in the addition rule drops out.'],
+        deriv: [
+          { l: 'Pr(A or B)', r: '= Pr(A ∪ B)' },
+          { r: '= Pr(A) + Pr(B) − Pr(A ∩ B)', w: 'general addition rule' },
+          { r: '= Pr(A) + Pr(B)', w: 'mutually exclusive, so Pr(A ∩ B) = 0' },
+          { r: '= 1/4 + 1/4', w: 'one outcome each, out of four' },
+          { r: '= 1/2 = 0.5', res: true }
+        ],
+        sim: fSim(s)
+      });
+    }
+  },
+  {
+    id: 'Question 2',
+    text: 'Two offspring plants, grown from different seeds, are chosen at random. What is the probability that both plants have red flowers?',
+    visual: (c, rev) => { c.innerHTML = twoPlantTable(rev); },
+    answer: c => {
+      const s = simMean(i => sim.col[i] === 'red' && sim.col2[i] === 'red');
+      c.innerHTML = answerHTML({
+        badge: 'Independent', cls: 'indep',
+        events: [['A', 'plant 1 has red flowers'], ['B', 'plant 2 has red flowers']],
+        work: ['Different seeds come from separate fertilisations, so one plant’s colour tells us nothing about the other’s. A and B are <strong>independent</strong>, so the multiplication rule applies. The table shows every combination of colours for the two plants; the highlighted cell is the one we want.'],
+        deriv: [
+          { l: 'Pr(A and B)', r: '= Pr(A ∩ B)' },
+          { r: '= Pr(A) × Pr(B)', w: 'multiplication rule, since A and B are independent' },
+          { r: '= 1/4 × 1/4' },
+          { r: '= 1/16 = 0.0625', res: true }
+        ],
+        sim: fSim(s)
+      });
+    }
+  },
+  {
+    id: 'Question 3',
+    text: 'One offspring plant is chosen at random.<span class="qpart">(a) What is the probability that it received an R allele from the first parent <em>and</em> has red flowers?</span><span class="qpart">(b) What is the probability that it received an R allele from the first parent, <em>or</em> has red flowers, or both?</span><span class="qpart">(c) If you were told that the plant received an R allele from the first parent, would that change how likely you think it is to have red flowers? Explain.</span>',
+    visual: (c, rev) => {
+      c.innerHTML = punnettHTML(rev ? (a1, a2) => {
+        const inA = a1 === 'R';
+        const inB = colourOf(a1, a2) === 'red';
+        if (!inA && !inB) return { cls: 'dim' };
+        return { cls: inA ? 'hlA' : '', tags: inB ? ['red'] : [] };
+      } : null, rev ? '<span><span class="lg-box" style="box-shadow: inset 0 0 0 2px var(--amber);"></span>A · received R from parent 1 (top row)</span><span><span class="lg-box" style="background:var(--steel);"></span>B · red flowers</span>' : null);
+    },
+    answer: c => {
+      const sA = simMean(i => sim.p1[i] === 'R' && sim.col[i] === 'red');
+      const sB = simMean(i => sim.p1[i] === 'R' || sim.col[i] === 'red');
+      const nR = sim.p1.filter(a => a === 'R').length;
+      let redGivenR = 0;
+      for (let i = 0; i < SIM_N; i++) if (sim.p1[i] === 'R' && sim.col[i] === 'red') redGivenR++;
+      c.innerHTML = answerHTML({
+        badge: 'Neither', cls: 'neither',
+        events: [['A', 'the plant received an R allele from parent 1'], ['B', 'the plant has red flowers']],
+        work: [
+          '<strong>(a)</strong> Only the outcome (R,R) is in both events, so A and B can happen together: they are <strong>not mutually exclusive</strong>.',
+          '<strong>(b)</strong> Adding Pr(A) and Pr(B) would count (R,R) twice, so the general addition rule subtracts the overlap once. In the grid, A ∪ B is just the top row, which already contains the red cell.',
+          '<strong>(c)</strong> Yes. Knowing A leaves only the top row, where 1 of the 2 cells is red, so the chance of red rises from 1/4 to 1/2. One event changes the probability of the other, so they are <strong>not independent</strong>.'
+        ],
+        deriv: [
+          { part: 'From the grid' },
+          { l: 'Pr(A)', r: '= Pr{(R,R), (R,W)} = 2/4 = 1/2' },
+          { l: 'Pr(B)', r: '= Pr{(R,R)} = 1/4' },
+          { part: 'Part (a)' },
+          { l: 'Pr(A and B)', r: '= Pr(A ∩ B)' },
+          { r: '= Pr{(R,R)}', w: 'the only outcome in both' },
+          { r: '= 1/4 = 0.25', res: true },
+          { part: 'Part (b)' },
+          { l: 'Pr(A or B)', r: '= Pr(A ∪ B)' },
+          { r: '= Pr(A) + Pr(B) − Pr(A ∩ B)', w: 'general addition rule' },
+          { r: '= 1/2 + 1/4 − 1/4', w: 'subtract the overlap (R,R) once' },
+          { r: '= 1/2 = 0.5', res: true },
+          { part: 'Part (c)' },
+          { l: 'Pr(B | A)', r: '= Pr(A ∩ B) / Pr(A)', w: 'conditional probability' },
+          { r: '= (1/4) / (1/2)' },
+          { r: '= 1/2', res: true, w: 'compared with Pr(B) = 1/4 without the information' },
+          { l: 'Pr(A) × Pr(B)', r: '= 1/2 × 1/4 = 1/8', w: 'independence check' },
+          { r: '≠ Pr(A ∩ B) = 1/4', res: true, w: 'so A and B are dependent' }
+        ],
+        sim: `(a) ${fSim(sA)} &nbsp;(b) ${fSim(sB)} &nbsp;(c) red among plants that got R from parent 1: ${fSim(redGivenR / nR)}`
+      });
+    }
+  }
+];
+
+/* ======================= class height questions (frequency table only) ======================= */
+function addAnswerPlot(c, mark, legend) {
+  const d = document.createElement('div');
+  d.className = 'ans-plot';
+  histPlot(newSvg(d), mark);
+  if (legend) {
+    const lg = document.createElement('div');
+    lg.className = 'plegend';
+    lg.innerHTML = legend;
+    d.appendChild(lg);
+  }
+  // the plot sits between the badge/events and the working
+  c.insertBefore(d, c.querySelector('.work'));
+}
+const LGH = {
+  a180:   '<span><span class="lg-box" style="background:var(--amber-soft); border:2px solid var(--amber);"></span>at least 180 cm</span>',
+  u160:   '<span><span class="lg-box" style="background:var(--steel-soft); border:2px solid var(--steel);"></span>shorter than 160 cm</span>',
+  a170:   '<span><span class="lg-box" style="background:var(--amber-soft); border:2px solid var(--amber);"></span>at least 170 cm (but under 180)</span>',
+  both:   '<span><span class="lg-box" style="background:var(--amber); border:2px solid var(--amber);"></span>at least 180 cm (so also at least 170)</span>',
+  not180: '<span><span class="lg-box" style="background:var(--steel-soft); border:2px solid var(--steel);"></span>under 180 cm</span>'
+};
+function stepsTable(rows) {
+  let h = '<div class="table-wrap"><table class="data"><tr><th>Step</th><th>Students of that kind left</th><th>Students left</th><th>Probability</th></tr>';
+  rows.forEach(r => { h += `<tr${r.total ? ' class="total"' : ''}><td class="lab">${r.step}</td><td>${r.a}</td><td>${r.b}</td><td>${r.p}</td></tr>`; });
+  return h + '</table></div>';
+}
+
+const I180 = [4, 5], I160 = [0, 1], I170 = [3, 4, 5];
+const k180 = sumBins(I180), k160 = sumBins(I160), k170 = sumBins(I170);
+const kUnder180 = N_CLASS - k180;
+const N = N_CLASS;
+
+const HEIGHT_QS = [
+  {
+    id: 'Question 4',
+    text: 'A student is chosen at random. What is the probability that the student is at least 180 cm tall?',
+    visual: () => {},
+    answer: c => {
+      const s = simMean(i => sim.one[i] >= 180);
+      c.innerHTML = answerHTML({
+        badge: 'Relative frequency', cls: 'other',
+        events: [['A', 'the student is at least 180 cm tall, that is Y ≥ 180']],
+        work: ['Every student is equally likely to be chosen, so the probability of any interval is its frequency divided by 150. “At least 180 cm” covers two bins of the table, and a student can only fall in one bin, so their probabilities add.'],
+        deriv: [
+          { l: 'Pr(A)', r: '= Pr(Y ≥ 180)' },
+          { r: '= Pr(180 ≤ Y < 190) + Pr(190 ≤ Y < 200)', w: 'the bins don’t overlap, so add' },
+          { r: `= ${FREQ[4]}/150 + ${FREQ[5]}/150`, w: 'frequency ÷ 150 for each bin' },
+          { r: `= ${k180}/150 = ${f2(k180 / N)}`, res: true }
+        ],
+        sim: fSim(s)
+      });
+      addAnswerPlot(c, i => (I180.includes(i) ? 'A' : null), LGH.a180);
+    }
+  },
+  {
+    id: 'Question 5',
+    text: 'A student is chosen at random. What is the probability that the student is either shorter than 160 cm or at least 180 cm tall?',
+    visual: () => {},
+    answer: c => {
+      const s = simMean(i => sim.one[i] < 160 || sim.one[i] >= 180);
+      c.innerHTML = answerHTML({
+        badge: 'Mutually exclusive', cls: 'me',
+        events: [['A', 'the student is shorter than 160 cm, that is Y < 160'], ['B', 'the student is at least 180 cm tall, that is Y ≥ 180']],
+        work: ['No student can be both shorter than 160 cm and at least 180 cm tall — the two groups of bars don’t overlap. So A and B are <strong>mutually exclusive</strong>, and the overlap term drops out.'],
+        deriv: [
+          { l: 'Pr(A or B)', r: '= Pr(A ∪ B)' },
+          { r: '= Pr(A) + Pr(B) − Pr(A ∩ B)', w: 'general addition rule' },
+          { r: '= Pr(A) + Pr(B)', w: 'mutually exclusive, so Pr(A ∩ B) = 0' },
+          { r: `= ${k160}/150 + ${k180}/150`, w: `Pr(A) = (${FREQ[0]} + ${FREQ[1]})/150 and Pr(B) = (${FREQ[4]} + ${FREQ[5]})/150` },
+          { r: `= ${k160 + k180}/150 = ${f2((k160 + k180) / N)}`, res: true }
+        ],
+        sim: fSim(s)
+      });
+      addAnswerPlot(c, i => (I160.includes(i) ? 'B' : I180.includes(i) ? 'A' : null), LGH.u160 + LGH.a180);
+    }
+  },
+  {
+    id: 'Question 6',
+    text: `<span class="qpart" style="margin-top:0">(a) A student is chosen at random. What is the probability that the student is both at least 170 cm tall and at least 180 cm tall?</span><span class="qpart">(b) A classmate calculates the answer to (a) as ${f2(k170 / N)} &times; ${f2(k180 / N)}. Explain why this is wrong.</span>`,
+    visual: () => {},
+    answer: c => {
+      const s = simMean(i => sim.one[i] >= 170 && sim.one[i] >= 180);
+      c.innerHTML = answerHTML({
+        badge: 'Neither', cls: 'neither',
+        events: [['A', 'the student is at least 170 cm tall, that is Y ≥ 170'], ['B', 'the student is at least 180 cm tall, that is Y ≥ 180']],
+        work: [
+          '<strong>(a)</strong> Every student who is at least 180 cm tall is automatically at least 170 cm tall, so B sits entirely inside A — the solid amber bars are part of the larger group. “Both” is therefore the same as B.',
+          '<strong>(b)</strong> Multiplying probabilities only works for <strong>independent</strong> events. Here, knowing B makes A <em>certain</em>, so the events are dependent. They can happen together, so they are not mutually exclusive either.'
+        ],
+        deriv: [
+          { part: 'Part (a)' },
+          { l: 'Pr(A and B)', r: '= Pr(A ∩ B)' },
+          { r: '= Pr(B)', w: 'B ⊆ A, so A ∩ B = B' },
+          { r: `= ${k180}/150 = ${f2(k180 / N)}`, res: true },
+          { part: 'Part (b)' },
+          { l: 'Pr(A) × Pr(B)', r: `= ${k170}/150 × ${k180}/150`, w: 'the classmate’s calculation' },
+          { r: `= ${f2(k170 / N)} × ${f2(k180 / N)} = ${f3(k170 / N * k180 / N)}` },
+          { r: `≠ Pr(A ∩ B) = ${f2(k180 / N)}`, res: true, w: 'the multiplication rule fails, so A and B are not independent' },
+          { l: 'Pr(A | B)', r: '= Pr(A ∩ B) / Pr(B)', w: 'conditional probability' },
+          { r: `= ${f2(k180 / N)} / ${f2(k180 / N)} = 1`, res: true, w: 'knowing B makes A certain' }
+        ],
+        sim: fSim(s)
+      });
+      addAnswerPlot(c, i => (I180.includes(i) ? 'AB' : i === 3 ? 'A' : null), LGH.a170 + LGH.both);
+    }
+  },
+  {
+    id: 'Question 7',
+    text: 'Two different students are chosen at random, one after the other (the same student can&rsquo;t be chosen twice). What is the probability that both of them are at least 180 cm tall?',
+    visual: () => {},
+    answer: c => {
+      const s = simMean(i => sim.two[i][0] >= 180 && sim.two[i][1] >= 180);
+      const exact = (k180 / N) * ((k180 - 1) / (N - 1));
+      c.innerHTML = answerHTML({
+        badge: 'Neither (dependent)', cls: 'neither',
+        events: [['A', 'the 1st student is at least 180 cm tall'], ['B', 'the 2nd student is at least 180 cm tall']],
+        work: [
+          'Both students can be tall, so A and B are <strong>not mutually exclusive</strong>.',
+          `They are also <strong>not independent</strong>: once a student who is at least 180 cm has been chosen, one fewer is left for the second pick, so the second factor is a conditional probability. From the frequency table, ${k180} students are at least 180 cm. Work one pick at a time:`,
+          stepsTable([
+            { step: '1st student is at least 180 cm', a: k180, b: N, p: `${k180}/${N} = ${f3(k180 / N)}` },
+            { step: '2nd student is at least 180 cm (given the 1st was)', a: k180 - 1, b: N - 1, p: `${k180 - 1}/${N - 1} = ${f3((k180 - 1) / (N - 1))}` },
+            { step: 'Both (multiply)', a: '', b: '', p: f3(exact), total: true }
+          ]),
+          `The second probability drops from ${f3(k180 / N)} to ${f3((k180 - 1) / (N - 1))}. With 150 students the change is small, but it is there, and that is what makes the picks dependent.`
+        ],
+        deriv: [
+          { l: 'Pr(A and B)', r: '= Pr(A ∩ B)' },
+          { r: '= Pr(A) × Pr(B | A)', w: 'general multiplication rule' },
+          { r: `= ${k180}/${N} × ${k180 - 1}/${N - 1}`, w: 'one tall student fewer for the 2nd pick' },
+          { r: `= ${f3(exact)}`, res: true }
+        ],
+        sim: fSim(s)
+      });
+      addAnswerPlot(c, i => (I180.includes(i) ? 'A' : null), LGH.a180);
+    }
+  },
+  {
+    id: 'Question 8',
+    text: 'Two different students are chosen at random. What is the probability that at least one of them is at least 180 cm tall?',
+    visual: () => {},
+    answer: c => {
+      const s = simMean(i => sim.two[i][0] >= 180 || sim.two[i][1] >= 180);
+      const neither = (kUnder180 / N) * ((kUnder180 - 1) / (N - 1));
+      const both = (k180 / N) * ((k180 - 1) / (N - 1));
+      c.innerHTML = answerHTML({
+        badge: 'Complement rule', cls: 'other',
+        events: [['A', 'the 1st student is at least 180 cm tall'], ['B', 'the 2nd student is at least 180 cm tall']],
+        work: [
+          '“At least one” means A ∪ B, which covers three cases: only the 1st, only the 2nd, or both. It’s easier to work out the opposite — <strong>neither</strong> student is at least 180 cm, which is Aᶜ ∩ Bᶜ — and subtract from 1.',
+          `From the frequency table, ${kUnder180} students are under 180 cm (${FREQ.slice(0, 4).join(' + ')}):`,
+          stepsTable([
+            { step: '1st student is under 180 cm', a: kUnder180, b: N, p: `${kUnder180}/${N} = ${f3(kUnder180 / N)}` },
+            { step: '2nd student is under 180 cm (given the 1st was)', a: kUnder180 - 1, b: N - 1, p: `${kUnder180 - 1}/${N - 1} = ${f3((kUnder180 - 1) / (N - 1))}` },
+            { step: 'Neither is at least 180 cm (multiply)', a: '', b: '', p: f3(neither), total: true }
+          ])
+        ],
+        deriv: [
+          { l: 'Pr(A or B)', r: '= Pr(A ∪ B)' },
+          { r: '= 1 − Pr(Aᶜ ∩ Bᶜ)', w: 'complement rule: it fails only if neither student is tall' },
+          { r: '= 1 − Pr(Aᶜ) × Pr(Bᶜ | Aᶜ)', w: 'general multiplication rule' },
+          { r: `= 1 − ${kUnder180}/${N} × ${kUnder180 - 1}/${N - 1}` },
+          { r: `= 1 − ${f3(neither)} = ${f3(1 - neither)}`, res: true },
+          { part: 'Check with the general addition rule' },
+          { l: 'Pr(A ∪ B)', r: '= Pr(A) + Pr(B) − Pr(A ∩ B)', w: 'general addition rule' },
+          { r: `= ${k180}/${N} + ${k180}/${N} − ${f3(both)}`, w: `Pr(B) = ${k180}/${N}, since on its own the 2nd pick is equally likely to be any student; Pr(A ∩ B) comes from Question 7` },
+          { r: `= ${f3(2 * k180 / N)} − ${f3(both)} = ${f3(2 * k180 / N - both)}`, res: true, w: 'the same answer ✓' }
+        ],
+        sim: fSim(s)
+      });
+      addAnswerPlot(c, i => (I180.includes(i) ? 'A' : 'B'), LGH.not180 + LGH.a180);
+    }
+  }
+];
+
+/* ======================= question rendering ======================= */
+function renderQuestions(containerId, qs) {
+  const wrap = document.getElementById(containerId);
+  qs.forEach(q => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `<p class="qkicker">${q.id}</p><p class="qtext">${q.text}</p><div class="qvisual"></div><button class="pill primary" type="button">Show answer</button><div class="answer"></div>`;
+    wrap.appendChild(card);
+    const vis = card.querySelector('.qvisual');
+    const ans = card.querySelector('.answer');
+    const btn = card.querySelector('.pill');
+    let revealed = false;
+    q.visual(vis, false);
+    if (!vis.innerHTML) vis.style.display = 'none';
+    btn.addEventListener('click', () => {
+      revealed = !revealed;
+      vis.innerHTML = '';
+      q.visual(vis, revealed);
+      if (revealed) {
+        ans.innerHTML = '';
+        q.answer(ans);
+        ans.classList.add('shown');
+        btn.textContent = 'Hide answer';
+      } else {
+        ans.classList.remove('shown');
+        ans.innerHTML = '';
+        btn.textContent = 'Show answer';
+      }
+    });
+  });
+}
+
+/* ======================= snapdragon simulation card ======================= */
+const SNAP_THEORY = { red: 0.25, pink: 0.5, white: 0.25 };
+const SNAP_COLS = ['red', 'pink', 'white'];
+let snapObserved = null; // kept so a resize can redraw without re-sampling
+
+function drawSnapChart() {
+  if (!snapObserved) return;
+  groupedBars(document.getElementById('snapChart'), SNAP_COLS, [
+    { values: SNAP_COLS.map(c => SNAP_THEORY[c]), fill: () => 'none', stroke: () => 'var(--haze-dim)', dash: true },
+    { values: SNAP_COLS.map(c => snapObserved[c]), fill: i => FLOWER_FILL[SNAP_COLS[i]], stroke: () => 'var(--mute)' }
+  ], { yMax: 0.75, ticks: 3, fmt: v => v.toFixed(2), xTitle: 'Y = FLOWER COLOUR' });
+}
+
+function renderSnapGrow(n) {
+  const outcomeCounts = { '(R,R)': 0, '(R,W)': 0, '(W,R)': 0, '(W,W)': 0 };
+  const colourCounts = { red: 0, pink: 0, white: 0 };
+  for (let i = 0; i < n; i++) {
+    const a = randAllele(), b = randAllele();
+    outcomeCounts[`(${a},${b})`]++;
+    colourCounts[colourOf(a, b)]++;
+  }
+  let t1 = '<table class="data"><tr><th>Outcome</th><th>Count</th><th>Proportion</th></tr>';
+  Object.keys(outcomeCounts).forEach(k => {
+    t1 += `<tr><td>${k}</td><td>${outcomeCounts[k].toLocaleString()}</td><td>${(outcomeCounts[k] / n).toFixed(3)}</td></tr>`;
+  });
+  t1 += `<tr class="total"><td class="lab">Total</td><td>${n.toLocaleString()}</td><td>1</td></tr></table>`;
+  document.getElementById('snapOutcomeTable').innerHTML = t1;
+
+  let t2 = '<table class="data"><tr><th>Y</th><th>Count</th><th>Observed</th><th>Theory</th></tr>';
+  SNAP_COLS.forEach(c => {
+    t2 += `<tr><td class="lab"><span class="fdot ${c}"></span> ${c}</td><td>${colourCounts[c].toLocaleString()}</td><td>${(colourCounts[c] / n).toFixed(3)}</td><td>${SNAP_THEORY[c].toFixed(2)}</td></tr>`;
+  });
+  t2 += `<tr class="total"><td class="lab">Total</td><td>${n.toLocaleString()}</td><td>1</td><td>1</td></tr></table>`;
+  document.getElementById('snapColourTable').innerHTML = t2;
+
+  snapObserved = {};
+  SNAP_COLS.forEach(c => { snapObserved[c] = colourCounts[c] / n; });
+  drawSnapChart();
+}
+
+/* ======================= class roster, summary and frequency table ======================= */
+function renderClassRoster() {
+  let h = '<div class="roster">';
+  CLASS.forEach((v, i) => { h += `<div class="rtile" id="rt-${i}" title="Student ${i + 1}: ${v} cm"><span class="rid">${i + 1}</span><span>${v}</span></div>`; });
+  h += '</div><p class="pcap">Small number: student &nbsp;&middot;&nbsp; Large number: height in cm</p>';
+  document.getElementById('classRoster').innerHTML = h;
+}
+
+function renderClassSummary() {
+  const s = CLASS.slice().sort((a, b) => a - b);
+  const n = s.length;
+  const mean = s.reduce((a, b) => a + b, 0) / n;
+  const median = n % 2 ? s[(n - 1) / 2] : (s[n / 2 - 1] + s[n / 2]) / 2;
+  const sd = Math.sqrt(s.reduce((a, b) => a + (b - mean) ** 2, 0) / (n - 1));
+  const rows = [
+    ['Number of students', n],
+    ['Mean', f2(mean) + ' cm'],
+    ['Median', f2(median) + ' cm'],
+    ['Standard deviation', f2(sd) + ' cm'],
+    ['Minimum', s[0] + ' cm'],
+    ['Maximum', s[n - 1] + ' cm'],
+    ['Range', (s[n - 1] - s[0]) + ' cm']
+  ];
+  let t = '<table class="data"><tr><th>Statistic</th><th>Value</th></tr>';
+  rows.forEach(r => { t += `<tr><td class="lab">${r[0]}</td><td>${r[1]}</td></tr>`; });
+  document.getElementById('classSummaryTable').innerHTML = t + '</table>';
+}
+
+function renderClassDistribution() {
+  let t = '<table class="data"><tr><th>Height (cm)</th><th>Frequency</th><th>Relative frequency = Pr(Y in interval)</th></tr>';
+  FREQ.forEach((f, i) => { t += `<tr><td class="lab">${binLabel(i)}</td><td>${f}</td><td>${f}/150 = ${f2(f / N_CLASS)}</td></tr>`; });
+  t += `<tr class="total"><td class="lab">Total</td><td>${N_CLASS}</td><td>1.00</td></tr></table>`;
+  document.getElementById('classFreqTable').innerHTML = t;
+  histPlot(document.getElementById('classFreqChart'), null);
+}
+
+let pickedIdx = null;
+document.getElementById('pickBtn').addEventListener('click', () => {
+  if (pickedIdx !== null) document.getElementById('rt-' + pickedIdx).classList.remove('picked');
+  pickedIdx = randIdx();
+  document.getElementById('rt-' + pickedIdx).classList.add('picked');
+  document.getElementById('pickReadout').innerHTML = `Outcome: Student ${pickedIdx + 1} &nbsp;&rarr;&nbsp; Y(Student ${pickedIdx + 1}) = ${CLASS[pickedIdx]} cm`;
+});
+
+document.getElementById('ryExample').textContent = `e.g. Y(Student 1) = ${CLASS[0]}, Y(Student 2) = ${CLASS[1]}`;
+document.getElementById('measSpace').innerHTML = `Any positive height in principle (height is continuous). In this class, the recorded heights run from <span class="m">${Math.min(...CLASS)}</span> to <span class="m">${Math.max(...CLASS)}</span> cm.`;
+
+/* ======================= wiring ======================= */
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); });
+    tab.classList.add('active');
+    tab.setAttribute('aria-selected', 'true');
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.getElementById('section-' + tab.dataset.tab).classList.add('active');
+  });
+});
+
+function wireSeg(segId, fn) {
+  document.querySelectorAll(`#${segId} .pill`).forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll(`#${segId} .pill`).forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      fn(parseInt(btn.dataset.n, 10));
+    });
+  });
+}
+wireSeg('snapSeg', renderSnapGrow);
+
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    drawSnapChart();
+    histPlot(document.getElementById('classFreqChart'), null);
+  }, 150);
+});
+
+document.getElementById('snapSetupGrid').innerHTML = punnettHTML(null);
+renderSnapGrow(200);
+renderClassRoster();
+renderClassSummary();
+renderClassDistribution();
+renderQuestions('snapQuestions', SNAP_QS);
+renderQuestions('heightQuestions', HEIGHT_QS);
+</script>
+
+</body>
+</html>

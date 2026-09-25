@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>(function(){try{var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark"){t=(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+<title>PMF vs PDF Explorer — Uche Mbaka</title>
+<meta name="description" content="A companion tool for STAT 20070: probability as the height of a bar for a discrete variable, and as the area under a curve for a continuous one.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#080A0F;
+    --ink-rgb:8,10,15;
+    --ink-2:#0D1017;
+    --haze:#E9E6DF;
+    --haze-dim:#B9B6AE;
+    --mute:#6A7180;
+    --mute-2:#454B58;
+    --line:rgba(233,230,223,.09);
+    --line-2:rgba(233,230,223,.16);
+    --amber:#CFA15F;
+    --amber-soft:rgba(207,161,95,.16);
+    --steel:#5C7585;
+    --on-accent:#080A0F;
+  }
+  [data-theme="light"]{
+    --ink:#F3F0E9;
+    --ink-rgb:243,240,233;
+    --ink-2:#FBFAF5;
+    --haze:#1B1C20;
+    --haze-dim:#4A4C54;
+    --mute:#6E727D;
+    --mute-2:#9A9DA6;
+    --line:rgba(20,21,26,.10);
+    --line-2:rgba(20,21,26,.18);
+    --amber:#9E6B22;
+    --amber-soft:rgba(158,107,34,.12);
+    --steel:#4A6377;
+    --on-accent:#FBFAF5;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    min-height:100vh;
+    background:var(--ink);
+    color:var(--haze);
+    font-family:"Newsreader",Georgia,serif;
+    font-weight:300;
+    font-size:18px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    display:flex;
+    justify-content:center;
+    padding:44px 22px 72px;
+    transition:background .35s ease, color .35s ease;
+  }
+  ::selection{background:rgba(207,161,95,.22);color:var(--haze)}
+  a{color:inherit;text-decoration:none}
+
+  .stage{width:100%;max-width:740px}
+
+  .mono{
+    font-family:"JetBrains Mono",ui-monospace,monospace;
+    font-weight:400;font-size:11px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--mute);
+  }
+
+  /* ---------- top row ---------- */
+  .toprow{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:34px}
+  .back{transition:color .25s}
+  .back:hover{color:var(--amber)}
+
+  .theme-toggle{display:inline-flex;align-items:center;gap:10px;background:none;border:0;padding:0;cursor:pointer;font:inherit;line-height:1}
+  .theme-toggle .tmode{color:var(--mute);transition:color .25s}
+  .theme-toggle:hover .tmode{color:var(--amber)}
+  .theme-toggle .track{width:40px;height:21px;border-radius:999px;border:1px solid var(--line-2);position:relative;transition:border-color .25s;flex:0 0 auto}
+  .theme-toggle:hover .track{border-color:var(--amber)}
+  .theme-toggle .knob{position:absolute;top:50%;left:3px;transform:translateY(-50%);width:13px;height:13px;border-radius:50%;background:var(--mute);transition:left .28s cubic-bezier(.4,0,.2,1),background .25s}
+  [data-theme="light"] .theme-toggle .knob{left:22px;background:var(--amber)}
+  .theme-toggle:focus-visible{outline:none}
+  .theme-toggle:focus-visible .track{outline:2px solid var(--amber);outline-offset:3px}
+
+  /* ---------- header ---------- */
+  header{margin-bottom:28px}
+  .eyebrow{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--mute-2);margin:0 0 16px;
+  }
+  h1{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;
+    font-size:clamp(30px,5.4vw,44px);line-height:1.02;letter-spacing:-.025em;
+    color:var(--haze);margin:0 0 16px;
+  }
+  .sub{font-size:17px;line-height:1.6;color:var(--haze-dim);font-weight:300;margin:0;max-width:58ch}
+  .sub b{color:var(--amber);font-weight:400}
+
+  /* ---------- cards ---------- */
+  .card{
+    background:linear-gradient(160deg, var(--ink-2), rgba(var(--ink-rgb),0));
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:26px 28px 24px;
+    margin-bottom:18px;
+  }
+  @media (max-width:480px){.card{padding:22px 18px 20px}}
+
+  .panel-kicker{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--amber);margin:0 0 8px;
+  }
+  .panel-title{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;
+    font-size:21px;letter-spacing:-.02em;color:var(--haze);margin:0 0 20px;
+  }
+  .panel-title span{color:var(--haze-dim);font-weight:400}
+  .panel-note{font-size:16px;line-height:1.58;color:var(--haze-dim);margin:18px 0 0}
+  .panel-note strong{color:var(--haze);font-weight:400}
+
+  svg.chart{width:100%;height:auto;display:block;overflow:visible}
+
+  /* discrete bars */
+  .bar{fill:var(--mute-2);cursor:pointer;transition:fill .18s ease}
+  .bar:hover{fill:var(--haze-dim)}
+  .bar.selected,.bar.selected:hover{fill:var(--amber)}
+  .bar:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+
+  .hint{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--mute);margin:16px 0 0;text-align:center;
+  }
+
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+  .btn{
+    display:inline-block;background:none;cursor:pointer;
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--haze);
+    border:1px solid var(--line-2);border-radius:999px;padding:11px 20px;
+    transition:.25s;
+  }
+  .btn:hover:not(:disabled){border-color:var(--amber);color:var(--amber)}
+  .btn:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+  .btn:disabled{opacity:.35;cursor:default}
+  .btn.primary{border-color:var(--amber);color:var(--amber)}
+  .btn.primary:hover:not(:disabled){background:var(--amber);color:var(--on-accent)}
+  .btn.quiet{color:var(--mute)}
+  .btn.quiet:hover:not(:disabled){color:var(--amber)}
+
+  /* handles: touch-action none so a drag on a phone moves the handle, not the page */
+  .handle{cursor:grab;touch-action:none}
+  .handle:active{cursor:grabbing}
+  .handle-hit{fill:transparent}
+  .handle-hit:focus{outline:none}
+
+  /* ---------- derivation (same layout as the other worked examples) ---------- */
+  .deriv{margin-top:22px;border-left:2px solid var(--amber);padding:6px 0 6px 20px}
+  .d-grid{
+    display:grid;grid-template-columns:max-content max-content minmax(0,1fr);
+    column-gap:10px;row-gap:9px;align-items:baseline;
+  }
+  .d-l,.d-r{font-family:"JetBrains Mono",monospace;font-size:13.5px;letter-spacing:.01em;color:var(--haze);white-space:nowrap}
+  .d-l{text-align:right}
+  .d-r.res{color:var(--amber);font-weight:500;font-size:17px}
+  .d-w{font-size:15px;line-height:1.4;font-style:italic;color:var(--haze-dim);padding-left:16px}
+  .d-empty{font-size:16px;font-style:italic;color:var(--mute);margin:0}
+  sub,sup{font-size:.7em;line-height:0}
+  @media (max-width:640px){
+    .d-grid{grid-template-columns:max-content minmax(0,1fr);row-gap:4px}
+    .d-r{white-space:normal}
+    .d-w{grid-column:1 / -1;padding:0 0 8px;font-size:14.5px}
+    .d-w:empty{display:none}
+  }
+
+  .callout{
+    margin:16px 0 0;padding:4px 0 4px 18px;border-left:2px solid var(--amber);
+    font-family:"JetBrains Mono",monospace;font-size:12.5px;letter-spacing:.02em;
+    line-height:1.6;color:var(--amber);
+  }
+  .callout:empty{display:none}
+
+  @media (prefers-reduced-motion:reduce){*{transition:none !important}}
+</style>
+</head>
+<body>
+
+<div class="stage">
+
+  <div class="toprow">
+    <a class="back mono" href="../STAT20070.html">← STAT 20070</a>
+    <button class="theme-toggle" id="themeToggle" aria-label="Switch between light and dark theme" aria-pressed="false"><span class="tmode mono" id="tmode">Dark</span><span class="track"><span class="knob"></span></span></button>
+  </div>
+
+  <header>
+    <p class="eyebrow">Section 2 · Lecture 06 · Binomial Distribution</p>
+    <h1>PMF vs PDF Explorer</h1>
+    <p class="sub">For a discrete random variable, probability is the <b>height</b> of a bar. For a continuous random variable, probability is the <b>area</b> under a curve between two points, and never the height of the curve at a single point. Both are shown below.</p>
+  </header>
+
+  <div class="card">
+    <p class="panel-kicker">Discrete</p>
+    <p class="panel-title">Probability mass function <span>· a fair die</span></p>
+
+    <svg id="pmfChart" class="chart" viewBox="0 0 560 240" role="img" aria-label="Bar chart of a fair die's probability mass function"></svg>
+    <p class="hint">Click one or more bars</p>
+
+    <div class="btn-row">
+      <button class="btn quiet" id="clearBars" type="button">Clear selection</button>
+    </div>
+
+    <div class="deriv" id="pmfDeriv"></div>
+
+    <p class="panel-note">Here the height of each bar <em>is</em> the probability. Select several bars and, because the outcomes are mutually exclusive, their heights simply add up.</p>
+  </div>
+
+  <div class="card">
+    <p class="panel-kicker">Continuous</p>
+    <p class="panel-title">Probability density function <span>· the standard normal curve</span></p>
+
+    <svg id="pdfChart" class="chart" viewBox="0 0 560 280" role="img" aria-label="Density curve with draggable boundaries a and b"></svg>
+    <p class="hint">Drag either handle, or click one and use the arrow keys</p>
+
+    <div class="btn-row">
+      <button class="btn primary" id="shrinkBtn" type="button">Shrink the interval to a point</button>
+      <button class="btn quiet" id="resetPdf" type="button">Reset</button>
+    </div>
+
+    <div class="deriv" id="pdfDeriv"></div>
+    <p class="callout" id="pdfCallout"></p>
+
+    <p class="panel-note">The height of the curve is a <em>density</em>, not a probability. Only the area under it between two points is a probability. Shrink the interval and the area, and with it the probability, vanishes: <strong>Pr(Y = y) = 0</strong> for any single point y.</p>
+  </div>
+</div>
+
+<script>
+/* ---------- theme toggle (shares the site's stored preference) ---------- */
+(function(){
+  var root = document.documentElement;
+  var btn  = document.getElementById('themeToggle');
+  function current(){ return root.getAttribute('data-theme') === 'light' ? 'light' : 'dark'; }
+  function sync(){
+    var t = current();
+    btn.setAttribute('aria-pressed', t === 'light' ? 'true' : 'false');
+    document.getElementById('tmode').textContent = t === 'light' ? 'Light' : 'Dark';
+  }
+  sync();
+  btn.addEventListener('click', function(){
+    var t = current() === 'light' ? 'dark' : 'light';
+    root.setAttribute('data-theme', t);
+    try{ localStorage.setItem('theme', t); }catch(e){}
+    sync();
+  });
+})();
+
+const NS = 'http://www.w3.org/2000/svg';
+const MONO = "'JetBrains Mono', monospace";
+
+function el(tag, attrs, text) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+
+// on narrow screens the SVGs are scaled down a long way, so chart type is sized
+// up in user units to keep axis labels legible on a phone
+function chartScale() {
+  const small = window.innerWidth < 560;
+  return { small, FS: small ? 17 : 11 };
+}
+
+function derivHTML(rows) {
+  return '<div class="d-grid">' + rows.map(d =>
+    `<span class="d-l">${d.l || ''}</span><span class="d-r${d.res ? ' res' : ''}">${d.r}</span><span class="d-w">${d.w || ''}</span>`
+  ).join('') + '</div>';
+}
+const fmtY = v => (v < 0 ? '−' : '') + Math.abs(v).toFixed(2);
+
+/* ============================= DISCRETE PANEL ============================= */
+
+const pmfChart = document.getElementById('pmfChart');
+const pmfDeriv = document.getElementById('pmfDeriv');
+
+const DIE_LABELS = [1, 2, 3, 4, 5, 6];
+const DIE_PROB = 1 / 6;
+let selectedBars = new Set();
+
+function renderPMF() {
+  const { small, FS } = chartScale();
+  const W = 560, H = small ? 270 : 240;
+  const ML = small ? 70 : 52, MR = 16, MT = small ? 30 : 24, MB = small ? 60 : 44;
+  const plotW = W - ML - MR, plotH = H - MT - MB;
+  pmfChart.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  pmfChart.innerHTML = '';
+
+  const nb = DIE_LABELS.length;
+  const gap = 14;
+  const barW = (plotW - gap * (nb - 1)) / nb;
+  const maxProb = 0.2;
+  const yScale = v => MT + plotH - (v / maxProb) * plotH;
+  const base = MT + plotH;
+
+  [0, 0.05, 0.10, 0.15, 0.20].forEach(v => {
+    const y = yScale(v);
+    pmfChart.appendChild(el('line', { x1: ML, x2: W - MR, y1: y, y2: y, stroke: 'var(--line-2)', 'stroke-width': 1 }));
+    pmfChart.appendChild(el('text', { x: ML - 10, y: y + FS * 0.35, 'text-anchor': 'end', 'font-size': FS, 'letter-spacing': '.04em', 'font-family': MONO, fill: 'var(--mute)' }, v.toFixed(2)));
+  });
+  pmfChart.appendChild(el('line', { x1: ML, x2: W - MR, y1: base, y2: base, stroke: 'var(--haze-dim)', 'stroke-width': 1.4 }));
+
+  DIE_LABELS.forEach((label, i) => {
+    const x = ML + i * (barW + gap);
+    const y = yScale(DIE_PROB);
+    const sel = selectedBars.has(i);
+    const rect = el('rect', {
+      x, y, width: barW, height: base - y, rx: 2,
+      class: 'bar' + (sel ? ' selected' : ''),
+      tabindex: '0', role: 'button',
+      'aria-pressed': sel ? 'true' : 'false',
+      'aria-label': `Y = ${label}, probability 1/6`
+    });
+    rect.addEventListener('click', () => toggleBar(i));
+    rect.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleBar(i); }
+    });
+    pmfChart.appendChild(rect);
+
+    pmfChart.appendChild(el('text', { x: x + barW / 2, y: base + FS + 9, 'text-anchor': 'middle', 'font-size': FS + 1, 'font-family': MONO, fill: sel ? 'var(--amber)' : 'var(--haze-dim)' }, label));
+    pmfChart.appendChild(el('text', { x: x + barW / 2, y: y - 9, 'text-anchor': 'middle', 'font-size': FS - 0.5, 'letter-spacing': '.04em', 'font-family': MONO, fill: sel ? 'var(--amber)' : 'var(--mute)' }, '1/6'));
+  });
+
+  pmfChart.appendChild(el('text', { x: (ML + W - MR) / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': FS - 1, 'letter-spacing': '.14em', 'font-family': MONO, fill: 'var(--mute-2)' }, 'Y = OUTCOME OF ROLLING A FAIR DIE'));
+}
+
+function renderPMFFormula() {
+  if (selectedBars.size === 0) {
+    pmfDeriv.innerHTML = '<p class="d-empty">Select a bar to begin.</p>';
+    return;
+  }
+  const idx = [...selectedBars].sort((a, b) => a - b);
+  const m = idx.length;
+  const vals = idx.map(i => DIE_LABELS[i]);
+  if (m === 1) {
+    pmfDeriv.innerHTML = derivHTML([
+      { l: `Pr(Y = ${vals[0]})`, r: '= height of the bar', w: 'for a PMF, the height is the probability' },
+      { r: `= 1/6 ≈ ${DIE_PROB.toFixed(3)}`, res: true }
+    ]);
+    return;
+  }
+  const set = `{${vals.join(', ')}}`;
+  pmfDeriv.innerHTML = derivHTML([
+    { l: `Pr(Y ∈ ${set})`, r: '= ' + vals.map(v => `Pr(Y = ${v})`).join(' + '), w: 'mutually exclusive outcomes, so add' },
+    { r: '= ' + vals.map(() => '1/6').join(' + ') },
+    { r: `= ${m}/6 ≈ ${(m * DIE_PROB).toFixed(3)}`, res: true }
+  ]);
+}
+
+function toggleBar(i) {
+  if (selectedBars.has(i)) selectedBars.delete(i);
+  else selectedBars.add(i);
+  renderPMF();
+  renderPMFFormula();
+}
+
+document.getElementById('clearBars').addEventListener('click', () => {
+  selectedBars = new Set();
+  renderPMF();
+  renderPMFFormula();
+});
+
+/* ============================= CONTINUOUS PANEL ============================= */
+
+const pdfChart = document.getElementById('pdfChart');
+const pdfDeriv = document.getElementById('pdfDeriv');
+const pdfCalloutEl = document.getElementById('pdfCallout');
+
+const DOMAIN_MIN = -4, DOMAIN_MAX = 4;
+let G = null; // current chart geometry, rebuilt on resize
+
+function density(x) {
+  return (1 / Math.sqrt(2 * Math.PI)) * Math.exp(-(x * x) / 2);
+}
+const MAX_DENSITY = 0.45;
+
+function xScale(v) { return G.ML + ((v - DOMAIN_MIN) / (DOMAIN_MAX - DOMAIN_MIN)) * G.plotW; }
+function xInvert(px) {
+  const v = DOMAIN_MIN + ((px - G.ML) / G.plotW) * (DOMAIN_MAX - DOMAIN_MIN);
+  return Math.max(DOMAIN_MIN, Math.min(DOMAIN_MAX, v));
+}
+function yScale(v) { return G.MT + G.plotH - (v / MAX_DENSITY) * G.plotH; }
+
+let a = -1, b = 1;
+const MIN_GAP = 0.02;
+
+let areaPolygon, guideA, guideB, handleA, handleB, hitA, hitB, labelA, labelB;
+let animating = false;
+
+function svgPointFromEvent(evt) {
+  const pt = pdfChart.createSVGPoint();
+  pt.x = evt.clientX;
+  pt.y = evt.clientY;
+  return pt.matrixTransform(pdfChart.getScreenCTM().inverse());
+}
+
+function buildStaticPDF() {
+  const { small, FS } = chartScale();
+  const W = 560, H = small ? 320 : 280;
+  const ML = small ? 62 : 48, MR = 16, MT = small ? 22 : 18;
+  const MB = small ? 92 : 66; // room for axis ticks plus the a / b labels beneath the handles
+  G = { W, H, ML, MR, MT, MB, FS, small, plotW: W - ML - MR, plotH: H - MT - MB };
+  G.base = MT + G.plotH;
+  pdfChart.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  pdfChart.innerHTML = '';
+
+  [0, 0.1, 0.2, 0.3, 0.4].forEach(v => {
+    const y = yScale(v);
+    pdfChart.appendChild(el('line', { x1: ML, x2: W - MR, y1: y, y2: y, stroke: 'var(--line-2)', 'stroke-width': 1 }));
+    pdfChart.appendChild(el('text', { x: ML - 10, y: y + FS * 0.35, 'text-anchor': 'end', 'font-size': FS, 'letter-spacing': '.04em', 'font-family': MONO, fill: 'var(--mute)' }, v.toFixed(1)));
+  });
+
+  pdfChart.appendChild(el('line', { x1: ML, x2: W - MR, y1: G.base, y2: G.base, stroke: 'var(--haze-dim)', 'stroke-width': 1.4 }));
+  for (let v = DOMAIN_MIN; v <= DOMAIN_MAX; v++) {
+    const x = xScale(v);
+    pdfChart.appendChild(el('line', { x1: x, x2: x, y1: G.base, y2: G.base + 5, stroke: 'var(--haze-dim)', 'stroke-width': 1 }));
+    pdfChart.appendChild(el('text', { x, y: G.base + FS + 9, 'text-anchor': 'middle', 'font-size': FS, 'letter-spacing': '.04em', 'font-family': MONO, fill: 'var(--mute)' }, v < 0 ? '−' + Math.abs(v) : v));
+  }
+
+  // shaded area, drawn before the curve so the curve sits on top
+  areaPolygon = el('polygon', { points: '', fill: 'var(--amber)', 'fill-opacity': 0.42, stroke: 'none' });
+  pdfChart.appendChild(areaPolygon);
+
+  const steps = 200;
+  let curvePts = '';
+  for (let i = 0; i <= steps; i++) {
+    const x = DOMAIN_MIN + (i / steps) * (DOMAIN_MAX - DOMAIN_MIN);
+    curvePts += `${xScale(x)},${yScale(density(x))} `;
+  }
+  pdfChart.appendChild(el('polyline', { points: curvePts.trim(), fill: 'none', stroke: 'var(--haze)', 'stroke-width': 2, 'stroke-linejoin': 'round' }));
+
+  guideA = el('line', { y1: G.base, y2: MT, stroke: 'var(--amber)', 'stroke-width': 1.4, 'stroke-dasharray': '4,4' });
+  guideB = el('line', { y1: G.base, y2: MT, stroke: 'var(--amber)', 'stroke-width': 1.4, 'stroke-dasharray': '4,4' });
+  pdfChart.appendChild(guideA);
+  pdfChart.appendChild(guideB);
+
+  // visible handle plus a larger invisible hit area that is easier to grab, especially by finger
+  const hitR = small ? 26 : 18;
+  const common = { cy: G.base, r: hitR, class: 'handle-hit handle', tabindex: '0', role: 'slider', 'aria-valuemin': DOMAIN_MIN, 'aria-valuemax': DOMAIN_MAX };
+  hitA = el('circle', { ...common, 'aria-label': 'Lower boundary a' });
+  hitB = el('circle', { ...common, 'aria-label': 'Upper boundary b' });
+  const handleR = small ? 11 : 8;
+  handleA = el('circle', { cy: G.base, r: handleR, fill: 'var(--amber)', stroke: 'var(--ink)', 'stroke-width': 3, class: 'handle' });
+  handleB = el('circle', { cy: G.base, r: handleR, fill: 'var(--amber)', stroke: 'var(--ink)', 'stroke-width': 3, class: 'handle' });
+
+  const labelY = G.base + FS * 2 + 22;
+  labelA = el('text', { y: labelY, 'font-size': FS + 0.5, 'font-family': MONO, 'font-weight': 500, fill: 'var(--amber)' });
+  labelB = el('text', { y: labelY, 'font-size': FS + 0.5, 'font-family': MONO, 'font-weight': 500, fill: 'var(--amber)' });
+
+  [handleA, handleB, labelA, labelB, hitA, hitB].forEach(n => pdfChart.appendChild(n));
+
+  hitA.addEventListener('pointerdown', e => onHandleDown(e, 'a'));
+  hitB.addEventListener('pointerdown', e => onHandleDown(e, 'b'));
+  hitA.addEventListener('keydown', e => onHandleKey(e, 'a'));
+  hitB.addEventListener('keydown', e => onHandleKey(e, 'b'));
+
+  // the hit circles are invisible, so show focus on the visible handle instead
+  [[hitA, handleA], [hitB, handleB]].forEach(([hit, handle]) => {
+    hit.addEventListener('focus', () => handle.setAttribute('stroke', 'var(--haze)'));
+    hit.addEventListener('blur', () => handle.setAttribute('stroke', 'var(--ink)'));
+  });
+}
+
+function areaBetween(lo, hi) {
+  const steps = 400;
+  const w = (hi - lo) / steps;
+  let sum = 0;
+  for (let i = 0; i < steps; i++) {
+    const x0 = lo + i * w;
+    const x1 = lo + (i + 1) * w;
+    sum += 0.5 * (density(x0) + density(x1)) * w;
+  }
+  return sum;
+}
+
+function updatePDF() {
+  const lo = Math.min(a, b), hi = Math.max(a, b);
+
+  const steps = 80;
+  const pts = [`${xScale(lo)},${G.base}`];
+  for (let i = 0; i <= steps; i++) {
+    const x = lo + (i / steps) * (hi - lo);
+    pts.push(`${xScale(x)},${yScale(density(x))}`);
+  }
+  pts.push(`${xScale(hi)},${G.base}`);
+  areaPolygon.setAttribute('points', pts.join(' '));
+
+  const xa = xScale(a), xb = xScale(b);
+  guideA.setAttribute('x1', xa); guideA.setAttribute('x2', xa);
+  guideB.setAttribute('x1', xb); guideB.setAttribute('x2', xb);
+  handleA.setAttribute('cx', xa);
+  handleB.setAttribute('cx', xb);
+  hitA.setAttribute('cx', xa);
+  hitB.setAttribute('cx', xb);
+
+  // when the handles get close, push the labels apart so they never print on top of each other
+  const apart = (xb - xa) < (G.small ? 150 : 110);
+  labelA.setAttribute('x', apart ? xa - 6 : xa);
+  labelB.setAttribute('x', apart ? xb + 6 : xb);
+  labelA.setAttribute('text-anchor', apart ? 'end' : 'middle');
+  labelB.setAttribute('text-anchor', apart ? 'start' : 'middle');
+  labelA.textContent = `a = ${fmtY(a)}`;
+  labelB.textContent = `b = ${fmtY(b)}`;
+  hitA.setAttribute('aria-valuenow', a.toFixed(2));
+  hitB.setAttribute('aria-valuenow', b.toFixed(2));
+
+  const area = areaBetween(lo, hi);
+  pdfDeriv.innerHTML = derivHTML([
+    { l: `Pr(${fmtY(lo)} < Y < ${fmtY(hi)})`, r: `= ∫<sub>${fmtY(lo)}</sub><sup>${fmtY(hi)}</sup> f(y) dy`, w: 'the area under the density curve' },
+    { r: `= ${area.toFixed(4)}`, res: true }
+  ]);
+
+  const width = hi - lo;
+  pdfCalloutEl.textContent = width < 0.08
+    ? `The interval has shrunk to width ${width.toFixed(3)}. The area, and so the probability, is essentially zero, even though the curve is still ${density((lo + hi) / 2).toFixed(3)} high there.`
+    : '';
+}
+
+function setA(v) {
+  a = Math.max(DOMAIN_MIN, Math.min(DOMAIN_MAX, v));
+  if (a > b - MIN_GAP) a = b - MIN_GAP;
+  updatePDF();
+}
+function setB(v) {
+  b = Math.max(DOMAIN_MIN, Math.min(DOMAIN_MAX, v));
+  if (b < a + MIN_GAP) b = a + MIN_GAP;
+  updatePDF();
+}
+
+function onHandleDown(evt, which) {
+  if (animating) return;
+  evt.preventDefault();
+  const hit = which === 'a' ? hitA : hitB;
+  hit.setPointerCapture(evt.pointerId);
+  hit.focus();
+
+  function onMove(e) {
+    const sp = svgPointFromEvent(e);
+    const v = xInvert(sp.x);
+    if (which === 'a') setA(v); else setB(v);
+  }
+  function onUp() {
+    hit.removeEventListener('pointermove', onMove);
+    hit.removeEventListener('pointerup', onUp);
+    hit.removeEventListener('pointercancel', onUp);
+  }
+  hit.addEventListener('pointermove', onMove);
+  hit.addEventListener('pointerup', onUp);
+  hit.addEventListener('pointercancel', onUp);
+}
+
+function onHandleKey(evt, which) {
+  if (evt.key !== 'ArrowLeft' && evt.key !== 'ArrowRight') return;
+  const step = evt.shiftKey ? 0.5 : 0.1;
+  const delta = (evt.key === 'ArrowRight' ? step : -step);
+  if (which === 'a') setA(a + delta); else setB(b + delta);
+  evt.preventDefault();
+}
+
+function resetPDF() {
+  if (animating) return;
+  a = -1; b = 1;
+  updatePDF();
+}
+
+document.getElementById('resetPdf').addEventListener('click', resetPDF);
+
+document.getElementById('shrinkBtn').addEventListener('click', () => {
+  if (animating) return;
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const startA = a, startB = b;
+  const mid = (a + b) / 2;
+  const endA = mid - MIN_GAP / 2, endB = mid + MIN_GAP / 2;
+
+  if (reduceMotion) {
+    a = endA; b = endB;
+    updatePDF();
+    return;
+  }
+
+  animating = true;
+  document.getElementById('shrinkBtn').disabled = true;
+  document.getElementById('resetPdf').disabled = true;
+  const duration = 900;
+  const startTime = performance.now();
+
+  function step(now) {
+    const t = Math.min(1, (now - startTime) / duration);
+    const eased = 1 - Math.pow(1 - t, 3);
+    a = startA + (endA - startA) * eased;
+    b = startB + (endB - startB) * eased;
+    updatePDF();
+    if (t < 1) {
+      requestAnimationFrame(step);
+    } else {
+      animating = false;
+      document.getElementById('shrinkBtn').disabled = false;
+      document.getElementById('resetPdf').disabled = false;
+    }
+  }
+  requestAnimationFrame(step);
+});
+
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    renderPMF();
+    buildStaticPDF();
+    updatePDF();
+  }, 150);
+});
+
+renderPMF();
+renderPMFFormula();
+buildStaticPDF();
+updatePDF();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>(function(){try{var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark"){t=(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+<title>Binomial Experiment Lab — Uche Mbaka</title>
+<meta name="description" content="A companion tool for STAT 20070: run a Binomial experiment repeatedly and watch the observed frequencies settle onto the theoretical distribution.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#080A0F;
+    --ink-rgb:8,10,15;
+    --ink-2:#0D1017;
+    --haze:#E9E6DF;
+    --haze-dim:#B9B6AE;
+    --mute:#6A7180;
+    --mute-2:#454B58;
+    --line:rgba(233,230,223,.09);
+    --line-2:rgba(233,230,223,.16);
+    --amber:#CFA15F;
+    --amber-soft:rgba(207,161,95,.16);
+    --steel:#5C7585;
+    --steel-text:#8FA6B5;
+    --steel-soft:rgba(92,117,133,.24);
+    --ok:#7E9E82;
+    --on-accent:#080A0F;
+  }
+  [data-theme="light"]{
+    --ink:#F3F0E9;
+    --ink-rgb:243,240,233;
+    --ink-2:#FBFAF5;
+    --haze:#1B1C20;
+    --haze-dim:#4A4C54;
+    --mute:#6E727D;
+    --mute-2:#9A9DA6;
+    --line:rgba(20,21,26,.10);
+    --line-2:rgba(20,21,26,.18);
+    --amber:#9E6B22;
+    --amber-soft:rgba(158,107,34,.12);
+    --steel:#4A6377;
+    --steel-text:#4A6377;
+    --steel-soft:rgba(74,99,119,.14);
+    --ok:#3F6B4F;
+    --on-accent:#FBFAF5;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    min-height:100vh;
+    background:var(--ink);
+    color:var(--haze);
+    font-family:"Newsreader",Georgia,serif;
+    font-weight:300;
+    font-size:18px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    display:flex;
+    justify-content:center;
+    padding:44px 22px 72px;
+    transition:background .35s ease, color .35s ease;
+  }
+  ::selection{background:rgba(207,161,95,.22);color:var(--haze)}
+  a{color:inherit;text-decoration:none}
+
+  .stage{width:100%;max-width:740px}
+
+  .mono{
+    font-family:"JetBrains Mono",ui-monospace,monospace;
+    font-weight:400;font-size:11px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--mute);
+  }
+
+  /* ---------- top row ---------- */
+  .toprow{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:34px}
+  .back{transition:color .25s}
+  .back:hover{color:var(--amber)}
+
+  .theme-toggle{display:inline-flex;align-items:center;gap:10px;background:none;border:0;padding:0;cursor:pointer;font:inherit;line-height:1}
+  .theme-toggle .tmode{color:var(--mute);transition:color .25s}
+  .theme-toggle:hover .tmode{color:var(--amber)}
+  .theme-toggle .track{width:40px;height:21px;border-radius:999px;border:1px solid var(--line-2);position:relative;transition:border-color .25s;flex:0 0 auto}
+  .theme-toggle:hover .track{border-color:var(--amber)}
+  .theme-toggle .knob{position:absolute;top:50%;left:3px;transform:translateY(-50%);width:13px;height:13px;border-radius:50%;background:var(--mute);transition:left .28s cubic-bezier(.4,0,.2,1),background .25s}
+  [data-theme="light"] .theme-toggle .knob{left:22px;background:var(--amber)}
+  .theme-toggle:focus-visible{outline:none}
+  .theme-toggle:focus-visible .track{outline:2px solid var(--amber);outline-offset:3px}
+
+  /* ---------- header ---------- */
+  header{margin-bottom:28px}
+  .eyebrow{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--mute-2);margin:0 0 16px;
+  }
+  h1{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;
+    font-size:clamp(30px,5.4vw,44px);line-height:1.02;letter-spacing:-.025em;
+    color:var(--haze);margin:0 0 16px;
+  }
+  .sub{font-size:17px;line-height:1.6;color:var(--haze-dim);font-weight:300;margin:0;max-width:60ch}
+
+  /* ---------- cards ---------- */
+  .card{
+    background:linear-gradient(160deg, var(--ink-2), rgba(var(--ink-rgb),0));
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:26px 28px 24px;
+    margin-bottom:18px;
+  }
+  @media (max-width:480px){.card{padding:22px 18px 20px}}
+
+  /* ---------- sliders ---------- */
+  .slider-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 32px}
+  @media (max-width:560px){.slider-grid{grid-template-columns:1fr}}
+  /* no uppercase: these labels name the variables n and p */
+  .slider-label{
+    display:flex;justify-content:space-between;align-items:baseline;gap:12px;
+    font-family:"JetBrains Mono",monospace;font-size:12.5px;letter-spacing:.02em;color:var(--mute);
+  }
+  .slider-label strong{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;font-size:22px;
+    letter-spacing:-.02em;color:var(--amber);
+  }
+  input[type="range"]{
+    -webkit-appearance:none;appearance:none;
+    width:100%;height:3px;background:var(--line-2);border-radius:2px;
+    margin:14px 0 8px;cursor:pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb{
+    -webkit-appearance:none;appearance:none;
+    width:15px;height:15px;border-radius:50%;background:var(--amber);
+    border:3px solid var(--ink);box-shadow:0 0 0 1px var(--amber);cursor:pointer;margin-top:-6px;
+  }
+  input[type="range"]::-moz-range-thumb{
+    width:15px;height:15px;border-radius:50%;background:var(--amber);
+    border:3px solid var(--ink);box-shadow:0 0 0 1px var(--amber);cursor:pointer;
+  }
+  input[type="range"]:focus-visible{outline:2px solid var(--amber);outline-offset:6px;border-radius:4px}
+
+  /* ---------- chart ---------- */
+  svg.chart{width:100%;height:auto;display:block;overflow:visible}
+  .legend{
+    display:flex;gap:10px 22px;flex-wrap:wrap;margin-top:16px;
+    font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.02em;color:var(--mute);
+  }
+  .legend span{display:inline-flex;align-items:center;gap:8px}
+  .swatch{width:14px;height:12px;display:inline-block;border-radius:3px;flex:0 0 auto}
+  .swatch.dash{width:18px;height:0;border-radius:0;border-top:2px dashed var(--steel-text)}
+
+  /* ---------- prediction ---------- */
+  .predict-row{
+    display:flex;gap:14px;align-items:center;flex-wrap:wrap;
+    margin-top:22px;padding-top:22px;border-top:1px solid var(--line);
+  }
+  .predict-label{font-family:"JetBrains Mono",monospace;font-size:12.5px;letter-spacing:.02em;color:var(--mute)}
+  .predict-row input[type="number"]{
+    width:92px;padding:10px 12px;
+    border:1px solid var(--line-2);border-radius:10px;background:none;color:var(--haze);
+    font-family:"Space Grotesk",system-ui,sans-serif;font-size:18px;font-weight:500;
+  }
+  .predict-row input[type="number"]:focus{outline:2px solid var(--amber);outline-offset:2px;border-color:var(--amber)}
+  .predict-result{
+    flex:1 1 100%;margin:4px 0 0;padding:4px 0 4px 18px;border-left:2px solid var(--steel);
+    font-family:"JetBrains Mono",monospace;font-size:13px;letter-spacing:.02em;color:var(--haze-dim);
+  }
+  .predict-result:empty{display:none}
+  .predict-result.close{border-color:var(--ok)}
+  .predict-result b{color:var(--haze);font-weight:500}
+
+  /* ---------- buttons ---------- */
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap}
+  .btn{
+    display:inline-block;background:none;cursor:pointer;
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--haze);
+    border:1px solid var(--line-2);border-radius:999px;padding:11px 20px;
+    transition:.25s;
+  }
+  .btn:hover:not(:disabled){border-color:var(--amber);color:var(--amber)}
+  .btn:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+  .btn.primary{border-color:var(--amber);color:var(--amber)}
+  .btn.primary:hover:not(:disabled){background:var(--amber);color:var(--on-accent)}
+  .btn.quiet{color:var(--mute)}
+  .btn.quiet:hover:not(:disabled){color:var(--amber)}
+
+  /* ---------- single run: S/F chips, as in Build the Binomial Formula ---------- */
+  .trial-row{display:flex;flex-wrap:wrap;gap:6px;margin:22px 0 10px;min-height:0}
+  .trial-row:empty{margin:12px 0 0}
+  .chip{
+    font-family:"JetBrains Mono",monospace;font-size:13px;font-weight:500;
+    min-width:30px;padding:6px 0;text-align:center;border-radius:7px;
+  }
+  .chip.s{background:var(--amber-soft);color:var(--amber)}
+  .chip.f{background:var(--steel-soft);color:var(--steel-text)}
+  .trial-summary{
+    font-family:"JetBrains Mono",monospace;font-size:12.5px;letter-spacing:.02em;
+    color:var(--haze-dim);margin:0 0 22px;min-height:1.2em;
+  }
+  .trial-summary b{color:var(--amber);font-weight:500}
+
+  /* ---------- stats ---------- */
+  .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px 28px;padding-top:20px;border-top:1px solid var(--line)}
+  @media (max-width:560px){.stat-grid{grid-template-columns:1fr;gap:16px}}
+  .stat-label{
+    font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.02em;
+    color:var(--mute);margin:0 0 6px;
+  }
+  .stat-value{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;
+    font-size:26px;letter-spacing:-.025em;color:var(--haze);margin:0;
+  }
+  .stat-value.amber{color:var(--amber)}
+  .stat-value.steel{color:var(--steel-text)}
+
+  @media (prefers-reduced-motion:reduce){*{transition:none !important}}
+</style>
+</head>
+<body>
+
+<div class="stage">
+
+  <div class="toprow">
+    <a class="back mono" href="../STAT20070.html">← STAT 20070</a>
+    <button class="theme-toggle" id="themeToggle" aria-label="Switch between light and dark theme" aria-pressed="false"><span class="tmode mono" id="tmode">Dark</span><span class="track"><span class="knob"></span></span></button>
+  </div>
+
+  <header>
+    <p class="eyebrow">Section 2 · Lecture 06 · Binomial Distribution</p>
+    <h1>Binomial<br>Experiment Lab</h1>
+    <p class="sub">Choose the number of trials n and the probability of success p, then run the experiment repeatedly. The observed relative frequencies build up as solid bars over the theoretical Binomial distribution, extending the idea of the die-roll convergence tool from a single probability to the shape of a whole distribution.</p>
+  </header>
+
+  <div class="card">
+    <div class="slider-grid">
+      <div>
+        <label class="slider-label" for="nSlider"><span>Number of trials, n</span><strong id="nLabel">10</strong></label>
+        <input type="range" id="nSlider" min="1" max="30" step="1" value="10">
+      </div>
+      <div>
+        <label class="slider-label" for="pSlider"><span>Probability of success, p</span><strong id="pLabel">0.40</strong></label>
+        <input type="range" id="pSlider" min="0.01" max="0.99" step="0.01" value="0.4">
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <svg id="chart" class="chart" viewBox="0 0 640 290" role="img" aria-label="Binomial distribution with the observed relative frequencies overlaid"></svg>
+    <div class="legend">
+      <span><span class="swatch" style="background:var(--line); border:1.5px solid var(--haze-dim);"></span>Theoretical Pr(Y = k)</span>
+      <span><span class="swatch" style="background:var(--amber);"></span>Observed relative frequency</span>
+      <span><span class="swatch dash"></span>E(Y) = np</span>
+    </div>
+
+    <div class="predict-row">
+      <label class="predict-label" for="guessInput">Guess the centre, E(Y)</label>
+      <input type="number" id="guessInput" step="0.1">
+      <button class="btn primary" id="revealMean" type="button">Reveal E(Y)</button>
+      <p class="predict-result" id="predictResult"></p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="btn-row">
+      <button class="btn primary" id="run1" type="button">Run once</button>
+      <button class="btn" id="run10" type="button">Run ×10</button>
+      <button class="btn" id="run100" type="button">Run ×100</button>
+      <button class="btn" id="run10000" type="button">Run ×10,000</button>
+      <button class="btn quiet" id="resetBtn" type="button">Reset</button>
+    </div>
+
+    <div class="trial-row" id="trialRow"></div>
+    <p class="trial-summary" id="trialSummary"></p>
+
+    <div class="stat-grid">
+      <div>
+        <p class="stat-label">Experiments run</p>
+        <p class="stat-value" id="statTotal">0</p>
+      </div>
+      <div>
+        <p class="stat-label">Observed mean successes</p>
+        <p class="stat-value amber" id="statEmpMean">—</p>
+      </div>
+      <div>
+        <p class="stat-label">Theoretical E(Y) = np</p>
+        <p class="stat-value steel" id="statTheoMean">4.00</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- theme toggle (shares the site's stored preference) ---------- */
+(function(){
+  var root = document.documentElement;
+  var btn  = document.getElementById('themeToggle');
+  function current(){ return root.getAttribute('data-theme') === 'light' ? 'light' : 'dark'; }
+  function sync(){
+    var t = current();
+    btn.setAttribute('aria-pressed', t === 'light' ? 'true' : 'false');
+    document.getElementById('tmode').textContent = t === 'light' ? 'Light' : 'Dark';
+  }
+  sync();
+  btn.addEventListener('click', function(){
+    var t = current() === 'light' ? 'dark' : 'light';
+    root.setAttribute('data-theme', t);
+    try{ localStorage.setItem('theme', t); }catch(e){}
+    sync();
+  });
+})();
+
+const NS = 'http://www.w3.org/2000/svg';
+const MONO = "'JetBrains Mono', monospace";
+
+function el(tag, attrs, text) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+
+let n = 10, p = 0.4;
+let empiricalCounts = new Array(n + 1).fill(0);
+let totalExperiments = 0;
+let meanRevealed = false;
+
+const chart = document.getElementById('chart');
+const nSlider = document.getElementById('nSlider');
+const pSlider = document.getElementById('pSlider');
+const nLabel = document.getElementById('nLabel');
+const pLabel = document.getElementById('pLabel');
+const guessInput = document.getElementById('guessInput');
+const predictResult = document.getElementById('predictResult');
+const trialRow = document.getElementById('trialRow');
+const trialSummary = document.getElementById('trialSummary');
+const statTotal = document.getElementById('statTotal');
+const statEmpMean = document.getElementById('statEmpMean');
+const statTheoMean = document.getElementById('statTheoMean');
+
+function factorial(x) { let r = 1; for (let i = 2; i <= x; i++) r *= i; return r; }
+function choose(n, k) {
+  if (k < 0 || k > n) return 0;
+  if (n <= 12) return Math.round(factorial(n) / (factorial(k) * factorial(n - k)));
+  // for larger n, compute iteratively to avoid factorial overflow issues
+  let result = 1;
+  for (let i = 0; i < k; i++) result = result * (n - i) / (i + 1);
+  return result;
+}
+function pmf(k, n, p) { return choose(n, k) * Math.pow(p, k) * Math.pow(1 - p, n - k); }
+
+// a readable tick step for the probability axis: at most ~5 gridlines
+function niceStep(maxVal) {
+  const steps = [0.01, 0.02, 0.05, 0.1, 0.2, 0.25, 0.5];
+  return steps.find(s => maxVal / s <= 5) || 0.5;
+}
+
+function runOneExperiment() {
+  let successes = 0;
+  const outcomes = [];
+  for (let i = 0; i < n; i++) {
+    const success = Math.random() < p;
+    if (success) successes++;
+    outcomes.push(success);
+  }
+  return { successes, outcomes };
+}
+
+function renderChart() {
+  chart.innerHTML = '';
+
+  // on narrow screens the SVG is scaled down a long way, so the type is sized up
+  // in user units to keep axis labels legible on a phone
+  const small = window.innerWidth < 560;
+  const FS = small ? 17 : 11;
+  const W = 640, H = small ? 330 : 290;
+  const ML = small ? 84 : 66, MR = 16, MT = small ? 34 : 28, MB = small ? 62 : 48; // room for 4-char tick labels plus the rotated axis title
+  const plotW = W - ML - MR, plotH = H - MT - MB;
+  chart.setAttribute('viewBox', `0 0 ${W} ${H}`);
+
+  const theoVals = [];
+  for (let k = 0; k <= n; k++) theoVals.push(pmf(k, n, p));
+  const maxTheo = Math.max(...theoVals);
+  const empVals = empiricalCounts.map(c => totalExperiments ? c / totalExperiments : 0);
+  const maxEmp = Math.max(...empVals, 0);
+
+  const step = niceStep(Math.max(maxTheo, maxEmp) * 1.15);
+  const maxVal = Math.ceil(Math.max(maxTheo, maxEmp) * 1.15 / step) * step || 1;
+
+  const gap = n > 20 ? 2 : n > 10 ? 4 : 8;
+  const barW = (plotW - gap * n) / (n + 1);
+  const xCenter = k => ML + k * (barW + gap) + barW / 2;
+  const yScale = v => MT + plotH - (v / maxVal) * plotH;
+  const baseline = MT + plotH;
+
+  for (let v = 0; v <= maxVal + 1e-9; v += step) {
+    const y = yScale(v);
+    chart.appendChild(el('line', { x1: ML, x2: W - MR, y1: y, y2: y, stroke: 'var(--line-2)', 'stroke-width': 1 }));
+    chart.appendChild(el('text', { x: ML - 10, y: y + FS * 0.35, 'text-anchor': 'end', 'font-size': FS, 'letter-spacing': '.04em', 'font-family': MONO, fill: 'var(--mute)' }, v.toFixed(2)));
+  }
+  chart.appendChild(el('line', { x1: ML, x2: W - MR, y1: baseline, y2: baseline, stroke: 'var(--haze-dim)', 'stroke-width': 1.4 }));
+
+  const labelStep = small ? (n > 15 ? 5 : n > 8 ? 2 : 1) : (n > 20 ? 5 : n > 10 ? 2 : 1);
+
+  for (let k = 0; k <= n; k++) {
+    const cx = xCenter(k);
+
+    // theoretical bar (outline)
+    const yTheo = yScale(theoVals[k]);
+    chart.appendChild(el('rect', {
+      x: cx - barW / 2, y: yTheo, width: barW, height: baseline - yTheo, rx: 2,
+      fill: 'var(--line)', stroke: 'var(--haze-dim)', 'stroke-width': 1.2
+    }));
+
+    // observed bar (narrower, solid, overlaid)
+    if (totalExperiments > 0 && empVals[k] > 0) {
+      const yEmp = yScale(empVals[k]);
+      const empW = barW * 0.5;
+      chart.appendChild(el('rect', {
+        x: cx - empW / 2, y: yEmp, width: empW, height: baseline - yEmp, rx: 1.5,
+        fill: 'var(--amber)', 'fill-opacity': 0.92
+      }));
+    }
+
+    if (k % labelStep === 0 || k === n) {
+      chart.appendChild(el('text', { x: cx, y: baseline + FS + 7, 'text-anchor': 'middle', 'font-size': FS, 'letter-spacing': '.04em', 'font-family': MONO, fill: 'var(--mute)' }, k));
+    }
+  }
+
+  chart.appendChild(el('text', { x: (ML + W - MR) / 2, y: H - 5, 'text-anchor': 'middle', 'font-size': FS - 1, 'letter-spacing': '.14em', 'font-family': MONO, fill: 'var(--mute-2)' }, 'K · NUMBER OF SUCCESSES'));
+  chart.appendChild(el('text', { x: 12, y: MT + plotH / 2, 'text-anchor': 'middle', 'font-size': FS - 1, 'letter-spacing': '.14em', 'font-family': MONO, fill: 'var(--mute-2)', transform: `rotate(-90 12 ${MT + plotH / 2})` }, 'PROBABILITY'));
+
+  // mean marker (only after reveal)
+  if (meanRevealed) {
+    const meanK = n * p;
+    const mx = ML + meanK * (barW + gap) + barW / 2;
+    chart.appendChild(el('line', { x1: mx, x2: mx, y1: MT - 6, y2: baseline, stroke: 'var(--steel-text)', 'stroke-width': 2, 'stroke-dasharray': '6,4' }));
+    chart.appendChild(el('text', { x: mx, y: MT - 11, 'text-anchor': 'middle', 'font-size': FS, 'letter-spacing': '.04em', 'font-family': MONO, 'font-weight': 500, fill: 'var(--steel-text)' }, `E(Y) = ${meanK.toFixed(2)}`));
+  }
+}
+
+function updateStats() {
+  statTotal.textContent = totalExperiments.toLocaleString();
+  if (totalExperiments === 0) {
+    statEmpMean.textContent = '—';
+  } else {
+    let sum = 0;
+    for (let k = 0; k <= n; k++) sum += k * empiricalCounts[k];
+    statEmpMean.textContent = (sum / totalExperiments).toFixed(3);
+  }
+  statTheoMean.textContent = (n * p).toFixed(2);
+}
+
+function runBatch(count) {
+  let lastOutcomes = [];
+  for (let i = 0; i < count; i++) {
+    const { successes, outcomes } = runOneExperiment();
+    empiricalCounts[successes]++;
+    totalExperiments++;
+    lastOutcomes = outcomes;
+  }
+  trialRow.innerHTML = '';
+  if (count === 1) {
+    lastOutcomes.forEach(o => {
+      const t = document.createElement('span');
+      t.className = 'chip ' + (o ? 's' : 'f');
+      t.textContent = o ? 'S' : 'F';
+      trialRow.appendChild(t);
+    });
+    const successCount = lastOutcomes.filter(Boolean).length;
+    trialSummary.innerHTML = `This experiment: <b>${successCount}</b> success${successCount === 1 ? '' : 'es'} in ${n} trials`;
+  } else {
+    trialSummary.textContent = `Ran ${count.toLocaleString()} experiments`;
+  }
+  renderChart();
+  updateStats();
+}
+
+function resetLab() {
+  empiricalCounts = new Array(n + 1).fill(0);
+  totalExperiments = 0;
+  trialRow.innerHTML = '';
+  trialSummary.textContent = '';
+  renderChart();
+  updateStats();
+}
+
+function resetPrediction() {
+  meanRevealed = false;
+  guessInput.value = '';
+  predictResult.textContent = '';
+  predictResult.className = 'predict-result';
+}
+
+function revealMean() {
+  meanRevealed = true;
+  const guess = parseFloat(guessInput.value);
+  const actual = n * p;
+  const formula = `E(Y) = np = ${n} × ${p.toFixed(2)} = <b>${actual.toFixed(2)}</b>`;
+  if (!isNaN(guess)) {
+    const close = Math.abs(guess - actual) < 0.15;
+    predictResult.className = 'predict-result' + (close ? ' close' : '');
+    predictResult.innerHTML = close
+      ? `Close: you guessed ${guess}, and ${formula}`
+      : `You guessed ${guess}. ${formula}`;
+  } else {
+    predictResult.className = 'predict-result';
+    predictResult.innerHTML = formula;
+  }
+  renderChart();
+}
+
+nSlider.addEventListener('input', () => {
+  n = parseInt(nSlider.value, 10);
+  nLabel.textContent = n;
+  resetLab();
+  resetPrediction();
+});
+
+pSlider.addEventListener('input', () => {
+  p = parseFloat(pSlider.value);
+  pLabel.textContent = p.toFixed(2);
+  resetLab();
+  resetPrediction();
+});
+
+document.getElementById('run1').addEventListener('click', () => runBatch(1));
+document.getElementById('run10').addEventListener('click', () => runBatch(10));
+document.getElementById('run100').addEventListener('click', () => runBatch(100));
+document.getElementById('run10000').addEventListener('click', () => runBatch(10000));
+document.getElementById('resetBtn').addEventListener('click', resetLab);
+document.getElementById('revealMean').addEventListener('click', revealMean);
+guessInput.addEventListener('keydown', e => { if (e.key === 'Enter') revealMean(); });
+
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(renderChart, 150);
+});
+
+renderChart();
+updateStats();
+</script>
+
+</body>
+</html>

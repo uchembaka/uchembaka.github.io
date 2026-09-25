@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>(function(){try{var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark"){t=(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+<title>Build the Binomial Formula — Uche Mbaka</title>
+<meta name="description" content="A companion tool for STAT 20070: derive the Binomial probability formula step by step.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#080A0F;
+    --ink-rgb:8,10,15;
+    --ink-2:#0D1017;
+    --haze:#E9E6DF;
+    --haze-dim:#B9B6AE;
+    --mute:#6A7180;
+    --mute-2:#454B58;
+    --line:rgba(233,230,223,.09);
+    --line-2:rgba(233,230,223,.16);
+    --amber:#CFA15F;
+    --amber-soft:rgba(207,161,95,.16);
+    --steel:#5C7585;
+    --steel-text:#8FA6B5;
+    --steel-soft:rgba(92,117,133,.24);
+    --ok:#7E9E82;
+    --on-accent:#080A0F;
+  }
+  [data-theme="light"]{
+    --ink:#F3F0E9;
+    --ink-rgb:243,240,233;
+    --ink-2:#FBFAF5;
+    --haze:#1B1C20;
+    --haze-dim:#4A4C54;
+    --mute:#6E727D;
+    --mute-2:#9A9DA6;
+    --line:rgba(20,21,26,.10);
+    --line-2:rgba(20,21,26,.18);
+    --amber:#9E6B22;
+    --amber-soft:rgba(158,107,34,.12);
+    --steel:#4A6377;
+    --steel-text:#4A6377;
+    --steel-soft:rgba(74,99,119,.14);
+    --ok:#3F6B4F;
+    --on-accent:#FBFAF5;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    min-height:100vh;
+    background:var(--ink);
+    color:var(--haze);
+    font-family:"Newsreader",Georgia,serif;
+    font-weight:300;
+    font-size:18px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    display:flex;
+    justify-content:center;
+    padding:44px 22px 72px;
+    transition:background .35s ease, color .35s ease;
+  }
+  ::selection{background:rgba(207,161,95,.22);color:var(--haze)}
+  a{color:inherit;text-decoration:none}
+
+  .stage{width:100%;max-width:720px}
+
+  .mono{
+    font-family:"JetBrains Mono",ui-monospace,monospace;
+    font-weight:400;font-size:11px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--mute);
+  }
+
+  /* ---------- top row ---------- */
+  .toprow{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:34px}
+  .back{transition:color .25s}
+  .back:hover{color:var(--amber)}
+
+  .theme-toggle{display:inline-flex;align-items:center;gap:10px;background:none;border:0;padding:0;cursor:pointer;font:inherit;line-height:1}
+  .theme-toggle .tmode{color:var(--mute);transition:color .25s}
+  .theme-toggle:hover .tmode{color:var(--amber)}
+  .theme-toggle .track{width:40px;height:21px;border-radius:999px;border:1px solid var(--line-2);position:relative;transition:border-color .25s;flex:0 0 auto}
+  .theme-toggle:hover .track{border-color:var(--amber)}
+  .theme-toggle .knob{position:absolute;top:50%;left:3px;transform:translateY(-50%);width:13px;height:13px;border-radius:50%;background:var(--mute);transition:left .28s cubic-bezier(.4,0,.2,1),background .25s}
+  [data-theme="light"] .theme-toggle .knob{left:22px;background:var(--amber)}
+  .theme-toggle:focus-visible{outline:none}
+  .theme-toggle:focus-visible .track{outline:2px solid var(--amber);outline-offset:3px}
+
+  /* ---------- header ---------- */
+  header{margin-bottom:28px}
+  .eyebrow{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--mute-2);margin:0 0 16px;
+  }
+  h1{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;
+    font-size:clamp(30px,5.4vw,44px);line-height:1.02;letter-spacing:-.025em;
+    color:var(--haze);margin:0 0 16px;
+  }
+  .sub{font-size:17px;line-height:1.6;color:var(--haze-dim);font-weight:300;margin:0;max-width:58ch}
+
+  /* ---------- cards ---------- */
+  .card{
+    background:linear-gradient(160deg, var(--ink-2), rgba(var(--ink-rgb),0));
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:26px 28px 24px;
+    margin-bottom:18px;
+  }
+  @media (max-width:480px){.card{padding:22px 18px 20px}}
+
+  .step-kicker{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--amber);margin:0 0 8px;
+  }
+  .step-title{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;
+    font-size:21px;letter-spacing:-.02em;color:var(--haze);margin:0 0 18px;
+  }
+  .placeholder-note{font-size:16px;line-height:1.55;color:var(--mute);font-style:italic;margin:0}
+
+  /* ---------- setup controls ---------- */
+  .control-grid{display:grid;grid-template-columns:1fr 1fr 1.4fr;gap:22px}
+  @media (max-width:560px){.control-grid{grid-template-columns:1fr 1fr}.control.p{grid-column:1 / -1}}
+  .control{display:flex;flex-direction:column;gap:12px}
+  /* no uppercase: these labels name the variables n, k and p */
+  .control label{
+    font-family:"JetBrains Mono",monospace;font-size:12.5px;letter-spacing:.02em;
+    color:var(--mute);
+  }
+  .stepper{display:flex;align-items:center;gap:12px}
+  .step-btn{
+    width:34px;height:34px;border-radius:50%;
+    border:1px solid var(--line-2);background:none;color:var(--haze);
+    font-family:"JetBrains Mono",monospace;font-size:16px;line-height:1;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;transition:.25s;
+  }
+  .step-btn:hover:not(:disabled){border-color:var(--amber);color:var(--amber)}
+  .step-btn:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+  .step-btn:disabled{opacity:.3;cursor:default}
+  .step-value{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;font-size:24px;
+    letter-spacing:-.02em;color:var(--haze);min-width:22px;text-align:center;
+  }
+  .p-value{color:var(--amber)}
+
+  input[type="range"]{
+    -webkit-appearance:none;appearance:none;
+    width:100%;height:3px;background:var(--line-2);border-radius:2px;
+    margin:14px 0 6px;cursor:pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb{
+    -webkit-appearance:none;appearance:none;
+    width:15px;height:15px;border-radius:50%;background:var(--amber);
+    border:3px solid var(--ink);box-shadow:0 0 0 1px var(--amber);cursor:pointer;margin-top:-6px;
+  }
+  input[type="range"]::-moz-range-thumb{
+    width:15px;height:15px;border-radius:50%;background:var(--amber);
+    border:3px solid var(--ink);box-shadow:0 0 0 1px var(--amber);cursor:pointer;
+  }
+  input[type="range"]:focus-visible{outline:2px solid var(--amber);outline-offset:6px;border-radius:4px}
+
+  /* ---------- sequences ---------- */
+  .legend{
+    display:flex;flex-wrap:wrap;gap:8px 20px;margin:0 0 16px;
+    font-family:"JetBrains Mono",monospace;font-size:12.5px;letter-spacing:.02em;
+    color:var(--mute);
+  }
+  .legend b{font-weight:500}
+  .legend .ls{color:var(--amber)}
+  .legend .lf{color:var(--steel-text)}
+  .seq-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:7px}
+  .seq-pill{
+    font-family:"JetBrains Mono",monospace;font-size:13px;letter-spacing:.14em;
+    padding:7px 11px;border-radius:8px;
+    border:1px solid var(--line-2);background:none;color:var(--mute);
+    opacity:.35;transition:.2s;
+  }
+  .seq-pill.match{opacity:1;border-color:var(--amber);background:var(--amber-soft);cursor:pointer}
+  .seq-pill.match:hover{box-shadow:inset 0 0 0 1px var(--amber)}
+  .seq-pill.match:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+  .seq-pill .s-char{color:var(--amber);font-weight:500}
+  .seq-pill .f-char{color:var(--steel-text);font-weight:500}
+  .seq-pill.selected{background:var(--amber);border-color:var(--amber)}
+  .seq-pill.selected .s-char,.seq-pill.selected .f-char{color:var(--on-accent)}
+  .too-many-note{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--mute);margin:16px 0 0;line-height:1.7;
+    text-align:center;
+  }
+
+  /* ---------- guess ---------- */
+  .guess-row{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+  .guess-row .mono{margin:0}
+  .guess-row input[type="number"]{
+    width:88px;padding:10px 12px;
+    border:1px solid var(--line-2);border-radius:10px;background:none;color:var(--haze);
+    font-family:"Space Grotesk",system-ui,sans-serif;font-size:18px;font-weight:500;
+  }
+  .guess-row input[type="number"]:focus{outline:2px solid var(--amber);outline-offset:2px;border-color:var(--amber)}
+
+  .btn{
+    display:inline-block;background:none;cursor:pointer;
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--haze);
+    border:1px solid var(--line-2);border-radius:999px;padding:11px 22px;
+    transition:.25s;
+  }
+  .btn:hover:not(:disabled){border-color:var(--amber);color:var(--amber)}
+  .btn:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+  .btn.primary{border-color:var(--amber);color:var(--amber)}
+  .btn.primary:hover:not(:disabled){background:var(--amber);color:var(--on-accent)}
+
+  .reveal-box{
+    display:none;margin-top:20px;padding:4px 0 4px 20px;border-left:2px solid var(--amber);
+    font-size:16.5px;line-height:1.62;color:var(--haze-dim);
+  }
+  .reveal-box.shown{display:block}
+  .reveal-box.match-yes{border-color:var(--ok)}
+  .reveal-box .verdict{
+    display:block;font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.18em;
+    text-transform:uppercase;margin-bottom:6px;color:var(--amber);
+  }
+  .reveal-box.match-yes .verdict{color:var(--ok)}
+  .reveal-box .m{font-family:"JetBrains Mono",monospace;font-size:14px;color:var(--haze)}
+  .reveal-box strong{color:var(--haze);font-weight:400}
+
+  /* ---------- factors ---------- */
+  .factor-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+  .factor{
+    font-family:"JetBrains Mono",monospace;font-size:13.5px;
+    padding:7px 11px;border-radius:8px;
+  }
+  .factor.s{background:var(--amber-soft);color:var(--amber)}
+  .factor.f{background:var(--steel-soft);color:var(--steel-text)}
+  .times{font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--mute)}
+
+  /* ---------- derivation (same layout as the other worked examples) ---------- */
+  .deriv{border-left:2px solid var(--amber);padding:6px 0 6px 20px}
+  .d-grid{
+    display:grid;grid-template-columns:max-content max-content minmax(0,1fr);
+    column-gap:10px;row-gap:9px;align-items:baseline;
+  }
+  .d-l,.d-r{font-family:"JetBrains Mono",monospace;font-size:14px;letter-spacing:.01em;color:var(--haze);white-space:nowrap}
+  .d-l{text-align:right}
+  .d-r.res{color:var(--amber);font-weight:500;font-size:16px}
+  .d-w{font-size:15px;line-height:1.4;font-style:italic;color:var(--haze-dim);padding-left:16px}
+  sup{font-size:.72em;line-height:0}
+  @media (max-width:640px){
+    .d-grid{grid-template-columns:max-content minmax(0,1fr);row-gap:4px}
+    .d-r{white-space:normal}
+    .d-w{grid-column:1 / -1;padding:0 0 8px;font-size:14.5px}
+    .d-w:empty{display:none}
+  }
+
+  @media (prefers-reduced-motion:reduce){*{transition:none !important}}
+</style>
+</head>
+<body>
+
+<div class="stage">
+
+  <div class="toprow">
+    <a class="back mono" href="../STAT20070.html">← STAT 20070</a>
+    <button class="theme-toggle" id="themeToggle" aria-label="Switch between light and dark theme" aria-pressed="false"><span class="tmode mono" id="tmode">Dark</span><span class="track"><span class="knob"></span></span></button>
+  </div>
+
+  <header>
+    <p class="eyebrow">Section 2 · Lecture 06 · Binomial Distribution</p>
+    <h1>Build the Binomial<br>Formula</h1>
+    <p class="sub">Rather than stating the Binomial formula outright, this tool derives it in four steps: list every sequence of successes and failures, count the sequences with exactly k successes, find the probability of any one of them, and combine the two.</p>
+  </header>
+
+  <div class="card">
+    <p class="step-kicker">Setup</p>
+    <div class="control-grid">
+      <div class="control">
+        <label>Trials, n</label>
+        <div class="stepper">
+          <button class="step-btn" id="nMinus" type="button" aria-label="Decrease n">&minus;</button>
+          <span class="step-value" id="nValue">4</span>
+          <button class="step-btn" id="nPlus" type="button" aria-label="Increase n">+</button>
+        </div>
+      </div>
+      <div class="control">
+        <label>Successes, k</label>
+        <div class="stepper">
+          <button class="step-btn" id="kMinus" type="button" aria-label="Decrease k">&minus;</button>
+          <span class="step-value" id="kValue">2</span>
+          <button class="step-btn" id="kPlus" type="button" aria-label="Increase k">+</button>
+        </div>
+      </div>
+      <div class="control p">
+        <label for="pSlider">Pr(success), p = <span class="p-value" id="pValue">0.50</span></label>
+        <input type="range" id="pSlider" min="0.05" max="0.95" step="0.05" value="0.5">
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="step-kicker">Step 1</p>
+    <p class="step-title">Every possible sequence of outcomes</p>
+    <p class="legend"><span><b class="ls">S</b> = success, probability p</span><span><b class="lf">F</b> = failure, probability 1 − p</span></p>
+    <div class="seq-grid" id="seqGrid"></div>
+    <p class="too-many-note" id="tooManyNote"></p>
+  </div>
+
+  <div class="card">
+    <p class="step-kicker">Step 2</p>
+    <p class="step-title">How many sequences have exactly <span id="kTitle">2</span> successes?</p>
+    <div class="guess-row">
+      <label class="mono" for="guessInput">Your guess</label>
+      <input type="number" id="guessInput" min="0">
+      <button class="btn primary" id="revealCount" type="button">Reveal</button>
+    </div>
+    <div class="reveal-box" id="countReveal"></div>
+  </div>
+
+  <div class="card">
+    <p class="step-kicker">Step 3</p>
+    <p class="step-title">Pick one arrangement and find its probability</p>
+    <p class="placeholder-note" id="pickNote">Click a highlighted sequence in Step 1 to select it.</p>
+    <div class="factor-row" id="factorRow"></div>
+    <div class="reveal-box" id="factorReveal"></div>
+  </div>
+
+  <div class="card">
+    <p class="step-kicker">Step 4</p>
+    <p class="step-title">Put it together</p>
+    <p class="placeholder-note" id="combineNote">Complete Steps 2 and 3 first.</p>
+    <div class="deriv" id="combineBox" style="display:none;"></div>
+  </div>
+</div>
+
+<script>
+/* ---------- theme toggle (shares the site's stored preference) ---------- */
+(function(){
+  var root = document.documentElement;
+  var btn  = document.getElementById('themeToggle');
+  function current(){ return root.getAttribute('data-theme') === 'light' ? 'light' : 'dark'; }
+  function sync(){
+    var t = current();
+    btn.setAttribute('aria-pressed', t === 'light' ? 'true' : 'false');
+    document.getElementById('tmode').textContent = t === 'light' ? 'Light' : 'Dark';
+  }
+  sync();
+  btn.addEventListener('click', function(){
+    var t = current() === 'light' ? 'dark' : 'light';
+    root.setAttribute('data-theme', t);
+    try{ localStorage.setItem('theme', t); }catch(e){}
+    sync();
+  });
+})();
+
+let n = 4, k = 2, p = 0.5;
+let revealedCount = false;
+let selectedSeq = null; // array of 0/1
+
+function factorial(x) { let r = 1; for (let i = 2; i <= x; i++) r *= i; return r; }
+function choose(n, k) {
+  if (k < 0 || k > n) return 0;
+  return Math.round(factorial(n) / (factorial(k) * factorial(n - k)));
+}
+
+// probabilities can get very small (e.g. p = 0.05, k = 6), where toFixed(4) would print 0.0000
+function fmtP(x) {
+  if (x === 0) return '0';
+  if (x >= 0.0001) return x.toFixed(4);
+  const [m, e] = x.toExponential(2).split('e');
+  return `${m} × 10<sup>${+e}</sup>`;
+}
+
+function allSequences(n) {
+  const seqs = [];
+  for (let mask = 0; mask < (1 << n); mask++) {
+    const seq = [];
+    for (let i = n - 1; i >= 0; i--) seq.push((mask >> i) & 1);
+    seqs.push(seq);
+  }
+  return seqs;
+}
+
+function seqSuccessCount(seq) { return seq.reduce((a, b) => a + b, 0); }
+// sequences are rebuilt on every render, so compare them by content, not identity
+function seqKey(seq) { return seq ? seq.join('') : ''; }
+
+function renderControls() {
+  document.getElementById('nValue').textContent = n;
+  document.getElementById('kValue').textContent = k;
+  document.getElementById('kTitle').textContent = k;
+  document.getElementById('pValue').textContent = p.toFixed(2);
+  document.getElementById('nMinus').disabled = n <= 1;
+  document.getElementById('nPlus').disabled = n >= 6;
+  document.getElementById('kMinus').disabled = k <= 0;
+  document.getElementById('kPlus').disabled = k >= n;
+}
+
+function renderSeqGrid() {
+  const grid = document.getElementById('seqGrid');
+  const note = document.getElementById('tooManyNote');
+  grid.innerHTML = '';
+
+  const seqs = allSequences(n);
+  const selKey = seqKey(selectedSeq);
+  seqs.forEach(seq => {
+    const isMatch = seqSuccessCount(seq) === k;
+    const pill = document.createElement('span');
+    pill.className = 'seq-pill' + (isMatch ? ' match' : '') + (isMatch && seqKey(seq) === selKey ? ' selected' : '');
+    pill.innerHTML = seq.map(bit => bit === 1 ? '<span class="s-char">S</span>' : '<span class="f-char">F</span>').join(' ');
+    if (isMatch) {
+      pill.tabIndex = 0;
+      pill.setAttribute('role', 'button');
+      pill.setAttribute('aria-pressed', seqKey(seq) === selKey ? 'true' : 'false');
+      pill.addEventListener('click', () => selectSequence(seq));
+      pill.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectSequence(seq); }
+      });
+    }
+    grid.appendChild(pill);
+  });
+
+  note.textContent = `${seqs.length} sequences of length ${n} in total · the highlighted ones have exactly ${k} success${k === 1 ? '' : 'es'}`;
+}
+
+function selectSequence(seq) {
+  selectedSeq = seq;
+  renderSeqGrid();
+  renderFactorBreakdown();
+  renderCombine();
+}
+
+function renderCountStep() {
+  const reveal = document.getElementById('countReveal');
+  if (!revealedCount) {
+    reveal.className = 'reveal-box';
+    return;
+  }
+  const guess = parseInt(document.getElementById('guessInput').value, 10);
+  const actual = choose(n, k);
+  const matched = guess === actual;
+  const formula = `<span class="m">C(${n}, ${k}) = ${n}! / (${k}! × ${n - k}!) = ${actual}</span>`;
+  reveal.className = 'reveal-box shown' + (matched ? ' match-yes' : '');
+  reveal.innerHTML = matched
+    ? `<span class="verdict">Correct</span>There are ${formula} arrangements with exactly ${k} success${k === 1 ? '' : 'es'}. C(n, k), read “n choose k”, counts the ways to place k successes among n trials.`
+    : `<span class="verdict">You guessed ${isNaN(guess) ? 'nothing yet' : guess}</span>The actual count is ${formula}. C(n, k), read “n choose k”, counts the ways to place k successes among n trials.`;
+  renderCombine();
+}
+
+function renderFactorBreakdown() {
+  const factorRow = document.getElementById('factorRow');
+  const reveal = document.getElementById('factorReveal');
+  const note = document.getElementById('pickNote');
+
+  if (!selectedSeq) {
+    factorRow.innerHTML = '';
+    reveal.className = 'reveal-box';
+    note.style.display = 'block';
+    return;
+  }
+  note.style.display = 'none';
+
+  factorRow.innerHTML = '';
+  selectedSeq.forEach((bit, i) => {
+    if (i > 0) {
+      const t = document.createElement('span');
+      t.className = 'times';
+      t.textContent = '×';
+      factorRow.appendChild(t);
+    }
+    const f = document.createElement('span');
+    f.className = 'factor ' + (bit === 1 ? 's' : 'f');
+    f.textContent = bit === 1 ? `p = ${p.toFixed(2)}` : `1 − p = ${(1 - p).toFixed(2)}`;
+    factorRow.appendChild(f);
+  });
+
+  const successes = seqSuccessCount(selectedSeq);
+  const fails = n - successes;
+  const value = Math.pow(p, successes) * Math.pow(1 - p, fails);
+
+  reveal.className = 'reveal-box shown';
+  reveal.innerHTML = `<span class="m">p<sup>${successes}</sup>(1 − p)<sup>${fails}</sup> = ${fmtP(value)}</span><br>The trials are independent, so the probabilities multiply. Every arrangement with ${k} success${k === 1 ? '' : 'es'} gives this <em>same</em> probability, because multiplication does not depend on the order.`;
+
+  renderCombine();
+}
+
+function renderCombine() {
+  const box = document.getElementById('combineBox');
+  const note = document.getElementById('combineNote');
+
+  if (!revealedCount || !selectedSeq) {
+    box.style.display = 'none';
+    note.style.display = 'block';
+    return;
+  }
+  note.style.display = 'none';
+  box.style.display = 'block';
+
+  const count = choose(n, k);
+  const perArrangement = Math.pow(p, k) * Math.pow(1 - p, n - k);
+  const total = count * perArrangement;
+
+  const rows = [
+    { l: `Pr(Y = ${k})`, r: '= (number of arrangements) × (probability of each)', w: '' },
+    { r: `= C(n, k) × p<sup>k</sup>(1 − p)<sup>n − k</sup>`, w: 'the Binomial formula' },
+    { r: `= C(${n}, ${k}) × ${p.toFixed(2)}<sup>${k}</sup> × ${(1 - p).toFixed(2)}<sup>${n - k}</sup>`, w: `n = ${n}, k = ${k}, p = ${p.toFixed(2)}` },
+    { r: `= ${count} × ${fmtP(perArrangement)}`, w: 'Step 2 × Step 3' },
+    { r: `= ${fmtP(total)}`, res: true }
+  ];
+  box.innerHTML = '<div class="d-grid">' + rows.map(d =>
+    `<span class="d-l">${d.l || ''}</span><span class="d-r${d.res ? ' res' : ''}">${d.r}</span><span class="d-w">${d.w || ''}</span>`
+  ).join('') + '</div>';
+}
+
+function resetDownstream() {
+  revealedCount = false;
+  selectedSeq = null;
+  document.getElementById('guessInput').value = '';
+  renderCountStep();
+  renderFactorBreakdown();
+  renderCombine();
+}
+
+function renderAll() {
+  renderControls();
+  renderSeqGrid();
+  renderCountStep();
+  renderFactorBreakdown();
+  renderCombine();
+}
+
+document.getElementById('nMinus').addEventListener('click', () => {
+  if (n <= 1) return;
+  n--;
+  if (k > n) k = n;
+  resetDownstream();
+  renderAll();
+});
+document.getElementById('nPlus').addEventListener('click', () => {
+  if (n >= 6) return;
+  n++;
+  resetDownstream();
+  renderAll();
+});
+document.getElementById('kMinus').addEventListener('click', () => {
+  if (k <= 0) return;
+  k--;
+  resetDownstream();
+  renderAll();
+});
+document.getElementById('kPlus').addEventListener('click', () => {
+  if (k >= n) return;
+  k++;
+  resetDownstream();
+  renderAll();
+});
+document.getElementById('pSlider').addEventListener('input', (e) => {
+  p = parseFloat(e.target.value);
+  renderControls();
+  renderFactorBreakdown();
+  renderCombine();
+});
+document.getElementById('revealCount').addEventListener('click', () => {
+  revealedCount = true;
+  renderCountStep();
+});
+document.getElementById('guessInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { revealedCount = true; renderCountStep(); }
+});
+
+renderAll();
+</script>
+
+</body>
+</html>

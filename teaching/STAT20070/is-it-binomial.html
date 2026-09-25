@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>(function(){try{var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark"){t=(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+<title>Is It Binomial? — Uche Mbaka</title>
+<meta name="description" content="A drill for STAT 20070: for each scenario, decide which of the four Binomial conditions hold.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#080A0F;
+    --ink-rgb:8,10,15;
+    --ink-2:#0D1017;
+    --haze:#E9E6DF;
+    --haze-dim:#B9B6AE;
+    --mute:#6A7180;
+    --mute-2:#454B58;
+    --line:rgba(233,230,223,.09);
+    --line-2:rgba(233,230,223,.16);
+    --amber:#CFA15F;
+    --amber-soft:rgba(207,161,95,.16);
+    --steel:#5C7585;
+    --ok:#7E9E82;
+    --ok-soft:rgba(126,158,130,.14);
+    --err:#D98A72;
+    --err-soft:rgba(217,138,114,.14);
+    --on-accent:#080A0F;
+  }
+  [data-theme="light"]{
+    --ink:#F3F0E9;
+    --ink-rgb:243,240,233;
+    --ink-2:#FBFAF5;
+    --haze:#1B1C20;
+    --haze-dim:#4A4C54;
+    --mute:#6E727D;
+    --mute-2:#9A9DA6;
+    --line:rgba(20,21,26,.10);
+    --line-2:rgba(20,21,26,.18);
+    --amber:#9E6B22;
+    --amber-soft:rgba(158,107,34,.12);
+    --steel:#4A6377;
+    --ok:#3F6B4F;
+    --ok-soft:rgba(63,107,79,.10);
+    --err:#B3442E;
+    --err-soft:rgba(179,68,46,.10);
+    --on-accent:#FBFAF5;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    min-height:100vh;
+    background:var(--ink);
+    color:var(--haze);
+    font-family:"Newsreader",Georgia,serif;
+    font-weight:300;
+    font-size:18px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    display:flex;
+    justify-content:center;
+    padding:44px 22px 72px;
+    transition:background .35s ease, color .35s ease;
+  }
+  ::selection{background:rgba(207,161,95,.22);color:var(--haze)}
+  a{color:inherit;text-decoration:none}
+
+  .stage{width:100%;max-width:680px}
+
+  .mono{
+    font-family:"JetBrains Mono",ui-monospace,monospace;
+    font-weight:400;font-size:11px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--mute);
+  }
+
+  /* ---------- top row ---------- */
+  .toprow{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:34px}
+  .back{transition:color .25s}
+  .back:hover{color:var(--amber)}
+
+  .theme-toggle{display:inline-flex;align-items:center;gap:10px;background:none;border:0;padding:0;cursor:pointer;font:inherit;line-height:1}
+  .theme-toggle .tmode{color:var(--mute);transition:color .25s}
+  .theme-toggle:hover .tmode{color:var(--amber)}
+  .theme-toggle .track{width:40px;height:21px;border-radius:999px;border:1px solid var(--line-2);position:relative;transition:border-color .25s;flex:0 0 auto}
+  .theme-toggle:hover .track{border-color:var(--amber)}
+  .theme-toggle .knob{position:absolute;top:50%;left:3px;transform:translateY(-50%);width:13px;height:13px;border-radius:50%;background:var(--mute);transition:left .28s cubic-bezier(.4,0,.2,1),background .25s}
+  [data-theme="light"] .theme-toggle .knob{left:22px;background:var(--amber)}
+  .theme-toggle:focus-visible{outline:none}
+  .theme-toggle:focus-visible .track{outline:2px solid var(--amber);outline-offset:3px}
+
+  /* ---------- header ---------- */
+  header{margin-bottom:28px}
+  .eyebrow{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--mute-2);margin:0 0 16px;
+  }
+  h1{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;
+    font-size:clamp(32px,6vw,46px);line-height:1.02;letter-spacing:-.025em;
+    color:var(--haze);margin:0 0 16px;
+  }
+  .sub{font-size:17px;line-height:1.6;color:var(--haze-dim);font-weight:300;margin:0;max-width:52ch}
+
+  /* ---------- cards ---------- */
+  .card{
+    background:linear-gradient(160deg, var(--ink-2), rgba(var(--ink-rgb),0));
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:28px 30px 26px;
+    margin-bottom:18px;
+  }
+  @media (max-width:480px){.card{padding:22px 18px 20px}}
+
+  /* ---------- the four conditions ---------- */
+  .rules-title{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--mute);margin:0 0 14px;
+  }
+  .rules-title b{color:var(--amber);font-weight:400}
+  .rule{
+    display:grid;grid-template-columns:34px 1fr;gap:12px;align-items:baseline;
+    padding:11px 0;border-top:1px solid var(--line);
+  }
+  .rule:first-of-type{border-top:none;padding-top:2px}
+  .rule .n{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.06em;color:var(--amber)}
+  .rule .t{font-size:16.5px;line-height:1.5;color:var(--haze-dim)}
+
+  /* ---------- tally ---------- */
+  .tally{display:flex;gap:5px}
+  .tick{flex:1;height:3px;border-radius:2px;background:var(--line-2);transition:background .25s ease}
+  .tick.current{background:var(--haze-dim)}
+  .tick.correct{background:var(--ok)}
+  .tick.incorrect{background:var(--err)}
+  .tally-label{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute);margin:12px 0 26px}
+
+  .scenario-text{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:400;
+    font-size:clamp(19px,3.2vw,23px);line-height:1.38;letter-spacing:-.015em;
+    color:var(--haze);margin:0 0 22px;
+  }
+  .ask{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--mute);margin:0 0 12px;
+  }
+
+  /* ---------- condition checklist ---------- */
+  .cond{
+    position:relative;display:flex;align-items:center;gap:14px;
+    padding:14px 16px;margin-bottom:8px;
+    border:1px solid var(--line-2);border-radius:10px;cursor:pointer;
+    transition:border-color .25s ease, background .25s ease, opacity .25s ease;
+  }
+  .cond:hover{border-color:var(--amber)}
+  .cond input{position:absolute;opacity:0;pointer-events:none}
+  .box{
+    flex:0 0 auto;width:20px;height:20px;border-radius:6px;
+    border:1px solid var(--line-2);position:relative;transition:.2s;
+  }
+  .cond input:checked + .box{background:var(--amber);border-color:var(--amber)}
+  .cond input:checked + .box::after{
+    content:"";position:absolute;left:6px;top:2px;width:5px;height:10px;
+    border:solid var(--on-accent);border-width:0 2px 2px 0;transform:rotate(45deg);
+  }
+  .cond input:focus-visible + .box{outline:2px solid var(--amber);outline-offset:3px}
+  .cond-text{
+    flex:1;font-family:"Space Grotesk",system-ui,sans-serif;font-weight:400;
+    font-size:15.5px;letter-spacing:-.005em;color:var(--haze);
+  }
+  .result-icon{
+    font-family:"JetBrains Mono",monospace;font-size:14px;font-weight:500;
+    min-width:20px;text-align:center;
+  }
+  .cond.locked{cursor:default}
+  .cond.locked:hover{border-color:var(--line-2)}
+  .cond.result-correct{border-color:var(--ok);background:var(--ok-soft)}
+  .cond.result-correct .result-icon{color:var(--ok)}
+  .cond.result-incorrect{border-color:var(--err);background:var(--err-soft)}
+  .cond.result-incorrect .result-icon{color:var(--err)}
+  .cond.result-na{opacity:.45}
+  .cond.result-na .result-icon{
+    font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute);
+  }
+
+  /* ---------- buttons ---------- */
+  .btn{
+    display:inline-block;background:none;cursor:pointer;margin-top:18px;
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--haze);
+    border:1px solid var(--line-2);border-radius:999px;padding:11px 22px;
+    transition:.25s;
+  }
+  .btn:hover:not(:disabled){border-color:var(--amber);color:var(--amber)}
+  .btn:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+  .btn:disabled{opacity:.35;cursor:default}
+  .btn.primary{border-color:var(--amber);color:var(--amber)}
+  .btn.primary:hover:not(:disabled){background:var(--amber);color:var(--on-accent)}
+
+  /* ---------- verdict ---------- */
+  .verdict-box{display:none;margin-top:24px;padding:4px 0 4px 20px;border-left:2px solid}
+  .verdict-box.shown{display:block}
+  .verdict-box.yes{border-color:var(--ok)}
+  .verdict-box.no{border-color:var(--err)}
+  .verdict-title{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.16em;
+    text-transform:uppercase;line-height:1.7;margin:0 0 10px;
+  }
+  .verdict-box.yes .verdict-title{color:var(--ok)}
+  .verdict-box.no .verdict-title{color:var(--err)}
+  .verdict-explanation{font-size:16.5px;line-height:1.62;color:var(--haze-dim);margin:0}
+
+  /* ---------- results ---------- */
+  .score{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;
+    font-size:clamp(26px,4.6vw,36px);line-height:1.08;letter-spacing:-.025em;
+    color:var(--haze);margin:0 0 8px;
+  }
+  .score b{color:var(--amber);font-weight:500}
+  .score-line{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--mute);margin:0}
+  .result-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:10px}
+
+  @media (prefers-reduced-motion:reduce){*{transition:none !important}}
+</style>
+</head>
+<body>
+
+<div class="stage">
+
+  <div class="toprow">
+    <a class="back mono" href="../STAT20070.html">← STAT 20070</a>
+    <button class="theme-toggle" id="themeToggle" aria-label="Switch between light and dark theme" aria-pressed="false"><span class="tmode mono" id="tmode">Dark</span><span class="track"><span class="knob"></span></span></button>
+  </div>
+
+  <header>
+    <p class="eyebrow">Section 2 · Lecture 06 · Binomial Distribution</p>
+    <h1>Is It Binomial?</h1>
+    <p class="sub">For each scenario, check which of the four conditions actually hold, rather than simply answering yes or no.</p>
+  </header>
+
+  <div class="card">
+    <p class="rules-title">A situation is Binomial only when <b>all four</b> hold</p>
+    <div class="rule"><span class="n">01</span><span class="t">A fixed number of trials, n</span></div>
+    <div class="rule"><span class="n">02</span><span class="t">Only two possible outcomes per trial (success or failure)</span></div>
+    <div class="rule"><span class="n">03</span><span class="t">The same probability of success, p, on every trial</span></div>
+    <div class="rule"><span class="n">04</span><span class="t">The trials are independent of each other</span></div>
+  </div>
+
+  <div class="card">
+    <div class="tally" id="tally"></div>
+    <p class="tally-label" id="tallyLabel"></p>
+    <div id="roundArea"></div>
+  </div>
+</div>
+
+<script>
+/* ---------- theme toggle (shares the site's stored preference) ---------- */
+(function(){
+  var root = document.documentElement;
+  var btn  = document.getElementById('themeToggle');
+  function current(){ return root.getAttribute('data-theme') === 'light' ? 'light' : 'dark'; }
+  function sync(){
+    var t = current();
+    btn.setAttribute('aria-pressed', t === 'light' ? 'true' : 'false');
+    document.getElementById('tmode').textContent = t === 'light' ? 'Light' : 'Dark';
+  }
+  sync();
+  btn.addEventListener('click', function(){
+    var t = current() === 'light' ? 'dark' : 'light';
+    root.setAttribute('data-theme', t);
+    try{ localStorage.setItem('theme', t); }catch(e){}
+    sync();
+  });
+})();
+
+const CONDITIONS = [
+  { key: 'fixedN', label: 'Fixed number of trials, n' },
+  { key: 'twoOutcomes', label: 'Only two possible outcomes per trial' },
+  { key: 'constantP', label: 'Same probability of success every trial' },
+  { key: 'independent', label: 'Trials are independent of each other' }
+];
+
+const SCENARIOS = [
+  {
+    text: 'Flip a fair coin 10 times and count the number of heads.',
+    truth: { fixedN: true, twoOutcomes: true, constantP: true, independent: true },
+    explain: 'Every condition holds: 10 is fixed in advance, each flip is heads/tails, the coin doesn’t change, and one flip doesn’t affect another. This is Binomial.'
+  },
+  {
+    text: 'Draw a card from a full shuffled deck, note whether it’s an Ace, then replace it and reshuffle. Repeat this until you draw an Ace.',
+    truth: { fixedN: false, twoOutcomes: true, constantP: true, independent: true },
+    explain: 'Each draw is independent with the same 1/13 chance of an Ace — but the number of draws isn’t fixed in advance; you stop as soon as you succeed. That’s a Geometric setting, not Binomial.'
+  },
+  {
+    text: 'Draw 5 cards from a shuffled deck without replacement, and count how many are hearts.',
+    truth: { fixedN: true, twoOutcomes: true, constantP: false, independent: false },
+    explain: 'n = 5 is fixed and each card is heart/not-heart, but sampling without replacement means the probability of a heart changes after each draw, and the draws aren’t independent. (This is actually Hypergeometric.)'
+  },
+  {
+    text: 'Record how many siblings each of 10 randomly and independently selected people has.',
+    truth: { fixedN: true, twoOutcomes: false, constantP: null, independent: true },
+    explain: 'n is fixed and the people are independent, but each person’s result isn’t success/failure — the number of siblings can be 0, 1, 2, 3, … so there are many outcomes per trial, not two. Why is “same probability of success” marked n/a? A probability of success only exists once each trial has a success and a failure. Here no success is defined, so there is no p to be the same or different — the condition simply doesn’t apply, and it isn’t marked either way. (To make this Binomial, ask a yes/no question about each person, e.g. “has at least one sibling?”, and count the yeses.)'
+  },
+  {
+    text: 'A machine’s defect probability rises from 2% to 20% over a shift as it overheats. Check the next 15 items it produces for defects.',
+    truth: { fixedN: true, twoOutcomes: true, constantP: false, independent: true },
+    explain: 'n = 15 is fixed and each item is defective/not, but the probability of a defect changes over the shift instead of staying constant. That breaks the Binomial assumption.'
+  },
+  {
+    text: 'Roll a fair six-sided die 12 times and count how many times you roll a number greater than 4.',
+    truth: { fixedN: true, twoOutcomes: true, constantP: true, independent: true },
+    explain: '12 is fixed, each roll is either “>4” or not, p = 2/6 stays the same, and rolls don’t affect each other. This is Binomial.'
+  }
+];
+
+let current = 0;
+let results = new Array(SCENARIOS.length).fill(null); // true = fully correct diagnosis
+
+const tallyEl = document.getElementById('tally');
+const tallyLabelEl = document.getElementById('tallyLabel');
+const roundArea = document.getElementById('roundArea');
+
+function renderTally() {
+  tallyEl.innerHTML = '';
+  SCENARIOS.forEach((_, i) => {
+    const t = document.createElement('div');
+    t.className = 'tick';
+    if (results[i] === true) t.className += ' correct';
+    else if (results[i] === false) t.className += ' incorrect';
+    else if (i === current && current < SCENARIOS.length) t.className += ' current';
+    tallyEl.appendChild(t);
+  });
+  const correctSoFar = results.filter(r => r === true).length;
+  tallyLabelEl.textContent = current < SCENARIOS.length
+    ? `Scenario ${current + 1} of ${SCENARIOS.length} · ${correctSoFar} fully correct so far`
+    : `Complete · ${correctSoFar} of ${SCENARIOS.length} fully correct`;
+}
+
+function renderRound() {
+  const scenario = SCENARIOS[current];
+  let rowsHTML = '';
+  CONDITIONS.forEach(c => {
+    rowsHTML += `
+      <label class="cond" id="row-${c.key}" for="chk-${c.key}">
+        <input type="checkbox" id="chk-${c.key}">
+        <span class="box" aria-hidden="true"></span>
+        <span class="cond-text">${c.label}</span>
+        <span class="result-icon" id="icon-${c.key}"></span>
+      </label>
+    `;
+  });
+
+  roundArea.innerHTML = `
+    <p class="scenario-text">${scenario.text}</p>
+    <p class="ask">Check every condition you believe holds here</p>
+    ${rowsHTML}
+    <button class="btn primary" id="submitBtn" type="button">Check my diagnosis</button>
+    <div class="verdict-box" id="verdictBox">
+      <p class="verdict-title" id="verdictTitle"></p>
+      <p class="verdict-explanation" id="verdictExplanation"></p>
+      <button class="btn primary" id="nextBtn" type="button"></button>
+    </div>
+  `;
+
+  document.getElementById('submitBtn').addEventListener('click', submitDiagnosis);
+  renderTally();
+}
+
+function submitDiagnosis() {
+  const scenario = SCENARIOS[current];
+  let allCorrect = true;
+
+  CONDITIONS.forEach(c => {
+    const checked = document.getElementById('chk-' + c.key).checked;
+    const truth = scenario.truth[c.key];
+    const row = document.getElementById('row-' + c.key);
+    const icon = document.getElementById('icon-' + c.key);
+    document.getElementById('chk-' + c.key).disabled = true;
+    row.classList.add('locked');
+
+    if (truth === null) {
+      row.classList.add('result-na');
+      icon.textContent = 'n/a';
+    } else if (checked === truth) {
+      row.classList.add('result-correct');
+      icon.textContent = '✓';
+    } else {
+      row.classList.add('result-incorrect');
+      icon.textContent = '✗';
+      allCorrect = false;
+    }
+  });
+
+  document.getElementById('submitBtn').disabled = true;
+  results[current] = allCorrect;
+
+  const isBinomial = CONDITIONS.every(c => scenario.truth[c.key] === true);
+  const failedConditions = CONDITIONS.filter(c => scenario.truth[c.key] === false).map(c => c.label.toLowerCase());
+
+  const verdictBox = document.getElementById('verdictBox');
+  verdictBox.className = 'verdict-box shown ' + (isBinomial ? 'yes' : 'no');
+  document.getElementById('verdictTitle').textContent = isBinomial
+    ? 'This is a valid Binomial setting'
+    : `Not Binomial. It fails: ${failedConditions.join('; ')}`;
+  document.getElementById('verdictExplanation').textContent = scenario.explain;
+
+  const nextBtn = document.getElementById('nextBtn');
+  nextBtn.textContent = current === SCENARIOS.length - 1 ? 'See results →' : 'Next scenario →';
+  nextBtn.addEventListener('click', () => {
+    current++;
+    if (current < SCENARIOS.length) {
+      renderRound();
+    } else {
+      renderResults();
+    }
+  });
+
+  renderTally();
+}
+
+function renderResults() {
+  const correctCount = results.filter(r => r === true).length;
+  roundArea.innerHTML = `
+    <p class="score">You fully diagnosed <b>${correctCount}</b> of ${SCENARIOS.length} scenarios</p>
+    <p class="score-line">A scenario counts only when every condition is marked correctly</p>
+    <div class="result-actions">
+      <button class="btn primary" id="restartBtn" type="button">Try again</button>
+      <a class="btn" href="../STAT20070.html">More drills</a>
+    </div>
+  `;
+  document.getElementById('restartBtn').addEventListener('click', () => {
+    current = 0;
+    results = new Array(SCENARIOS.length).fill(null);
+    renderRound();
+  });
+  renderTally();
+}
+
+renderRound();
+</script>
+
+</body>
+</html>
