@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>(function(){try{var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark"){t=(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+<title>The Empirical Rule — Uche Mbaka</title>
+<meta name="description" content="A companion tool for STAT 20070: shade the area within one, two or three standard deviations of the mean of a Normal distribution, and compare the exact areas with the 68, 95 and 99.7 rule.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#080A0F;
+    --ink-rgb:8,10,15;
+    --ink-2:#0D1017;
+    --haze:#E9E6DF;
+    --haze-dim:#B9B6AE;
+    --mute:#6A7180;
+    --mute-2:#454B58;
+    --line:rgba(233,230,223,.09);
+    --line-2:rgba(233,230,223,.16);
+    --amber:#CFA15F;
+    --amber-soft:rgba(207,161,95,.18);
+    --steel:#5C7585;
+    --steel-text:#8FA6B5;
+    --steel-soft:rgba(92,117,133,.26);
+    --hl:rgba(233,230,223,.11);
+    --hl-edge:rgba(233,230,223,.32);
+    --on-accent:#080A0F;
+  }
+  [data-theme="light"]{
+    --ink:#F3F0E9;
+    --ink-rgb:243,240,233;
+    --ink-2:#FBFAF5;
+    --haze:#1B1C20;
+    --haze-dim:#4A4C54;
+    --mute:#6E727D;
+    --mute-2:#9A9DA6;
+    --line:rgba(20,21,26,.10);
+    --line-2:rgba(20,21,26,.18);
+    --amber:#9E6B22;
+    --amber-soft:rgba(158,107,34,.13);
+    --steel:#4A6377;
+    --steel-text:#4A6377;
+    --steel-soft:rgba(74,99,119,.14);
+    --hl:rgba(20,21,26,.075);
+    --hl-edge:rgba(20,21,26,.28);
+    --on-accent:#FBFAF5;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    min-height:100vh;
+    background:var(--ink);
+    color:var(--haze);
+    font-family:"Newsreader",Georgia,serif;
+    font-weight:300;
+    font-size:18px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    display:flex;
+    justify-content:center;
+    padding:44px 22px 72px;
+    transition:background .35s ease, color .35s ease;
+  }
+  ::selection{background:rgba(207,161,95,.22);color:var(--haze)}
+  a{color:inherit;text-decoration:none}
+
+  .stage{width:100%;max-width:800px}
+
+  .mono{
+    font-family:"JetBrains Mono",ui-monospace,monospace;
+    font-weight:400;font-size:11px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--mute);
+  }
+
+  /* ---------- top row ---------- */
+  .toprow{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:34px}
+  .back{transition:color .25s}
+  .back:hover{color:var(--amber)}
+
+  .theme-toggle{display:inline-flex;align-items:center;gap:10px;background:none;border:0;padding:0;cursor:pointer;font:inherit;line-height:1}
+  .theme-toggle .tmode{color:var(--mute);transition:color .25s}
+  .theme-toggle:hover .tmode{color:var(--amber)}
+  .theme-toggle .track{width:40px;height:21px;border-radius:999px;border:1px solid var(--line-2);position:relative;transition:border-color .25s;flex:0 0 auto}
+  .theme-toggle:hover .track{border-color:var(--amber)}
+  .theme-toggle .knob{position:absolute;top:50%;left:3px;transform:translateY(-50%);width:13px;height:13px;border-radius:50%;background:var(--mute);transition:left .28s cubic-bezier(.4,0,.2,1),background .25s}
+  [data-theme="light"] .theme-toggle .knob{left:22px;background:var(--amber)}
+  .theme-toggle:focus-visible{outline:none}
+  .theme-toggle:focus-visible .track{outline:2px solid var(--amber);outline-offset:3px}
+
+  /* ---------- header ---------- */
+  header{margin-bottom:28px}
+  .eyebrow{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--mute-2);margin:0 0 16px;
+  }
+  h1{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;
+    font-size:clamp(30px,5.4vw,44px);line-height:1.02;letter-spacing:-.025em;
+    color:var(--haze);margin:0 0 16px;
+  }
+  .sub{font-size:17px;line-height:1.6;color:var(--haze-dim);font-weight:300;margin:0;max-width:60ch}
+  .sub b{color:var(--amber);font-weight:400}
+
+  /* ---------- cards ---------- */
+  .card{
+    background:linear-gradient(160deg, var(--ink-2), rgba(var(--ink-rgb),0));
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:26px 28px 24px;
+    margin-bottom:18px;
+  }
+  @media (max-width:480px){.card{padding:22px 18px 20px}}
+
+  .card-title{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;
+    font-size:21px;letter-spacing:-.02em;color:var(--haze);margin:0 0 18px;
+  }
+  .kicker{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--mute);margin:0 0 12px;
+  }
+  /* no uppercase: these labels name μ, σ and k */
+  .label{font-family:"JetBrains Mono",monospace;font-size:12.5px;letter-spacing:.02em;color:var(--mute);margin:0 0 12px}
+  .block{margin-bottom:22px}
+  .block:last-child{margin-bottom:0}
+
+  /* ---------- pills ---------- */
+  .presets{display:flex;gap:8px;flex-wrap:wrap}
+  .pill{
+    background:none;cursor:pointer;
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--haze);
+    border:1px solid var(--line-2);border-radius:999px;padding:10px 16px;
+    transition:.25s;
+  }
+  .pill:hover{border-color:var(--amber);color:var(--amber)}
+  .pill:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+  .pill.active{background:var(--amber);border-color:var(--amber);color:var(--on-accent)}
+  /* the intervals contain σ, so they keep their case */
+  .seg{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  @media (max-width:520px){.seg{grid-template-columns:repeat(2,1fr)}}
+  .seg .pill{text-transform:none;letter-spacing:.02em;font-size:13.5px;padding:11px 6px}
+
+  .custom-row{display:none;gap:22px;margin-top:16px;flex-wrap:wrap;align-items:center}
+  .custom-row.shown{display:flex}
+  .custom-row label{font-family:"JetBrains Mono",monospace;font-size:14px;color:var(--haze-dim);display:inline-flex;align-items:center;gap:10px}
+  .custom-row input{
+    width:96px;padding:8px 12px;border:1px solid var(--line-2);border-radius:10px;
+    background:none;color:var(--haze);font-family:"JetBrains Mono",monospace;font-size:14px;
+  }
+  .custom-row input:focus{outline:none;border-color:var(--amber)}
+
+  .model{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;font-size:19px;
+    letter-spacing:-.01em;color:var(--amber);margin:0 0 16px;
+  }
+
+  /* ---------- chart ---------- */
+  svg.chart{width:100%;height:auto;display:block;overflow:visible}
+  .legend{
+    display:flex;gap:10px 22px;flex-wrap:wrap;margin-top:16px;
+    font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.02em;color:var(--mute);
+  }
+  .legend span{display:inline-flex;align-items:center;gap:8px}
+  .swatch{width:14px;height:12px;display:inline-block;border-radius:3px;flex:0 0 auto}
+
+  /* ---------- readout ---------- */
+  .readout{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  @media (max-width:560px){.readout{grid-template-columns:1fr}}
+  .ro-box{padding:14px 16px;border:1px solid var(--line-2);border-radius:12px}
+  .ro-label{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.02em;color:var(--mute);margin:0 0 6px}
+  .ro-value{font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;font-size:22px;letter-spacing:-.01em;color:var(--haze);margin:0}
+  .ro-value.amb{color:var(--amber)}
+  .ro-value.stl{color:var(--steel-text)}
+  .callout{margin:18px 0 0;padding:10px 0 10px 16px;border-left:2px solid var(--amber);font-size:16.5px;line-height:1.62;color:var(--haze-dim)}
+  .callout strong{color:var(--amber);font-weight:400}
+
+  /* ---------- answer derivation (same layout as the other worked examples) ---------- */
+  .question{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;
+    font-size:clamp(19px,3.2vw,24px);letter-spacing:-.02em;color:var(--haze);margin:0 0 18px;
+  }
+  .deriv{border-left:2px solid var(--amber);padding:6px 0 6px 20px}
+  .d-grid{
+    display:grid;grid-template-columns:max-content minmax(0,1fr);
+    column-gap:10px;row-gap:6px;align-items:baseline;
+  }
+  .d-l,.d-r{font-family:"JetBrains Mono",monospace;font-size:13.5px;letter-spacing:.01em;color:var(--haze)}
+  .d-l{text-align:right;white-space:nowrap}
+  .d-r{overflow-wrap:anywhere}
+  .d-r.res{color:var(--amber);font-weight:500;font-size:18px}
+  .d-w{grid-column:2;margin:-2px 0 6px;font-size:15px;line-height:1.4;font-style:italic;color:var(--haze-dim)}
+  .d-w:empty{display:none}
+  @media (max-width:520px){
+    .d-grid{grid-template-columns:minmax(0,1fr)}
+    .d-l{text-align:left;white-space:normal}
+    .d-l:empty{display:none}
+    .d-w{grid-column:1}
+  }
+  .note{font-size:16px;line-height:1.58;color:var(--haze-dim);margin:16px 0 0}
+
+  /* ---------- summary table ---------- */
+  .table-wrap{overflow-x:auto;border-radius:10px}
+  table.data{width:100%;border-collapse:separate;border-spacing:0;font-family:"JetBrains Mono",monospace;font-size:13px}
+  table.data th,table.data td{padding:9px 10px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap;color:var(--haze-dim)}
+  table.data th{color:var(--mute);font-weight:400;font-size:12px;border-bottom:1px solid var(--line-2)}
+  table.data tr.hl td{
+    background:var(--hl);color:var(--haze);
+    box-shadow:inset 0 1px 0 var(--hl-edge), inset 0 -1px 0 var(--hl-edge);
+  }
+  table.data tr.hl td:first-child{color:var(--amber);font-weight:500}
+
+  @media (prefers-reduced-motion:reduce){*{transition:none !important}}
+</style>
+</head>
+<body>
+
+<div class="stage">
+
+  <div class="toprow">
+    <a class="back mono" href="../STAT20070.html">← STAT 20070</a>
+    <button class="theme-toggle" id="themeToggle" aria-label="Switch between light and dark theme" aria-pressed="false"><span class="tmode mono" id="tmode">Dark</span><span class="track"><span class="knob"></span></span></button>
+  </div>
+
+  <header>
+    <p class="eyebrow">Section 2 · Lecture 07 · Normal Distribution</p>
+    <h1>The Empirical Rule</h1>
+    <p class="sub">For every Normal distribution, the proportion of values within a given number of standard deviations of the mean is the same. About <b>68%</b> lie within one standard deviation, about <b>95%</b> within two and about <b>99.7%</b> within three. Choose an interval and see the area it covers.</p>
+  </header>
+
+  <div class="card">
+    <div class="block">
+      <p class="kicker">Distribution</p>
+      <div class="presets" id="presetSeg">
+        <button class="pill active" data-preset="iq" type="button">IQ scores</button>
+        <button class="pill" data-preset="std" type="button">Standard Normal</button>
+        <button class="pill" data-preset="custom" type="button">Custom</button>
+      </div>
+      <div class="custom-row" id="customRow">
+        <label>μ = <input type="number" id="muInput" value="170" step="any" inputmode="decimal"></label>
+        <label>σ = <input type="number" id="sdInput" value="9" step="any" min="0.01" inputmode="decimal"></label>
+      </div>
+    </div>
+    <div class="block">
+      <p class="label">Interval: μ ± kσ</p>
+      <div class="seg" id="kSeg">
+        <button class="pill active" data-k="1" type="button">± 1σ</button>
+        <button class="pill" data-k="1.96" type="button">± 1.96σ</button>
+        <button class="pill" data-k="2" type="button">± 2σ</button>
+        <button class="pill" data-k="3" type="button">± 3σ</button>
+      </div>
+    </div>
+    <div class="block">
+      <p class="kicker">Show</p>
+      <div class="presets" id="modeSeg">
+        <button class="pill active" data-mode="within" type="button">Within the interval</button>
+        <button class="pill" data-mode="upper" type="button">Upper tail only</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="model" id="notation"></p>
+    <svg id="chart" class="chart" role="img" aria-label="Normal curve with the selected interval shaded"></svg>
+    <div class="legend" id="legend"></div>
+  </div>
+
+  <div class="card">
+    <div class="readout">
+      <div class="ro-box"><p class="ro-label" id="roIntervalLabel"></p><p class="ro-value" id="roInterval"></p></div>
+      <div class="ro-box"><p class="ro-label" id="roMainLabel"></p><p class="ro-value amb" id="roMain"></p></div>
+      <div class="ro-box"><p class="ro-label" id="roSecondLabel"></p><p class="ro-value stl" id="roSecond"></p></div>
+    </div>
+    <p class="callout" id="callout"></p>
+  </div>
+
+  <div class="card">
+    <p class="card-title">Working it out</p>
+    <p class="question" id="question"></p>
+    <div class="deriv"><div class="d-grid" id="deriv"></div></div>
+    <p class="note" id="derivNote"></p>
+  </div>
+
+  <div class="card">
+    <p class="card-title">All four intervals at a glance</p>
+    <div class="table-wrap" id="summaryTable"></div>
+    <p class="note">The exact values are the true areas under the Normal curve, to 2 decimal places. The rule of thumb rounds them to 68%, 95% and 99.7%. Note that 95% belongs to μ ± 1.96σ, and that μ ± 2σ covers slightly more, 95.45%.</p>
+  </div>
+</div>
+
+<script>
+/* ---------- theme toggle (shares the site's stored preference) ---------- */
+(function(){
+  var root = document.documentElement;
+  var btn  = document.getElementById('themeToggle');
+  function current(){ return root.getAttribute('data-theme') === 'light' ? 'light' : 'dark'; }
+  function sync(){
+    var t = current();
+    btn.setAttribute('aria-pressed', t === 'light' ? 'true' : 'false');
+    document.getElementById('tmode').textContent = t === 'light' ? 'Light' : 'Dark';
+  }
+  sync();
+  btn.addEventListener('click', function(){
+    var t = current() === 'light' ? 'dark' : 'light';
+    root.setAttribute('data-theme', t);
+    try{ localStorage.setItem('theme', t); }catch(e){}
+    sync();
+  });
+})();
+
+const NS = 'http://www.w3.org/2000/svg';
+const MONO = "'JetBrains Mono', monospace";
+const HEAD = "'Space Grotesk', system-ui, sans-serif";
+function el(tag, attrs, text) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) if (attrs[k] !== undefined && attrs[k] !== null) e.setAttribute(k, attrs[k]);
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+// erf by its Maclaurin series: accurate to about 1e-14 for the |z| ≤ 4 used here
+function erf(x) {
+  let term = x, sum = x;
+  for (let n = 1; n < 200; n++) {
+    term *= -x * x / n;
+    const add = term / (2 * n + 1);
+    sum += add;
+    if (Math.abs(add) < 1e-17) break;
+  }
+  return 2 / Math.sqrt(Math.PI) * sum;
+}
+function Phi(z) { return 0.5 * (1 + erf(z / Math.SQRT2)); }
+function phi(z) { return Math.exp(-z * z / 2) / Math.sqrt(2 * Math.PI); }
+
+const PRESETS = {
+  iq:     { mu: 100, sd: 15, V: 'Y', axis: 'y = IQ score', unit: 'people' },
+  std:    { mu: 0,   sd: 1,  V: 'Z', axis: 'z', unit: 'observations' },
+  custom: { mu: 170, sd: 9,  V: 'Y', axis: 'y', unit: 'observations' }
+};
+const RULE = { 1: '68%', 1.96: '95%', 2: '95%', 3: '99.7%' };
+const RULE_TAIL = { 1: '16%', 1.96: '2.5%', 2: '2.5%', 3: '0.15%' };
+
+let presetKey = 'iq', k = 1, mode = 'within';
+
+// numbers: trim to 2 dp and use a true minus sign
+function fmtNum(v) { const s = String(parseFloat(v.toFixed(2))); return s.startsWith('-') ? '−' + s.slice(1) : s; }
+function pct(p) { return (p * 100).toFixed(2) + '%'; }
+function f4(v) { return v.toFixed(4); }
+function kS(v) { return v === 1 ? '' : String(v); }   // μ + σ rather than μ + 1σ
+
+function current() {
+  const P = PRESETS[presetKey];
+  if (presetKey !== 'custom') return P;
+  let mu = parseFloat(document.getElementById('muInput').value);
+  let sd = parseFloat(document.getElementById('sdInput').value);
+  if (!isFinite(mu)) mu = 0;
+  if (!isFinite(sd) || sd <= 0) sd = 1;
+  return Object.assign({}, P, { mu, sd });
+}
+
+function render() {
+  const D = current();
+  const { mu, sd, V } = D;
+  document.getElementById('notation').textContent = `${V} ~ N(${fmtNum(mu)}, ${fmtNum(sd)}²)`;
+  const lo = mu - k * sd, hi = mu + k * sd;
+  const within = Phi(k) - Phi(-k);
+  const tail = 1 - Phi(k);
+
+  document.querySelectorAll('#presetSeg .pill').forEach(b => { b.classList.toggle('active', b.dataset.preset === presetKey); b.setAttribute('aria-pressed', b.dataset.preset === presetKey); });
+  document.querySelectorAll('#kSeg .pill').forEach(b => { const on = parseFloat(b.dataset.k) === k; b.classList.toggle('active', on); b.setAttribute('aria-pressed', on); });
+  document.querySelectorAll('#modeSeg .pill').forEach(b => { b.classList.toggle('active', b.dataset.mode === mode); b.setAttribute('aria-pressed', b.dataset.mode === mode); });
+  document.getElementById('customRow').classList.toggle('shown', presetKey === 'custom');
+
+  renderChart(D, within, tail);
+
+  document.getElementById('legend').innerHTML = mode === 'within'
+    ? `<span><span class="swatch" style="background:var(--amber);opacity:.6"></span>within μ ± ${kS(k)}σ</span><span><span class="swatch" style="background:var(--steel);opacity:.7"></span>outside (each tail)</span>`
+    : `<span><span class="swatch" style="background:var(--amber);opacity:.6"></span>above μ + ${kS(k)}σ</span>`;
+
+  // ---- readout ----
+  const set = (id, v) => { document.getElementById(id).textContent = v; };
+  if (mode === 'within') {
+    set('roIntervalLabel', `Interval μ ± ${kS(k)}σ`);
+    set('roInterval', `${fmtNum(lo)} to ${fmtNum(hi)}`);
+    set('roMainLabel', 'Within the interval');
+    set('roMain', pct(within));
+    set('roSecondLabel', 'In each tail');
+    set('roSecond', pct(tail));
+  } else {
+    set('roIntervalLabel', `Above μ + ${kS(k)}σ`);
+    set('roInterval', `above ${fmtNum(hi)}`);
+    set('roMainLabel', 'Upper tail, exact');
+    set('roMain', pct(tail));
+    set('roSecondLabel', 'Rule of thumb');
+    set('roSecond', RULE_TAIL[k]);
+  }
+
+  const unit = D.unit;
+  const sds = k === 1 ? 'standard deviation' : 'standard deviations';
+  let msg;
+  if (mode === 'within') {
+    msg = `<strong>About ${RULE[k]}</strong> of ${unit} fall within ${k} ${sds} of the mean, between ${fmtNum(lo)} and ${fmtNum(hi)}. The exact area is ${pct(within)}, which leaves ${pct(tail)} in each tail.`;
+    if (k === 2) msg += ' Note that ±2σ actually covers 95.45%. The interval that covers exactly 95% is ±1.96σ.';
+    if (k === 1.96) msg += ' This is why 1.96 appears so often: it is the multiplier that captures exactly 95%.';
+  } else {
+    msg = `The curve is symmetric, so the ${pct(1 - within)} outside the interval splits equally between the two tails. So <strong>about ${RULE_TAIL[k]}</strong> of ${unit} lie above ${fmtNum(hi)}, and the exact figure is ${pct(tail)}.`;
+    if (k === 1) msg += ' The rule of thumb gives (100% − 68%) ÷ 2 = 16%.';
+    if (k === 2) msg += ' The rule of thumb gives (100% − 95%) ÷ 2 = 2.5%; the exact value is smaller because ±2σ covers slightly more than 95%.';
+    if (k === 3) msg += ' The rule of thumb gives (100% − 99.7%) ÷ 2 = 0.15%; the exact value is 0.13%.';
+  }
+  document.getElementById('callout').innerHTML = msg;
+
+  renderDerivation(D, lo, hi, within, tail);
+
+  // ---- summary table ----
+  let t = `<table class="data"><tr><th>Interval</th><th>${D.axis.replace(/^y = /, '')} values</th><th>Exact % within</th><th>Rule of thumb</th><th>Exact % in upper tail</th></tr>`;
+  [1, 1.96, 2, 3].forEach(kk => {
+    t += `<tr class="${kk === k ? 'hl' : ''}"><td>μ ± ${kS(kk)}σ</td><td>${fmtNum(mu - kk * sd)} to ${fmtNum(mu + kk * sd)}</td><td>${pct(Phi(kk) - Phi(-kk))}</td><td>${RULE[kk]}</td><td>${pct(1 - Phi(kk))}</td></tr>`;
+  });
+  document.getElementById('summaryTable').innerHTML = t + '</table>';
+}
+
+// ---- the answer as an aligned derivation, with the rule named on each line ----
+function renderDerivation(D, lo, hi, within, tail) {
+  const { mu, sd, V } = D;
+  const K = String(k);
+  const tab = Math.round(Phi(k) * 10000) / 10000;          // Φ(k) to 4 dp, as in the Normal table
+  const isZ = V === 'Z';
+  const zRule = v => `standardise: z = (${V.toLowerCase()} − μ)/σ = (${fmtNum(v)} − ${fmtNum(mu)})/${fmtNum(sd)} = ${fmtNum((v - mu) / sd)}`;
+  const rows = [];
+  const add = (r, w, res) => rows.push({ l: rows.length ? '' : question, r, w, res });
+  let question, fromTable, exact;
+
+  if (mode === 'within') {
+    question = `Pr(${fmtNum(lo)} ≤ ${V} ≤ ${fmtNum(hi)})`;
+    if (!isZ) add(`= Pr(−${K} ≤ Z ≤ ${K})`, `${zRule(lo)} and ${zRule(hi).replace(/^standardise: /, '')}`);
+    add(`= Φ(${K}) − Φ(−${K})`, 'difference of two cumulative probabilities');
+    add(`= Φ(${K}) − [1 − Φ(${K})]`, 'symmetry: Φ(−z) = 1 − Φ(z)');
+    add(`= 2Φ(${K}) − 1`, 'collect terms');
+    add(`= 2(${f4(tab)}) − 1`, `Φ(${K}) = ${f4(tab)} from the Normal table`);
+    fromTable = 2 * tab - 1; exact = within;
+  } else {
+    question = `Pr(${V} > ${fmtNum(hi)})`;
+    if (!isZ) add(`= Pr(Z > ${K})`, zRule(hi));
+    add(`= 1 − Pr(Z ≤ ${K})`, 'complement rule');
+    add(`= 1 − Φ(${K})`, 'Φ is the cumulative probability of Z');
+    add(`= 1 − ${f4(tab)}`, `Φ(${K}) = ${f4(tab)} from the Normal table`);
+    fromTable = 1 - tab; exact = tail;
+  }
+  add(`= ${f4(fromTable)}`, '', true);
+
+  document.getElementById('question').textContent = question;
+  document.getElementById('deriv').innerHTML = rows.map(d =>
+    `<span class="d-l">${d.l}</span><span class="d-r${d.res ? ' res' : ''}">${d.r}</span><span class="d-w">${d.w}</span>`).join('');
+
+  const same = f4(fromTable) === f4(exact);
+  document.getElementById('derivNote').textContent = same
+    ? `So ${pct(exact)} of the distribution ${mode === 'within' ? 'lies in the interval' : 'lies above ' + fmtNum(hi)}.`
+    : `The exact area is ${f4(exact)}, or ${pct(exact)}. The last digit differs only because Φ(${K}) was rounded to 4 decimal places before doubling.`;
+}
+
+// ---- chart ----
+function renderChart(D, within, tail) {
+  const { mu, sd } = D;
+  const small = window.innerWidth < 560;
+  const FS = small ? 19 : 12;
+  const svg = document.getElementById('chart');
+  const W = 620, ML = 22, MR = 22, MT = 14;
+  const rowH = FS + 8;
+  const MB = FS * 3 + 34;
+  const H = (small ? 330 : 300);
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.innerHTML = '';
+  const plotW = W - ML - MR, plotH = H - MT - MB, base = MT + plotH;
+  const zmin = -4, zmax = 4;
+  const x = z => ML + ((z - zmin) / (zmax - zmin)) * plotW;
+  const y = d => MT + plotH - (d / (phi(0) * 1.08)) * plotH;
+
+  function shade(z0, z1, fill, op) {
+    const pts = [`${x(z0)},${base}`];
+    for (let i = 0; i <= 120; i++) { const z = z0 + (i / 120) * (z1 - z0); pts.push(`${x(z)},${y(phi(z))}`); }
+    pts.push(`${x(z1)},${base}`);
+    svg.appendChild(el('polygon', { points: pts.join(' '), fill, 'fill-opacity': op }));
+  }
+  if (mode === 'within') {
+    shade(-k, k, 'var(--amber)', 0.34);
+    shade(zmin, -k, 'var(--steel)', 0.45);
+    shade(k, zmax, 'var(--steel)', 0.45);
+  } else {
+    shade(k, zmax, 'var(--amber)', 0.5);
+  }
+
+  let curve = '';
+  for (let i = 0; i <= 300; i++) { const z = zmin + (i / 300) * (zmax - zmin); curve += `${x(z)},${y(phi(z))} `; }
+  svg.appendChild(el('polyline', { points: curve.trim(), fill: 'none', stroke: 'var(--haze)', 'stroke-width': 2 }));
+
+  // boundary lines
+  (mode === 'within' ? [-k, k] : [k]).forEach(z => svg.appendChild(el('line', { x1: x(z), x2: x(z), y1: base, y2: y(phi(z)) - 8, stroke: 'var(--haze-dim)', 'stroke-width': 1.5, 'stroke-dasharray': '4,3' })));
+
+  // area labels
+  // tail labels sit where the curve is low, so they never cross it
+  const tx = Math.min(Math.max(k + 0.62, 2.4), 3.4);
+  if (mode === 'within') {
+    svg.appendChild(el('text', { x: x(0), y: base - plotH * 0.32, 'text-anchor': 'middle', 'font-size': FS + 10, 'font-family': HEAD, 'font-weight': 500, fill: 'var(--amber)' }, pct(within)));
+    [tx, -tx].forEach(z => svg.appendChild(el('text', { x: x(z), y: base - FS - 22, 'text-anchor': 'middle', 'font-size': FS + 1, 'font-family': MONO, 'font-weight': 500, fill: 'var(--steel-text)' }, pct(tail))));
+  } else {
+    svg.appendChild(el('text', { x: x(tx), y: base - FS - 22, 'text-anchor': 'middle', 'font-size': FS + 3, 'font-family': MONO, 'font-weight': 500, fill: 'var(--amber)' }, pct(tail)));
+  }
+
+  // axis with two rows of labels: the value and μ + kσ
+  // at k = 1.96 the ±1.96 ticks replace ±2, which would sit almost on top of them
+  svg.appendChild(el('line', { x1: ML, x2: W - MR, y1: base, y2: base, stroke: 'var(--haze-dim)', 'stroke-width': 1.2 }));
+  const ticks = k === 1.96 ? [-3, -1.96, -1, 0, 1, 1.96, 3] : [-3, -2, -1, 0, 1, 2, 3];
+  // long custom values (e.g. 152.36 on a phone) shrink the value row just enough to stay apart
+  let minGap = Infinity;
+  for (let i = 1; i < ticks.length; i++) minGap = Math.min(minGap, x(ticks[i]) - x(ticks[i - 1]));
+  const longest = Math.max(...ticks.map(z => fmtNum(mu + z * sd).length));
+  const VFS = Math.min(FS, (minGap - 8) / (longest * 0.62));
+  ticks.forEach(z => {
+    const isK = Math.abs(Math.abs(z) - k) < 1e-9;
+    const col = isK ? 'var(--haze)' : 'var(--haze-dim)';
+    svg.appendChild(el('line', { x1: x(z), x2: x(z), y1: base, y2: base + 6, stroke: col, 'stroke-width': 1 }));
+    svg.appendChild(el('text', { x: x(z), y: base + FS + 8, 'text-anchor': 'middle', 'font-size': VFS, 'font-family': MONO, 'font-weight': isK ? 500 : 400, fill: isK ? 'var(--amber)' : col }, fmtNum(mu + z * sd)));
+    const a = Math.abs(z);
+    const lab = z === 0 ? 'μ' : `μ${z > 0 ? '+' : '−'}${kS(a)}σ`;
+    svg.appendChild(el('text', { x: x(z), y: base + FS + 8 + rowH, 'text-anchor': 'middle', 'font-size': FS - 1, 'font-family': MONO, fill: 'var(--mute)' }, lab));
+  });
+  svg.appendChild(el('text', { x: (ML + W - MR) / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': FS - 1, 'letter-spacing': '.04em', 'font-family': MONO, fill: 'var(--mute)' }, D.axis));
+}
+
+// ---- wiring ----
+document.querySelectorAll('#presetSeg .pill').forEach(b => b.addEventListener('click', () => { presetKey = b.dataset.preset; render(); }));
+document.querySelectorAll('#kSeg .pill').forEach(b => b.addEventListener('click', () => { k = parseFloat(b.dataset.k); render(); }));
+document.querySelectorAll('#modeSeg .pill').forEach(b => b.addEventListener('click', () => { mode = b.dataset.mode; render(); }));
+['muInput', 'sdInput'].forEach(id => document.getElementById(id).addEventListener('input', render));
+
+let resizeTimer;
+window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(render, 150); });
+
+render();
+</script>
+
+</body>
+</html>

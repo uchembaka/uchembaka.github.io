@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>(function(){try{var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark"){t=(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+<title>Binomial Table Reader — Uche Mbaka</title>
+<meta name="description" content="A companion tool for STAT 20070: rewrite any Binomial probability into the cumulative form the tables give, then read it off the table.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#080A0F;
+    --ink-rgb:8,10,15;
+    --ink-2:#0D1017;
+    --haze:#E9E6DF;
+    --haze-dim:#B9B6AE;
+    --mute:#6A7180;
+    --mute-2:#454B58;
+    --line:rgba(233,230,223,.09);
+    --line-2:rgba(233,230,223,.16);
+    --amber:#CFA15F;
+    --amber-soft:rgba(207,161,95,.18);
+    --steel:#5C7585;
+    --steel-text:#8FA6B5;
+    --steel-soft:rgba(92,117,133,.26);
+    --hl:rgba(233,230,223,.11);
+    --hl-edge:rgba(233,230,223,.32);
+    --hl-solid:#25282D; /* the tint above, flattened, for the sticky p column */
+    --on-accent:#080A0F;
+  }
+  [data-theme="light"]{
+    --ink:#F3F0E9;
+    --ink-rgb:243,240,233;
+    --ink-2:#FBFAF5;
+    --haze:#1B1C20;
+    --haze-dim:#4A4C54;
+    --mute:#6E727D;
+    --mute-2:#9A9DA6;
+    --line:rgba(20,21,26,.10);
+    --line-2:rgba(20,21,26,.18);
+    --amber:#9E6B22;
+    --amber-soft:rgba(158,107,34,.13);
+    --steel:#4A6377;
+    --steel-text:#4A6377;
+    --steel-soft:rgba(74,99,119,.14);
+    --hl:rgba(20,21,26,.075);
+    --hl-edge:rgba(20,21,26,.28);
+    --hl-solid:#E9E9E5;
+    --on-accent:#FBFAF5;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    min-height:100vh;
+    background:var(--ink);
+    color:var(--haze);
+    font-family:"Newsreader",Georgia,serif;
+    font-weight:300;
+    font-size:18px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    display:flex;
+    justify-content:center;
+    padding:44px 22px 72px;
+    transition:background .35s ease, color .35s ease;
+  }
+  ::selection{background:rgba(207,161,95,.22);color:var(--haze)}
+  a{color:inherit;text-decoration:none}
+
+  .stage{width:100%;max-width:800px}
+
+  .mono{
+    font-family:"JetBrains Mono",ui-monospace,monospace;
+    font-weight:400;font-size:11px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--mute);
+  }
+
+  /* ---------- top row ---------- */
+  .toprow{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:34px}
+  .back{transition:color .25s}
+  .back:hover{color:var(--amber)}
+
+  .theme-toggle{display:inline-flex;align-items:center;gap:10px;background:none;border:0;padding:0;cursor:pointer;font:inherit;line-height:1}
+  .theme-toggle .tmode{color:var(--mute);transition:color .25s}
+  .theme-toggle:hover .tmode{color:var(--amber)}
+  .theme-toggle .track{width:40px;height:21px;border-radius:999px;border:1px solid var(--line-2);position:relative;transition:border-color .25s;flex:0 0 auto}
+  .theme-toggle:hover .track{border-color:var(--amber)}
+  .theme-toggle .knob{position:absolute;top:50%;left:3px;transform:translateY(-50%);width:13px;height:13px;border-radius:50%;background:var(--mute);transition:left .28s cubic-bezier(.4,0,.2,1),background .25s}
+  [data-theme="light"] .theme-toggle .knob{left:22px;background:var(--amber)}
+  .theme-toggle:focus-visible{outline:none}
+  .theme-toggle:focus-visible .track{outline:2px solid var(--amber);outline-offset:3px}
+
+  /* ---------- header ---------- */
+  header{margin-bottom:28px}
+  .eyebrow{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--mute-2);margin:0 0 16px;
+  }
+  h1{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;
+    font-size:clamp(30px,5.4vw,44px);line-height:1.02;letter-spacing:-.025em;
+    color:var(--haze);margin:0 0 16px;
+  }
+  .sub{font-size:17px;line-height:1.6;color:var(--haze-dim);font-weight:300;margin:0;max-width:60ch}
+  .sub b{color:var(--amber);font-weight:400}
+
+  /* ---------- cards ---------- */
+  .card{
+    background:linear-gradient(160deg, var(--ink-2), rgba(var(--ink-rgb),0));
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:26px 28px 24px;
+    margin-bottom:18px;
+  }
+  @media (max-width:480px){.card{padding:22px 18px 20px}}
+
+  .card-title{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;
+    font-size:21px;letter-spacing:-.02em;color:var(--haze);margin:0 0 18px;
+  }
+  .kicker{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--mute);margin:0 0 12px;
+  }
+  /* no uppercase: these labels name the variables n, p, k, a and b */
+  .label{font-family:"JetBrains Mono",monospace;font-size:12.5px;letter-spacing:.02em;color:var(--mute);margin:0 0 12px}
+
+  /* ---------- pills ---------- */
+  .presets{display:flex;gap:8px;flex-wrap:wrap}
+  .pill{
+    background:none;cursor:pointer;
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--haze);
+    border:1px solid var(--line-2);border-radius:999px;padding:10px 16px;
+    transition:.25s;
+  }
+  .pill:hover{border-color:var(--amber);color:var(--amber)}
+  .pill:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+  .pill.active{background:var(--amber);border-color:var(--amber);color:var(--on-accent)}
+  /* the question types contain k, a and b, so they keep their case */
+  .seg{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:4px}
+  @media (max-width:640px){.seg{grid-template-columns:repeat(3,1fr)}}
+  .seg .pill{text-transform:none;letter-spacing:.02em;font-size:13.5px;padding:11px 6px}
+
+  /* ---------- controls ---------- */
+  .controls{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:22px;
+    margin:24px 0;padding:22px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+  }
+  @media (max-width:600px){.controls{grid-template-columns:1fr 1fr}.controls .model-cell{grid-column:1 / -1}}
+  .stepper{display:flex;align-items:center;gap:12px}
+  .step-btn{
+    width:34px;height:34px;border-radius:50%;
+    border:1px solid var(--line-2);background:none;color:var(--haze);
+    font-family:"JetBrains Mono",monospace;font-size:16px;line-height:1;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;transition:.25s;
+  }
+  .step-btn:hover:not(:disabled){border-color:var(--amber);color:var(--amber)}
+  .step-btn:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+  .step-btn:disabled{opacity:.3;cursor:default}
+  .step-value{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;font-size:24px;
+    letter-spacing:-.02em;color:var(--haze);min-width:48px;text-align:center;
+  }
+  .model{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;font-size:19px;
+    letter-spacing:-.01em;color:var(--amber);margin:4px 0 0;
+  }
+  .kvals{display:flex;gap:28px;flex-wrap:wrap;margin-top:22px}
+
+  .question{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;
+    font-size:clamp(20px,3.4vw,26px);letter-spacing:-.02em;color:var(--haze);margin:0;
+  }
+  .question span{color:var(--haze-dim);font-weight:400;font-size:.72em}
+
+  /* ---------- steps ---------- */
+  .step{display:grid;grid-template-columns:34px 1fr;gap:14px;padding:18px 0;border-top:1px solid var(--line)}
+  .step:first-child{border-top:none;padding-top:0}
+  .step-num{
+    width:28px;height:28px;border-radius:50%;border:1px solid var(--amber);color:var(--amber);
+    font-family:"JetBrains Mono",monospace;font-size:12.5px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .step-title{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;font-size:17px;
+    letter-spacing:-.01em;color:var(--haze);margin:2px 0 6px;
+  }
+  .step-body{font-size:16.5px;line-height:1.62;color:var(--haze-dim)}
+  .step-body strong{color:var(--haze);font-weight:400}
+  .eq{
+    display:inline-block;margin:8px 0 2px;padding:8px 14px;
+    font-family:"JetBrains Mono",monospace;font-size:13.5px;color:var(--haze);
+    border:1px solid var(--line-2);border-radius:10px;
+  }
+  .lk{font-family:"JetBrains Mono",monospace;font-size:13.5px}
+  .plus{color:var(--amber);font-weight:500}
+  .minus{color:var(--steel-text);font-weight:500}
+  .flip{color:var(--haze);font-weight:400;border-bottom:1px solid var(--haze-dim)}
+
+  /* "why r and not k" note inside Step 2 (no uppercase: it names r and k) */
+  .aside{margin:16px 0 2px;padding:10px 0 10px 16px;border-left:2px solid var(--steel)}
+  .aside p{margin:0 0 6px;font-size:15.5px;line-height:1.58;color:var(--haze-dim)}
+  .aside .aside-title{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;font-size:15.5px;
+    letter-spacing:-.005em;color:var(--haze);margin:0 0 4px;
+  }
+  .aside .aside-now{margin:0;color:var(--haze)}
+  .aside .lk{white-space:nowrap}
+
+  /* ---------- answer derivation (same layout as the other worked examples) ---------- */
+  .deriv{border-left:2px solid var(--amber);padding:6px 0 6px 20px;margin-top:4px}
+  .d-grid{
+    display:grid;grid-template-columns:max-content minmax(0,1fr);
+    column-gap:10px;row-gap:6px;align-items:baseline;
+  }
+  .d-l,.d-r{font-family:"JetBrains Mono",monospace;font-size:13.5px;letter-spacing:.01em;color:var(--haze)}
+  .d-l{text-align:right;white-space:nowrap}
+  .d-r{overflow-wrap:anywhere}
+  .d-r.res{color:var(--amber);font-weight:500;font-size:18px}
+  .d-w{grid-column:2;margin:-2px 0 6px;font-size:15px;line-height:1.4;font-style:italic;color:var(--haze-dim)}
+  .d-w:empty{display:none}
+
+  /* ---------- the table ---------- */
+  .table-wrap{overflow-x:auto;border-radius:10px}
+  table.ncst{border-collapse:separate;border-spacing:0;font-family:"JetBrains Mono",monospace;font-size:12px}
+  table.ncst th,table.ncst td{padding:7px 9px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap;color:var(--haze-dim)}
+  table.ncst th{color:var(--mute);font-weight:400;border-bottom:1px solid var(--line-2)}
+  /* the p column stays put while the table scrolls sideways on a phone */
+  table.ncst .plabel{
+    position:sticky;left:0;z-index:1;text-align:left;color:var(--mute);
+    background:var(--ink-2);border-right:1px solid var(--line-2);
+  }
+  /* the p row and the r columns form a crosshair: a tint plus edge lines, so both read in dark mode */
+  table.ncst tr.row-hl td{
+    background:var(--hl);color:var(--haze);
+    box-shadow:inset 0 1px 0 var(--hl-edge), inset 0 -1px 0 var(--hl-edge);
+  }
+  table.ncst tr.row-hl td.plabel{color:var(--amber);font-weight:500;background:var(--hl-solid)}
+  table.ncst td.col-hl,table.ncst th.col-hl{
+    background:var(--hl);color:var(--haze);
+    box-shadow:inset 1px 0 0 var(--hl-edge), inset -1px 0 0 var(--hl-edge);
+  }
+  table.ncst th.col-hl{font-weight:500}
+  table.ncst th.col-hl.plus{color:var(--amber)}
+  table.ncst th.col-hl.minus{color:var(--steel-text)}
+  table.ncst td.use-plus{background:var(--amber-soft) !important;color:var(--amber) !important;font-weight:500;box-shadow:inset 0 0 0 1.5px var(--amber) !important}
+  table.ncst td.use-minus{background:var(--steel-soft) !important;color:var(--steel-text) !important;font-weight:500;box-shadow:inset 0 0 0 1.5px var(--steel) !important}
+  .table-note{font-size:16px;line-height:1.58;color:var(--haze-dim);margin:16px 0 0}
+
+  svg.chart{width:100%;height:auto;display:block;overflow:visible}
+  .legend{
+    display:flex;gap:10px 22px;flex-wrap:wrap;margin-top:16px;
+    font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.02em;color:var(--mute);
+  }
+  .legend span{display:inline-flex;align-items:center;gap:8px}
+  .swatch{width:14px;height:12px;display:inline-block;border-radius:3px;flex:0 0 auto}
+
+  @media (prefers-reduced-motion:reduce){*{transition:none !important}}
+</style>
+</head>
+<body>
+
+<div class="stage">
+
+  <div class="toprow">
+    <a class="back mono" href="../STAT20070.html">← STAT 20070</a>
+    <button class="theme-toggle" id="themeToggle" aria-label="Switch between light and dark theme" aria-pressed="false"><span class="tmode mono" id="tmode">Dark</span><span class="track"><span class="knob"></span></span></button>
+  </div>
+
+  <header>
+    <p class="eyebrow">Section 2 · Lecture 07 · Binomial Distribution</p>
+    <h1>Binomial Table Reader</h1>
+    <p class="sub">Binomial tables give only one kind of probability, the cumulative <b>Pr(X ≤ r)</b>, and only for p up to 0.50. Every other question must first be rewritten in that form. Choose a question below and follow the steps from the question to the table and back to the answer.</p>
+  </header>
+
+  <div class="card">
+    <p class="kicker">Examples from the lecture</p>
+    <div class="presets" id="presets"></div>
+
+    <div class="controls">
+      <div>
+        <p class="label">Number of trials, n</p>
+        <div class="stepper"><button class="step-btn" id="nMinus" type="button" aria-label="Decrease n">&minus;</button><span class="step-value" id="nValue"></span><button class="step-btn" id="nPlus" type="button" aria-label="Increase n">+</button></div>
+      </div>
+      <div>
+        <p class="label">Probability of success, p</p>
+        <div class="stepper"><button class="step-btn" id="pMinus" type="button" aria-label="Decrease p">&minus;</button><span class="step-value" id="pValue"></span><button class="step-btn" id="pPlus" type="button" aria-label="Increase p">+</button></div>
+      </div>
+      <div class="model-cell">
+        <p class="label">Model</p>
+        <p class="model" id="model"></p>
+      </div>
+    </div>
+
+    <p class="label">Question type</p>
+    <div class="seg" id="typeSeg">
+      <button class="pill" data-type="eq" type="button">Y = k</button>
+      <button class="pill active" data-type="le" type="button">Y ≤ k</button>
+      <button class="pill" data-type="lt" type="button">Y &lt; k</button>
+      <button class="pill" data-type="ge" type="button">Y ≥ k</button>
+      <button class="pill" data-type="gt" type="button">Y &gt; k</button>
+      <button class="pill" data-type="bt" type="button">a ≤ Y ≤ b</button>
+    </div>
+
+    <div class="kvals" id="kvals"></div>
+  </div>
+
+  <div class="card">
+    <p class="kicker">We want</p>
+    <p class="question" id="question"></p>
+  </div>
+
+  <div class="card">
+    <p class="card-title">Step by step</p>
+    <div id="steps"></div>
+  </div>
+
+  <div class="card">
+    <p class="card-title" id="tableTitle"></p>
+    <div class="table-wrap" id="tableWrap"></div>
+    <p class="table-note" id="tableNote"></p>
+  </div>
+
+  <div class="card">
+    <p class="card-title" id="chartTitle"></p>
+    <svg id="chart" class="chart" role="img" aria-label="Probability mass function with the event highlighted"></svg>
+    <div class="legend"><span><span class="swatch" style="background:var(--amber);"></span>outcomes in the event</span><span><span class="swatch" style="background:var(--mute-2);"></span>other outcomes</span></div>
+  </div>
+</div>
+
+<script>
+/* ---------- theme toggle (shares the site's stored preference) ---------- */
+(function(){
+  var root = document.documentElement;
+  var btn  = document.getElementById('themeToggle');
+  function current(){ return root.getAttribute('data-theme') === 'light' ? 'light' : 'dark'; }
+  function sync(){
+    var t = current();
+    btn.setAttribute('aria-pressed', t === 'light' ? 'true' : 'false');
+    document.getElementById('tmode').textContent = t === 'light' ? 'Light' : 'Dark';
+  }
+  sync();
+  btn.addEventListener('click', function(){
+    var t = current() === 'light' ? 'dark' : 'light';
+    root.setAttribute('data-theme', t);
+    try{ localStorage.setItem('theme', t); }catch(e){}
+    sync();
+  });
+})();
+
+const NS = 'http://www.w3.org/2000/svg';
+const MONO = "'JetBrains Mono', monospace";
+function el(tag, attrs, text) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) if (attrs[k] !== undefined && attrs[k] !== null) e.setAttribute(k, attrs[k]);
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+function choose(n, k) { let r = 1; for (let i = 0; i < k; i++) r = r * (n - i) / (i + 1); return r; }
+function pmf(k, n, p) { return choose(n, k) * Math.pow(p, k) * Math.pow(1 - p, n - k); }
+function cdf(r, n, p) { if (r < 0) return 0; if (r >= n) return 1; let s = 0; for (let k = 0; k <= r; k++) s += pmf(k, n, p); return s; }
+function tab(r, n, p) { return Math.round(cdf(r, n, p) * 10000) / 10000; }  // 4 dp, as in the tables
+function f4(v) { return v.toFixed(4); }
+function pStr(pc) { return (pc / 100).toFixed(2); }
+function fmtR(r) { return r < 0 ? '−' + Math.abs(r) : String(r); }
+
+let n = 10, pc = 20, type = 'le', k = 2, a = 2, b = 5;
+
+const SYM = { eq: '=', le: '≤', lt: '<', ge: '≥', gt: '>' };
+function eventStr(t, v, name, lo, hi) {
+  if (t === 'bt') return `Pr(${lo} ≤ ${name} ≤ ${hi})`;
+  return `Pr(${name} ${SYM[t]} ${v})`;
+}
+
+// flip an event on Y into the same event on X = n - Y
+function flipEvent(t, v, lo, hi) {
+  const map = { eq: 'eq', le: 'ge', lt: 'gt', ge: 'le', gt: 'lt' };
+  if (t === 'bt') return { t: 'bt', lo: n - hi, hi: n - lo };
+  return { t: map[t], v: n - v };
+}
+
+// rewrite an event on V into cumulative pieces: { constant, terms: [{sign, r}] }
+function toCumulative(t, v, lo, hi) {
+  switch (t) {
+    case 'eq': return { c: 0, terms: [{ s: 1, r: v }, { s: -1, r: v - 1 }] };
+    case 'le': return { c: 0, terms: [{ s: 1, r: v }] };
+    case 'lt': return { c: 0, terms: [{ s: 1, r: v - 1 }] };
+    case 'ge': return { c: 1, terms: [{ s: -1, r: v - 1 }] };
+    case 'gt': return { c: 1, terms: [{ s: -1, r: v }] };
+    case 'bt': return { c: 0, terms: [{ s: 1, r: hi }, { s: -1, r: lo - 1 }] };
+  }
+}
+function inEvent(t, v, lo, hi, x) {
+  switch (t) {
+    case 'eq': return x === v; case 'le': return x <= v; case 'lt': return x < v;
+    case 'ge': return x >= v; case 'gt': return x > v; case 'bt': return x >= lo && x <= hi;
+  }
+}
+const WHY = {
+  eq: 'An exact value is the difference of two cumulative probabilities: everything up to r, minus everything up to r − 1.',
+  le: 'This is already in the form the table gives.',
+  lt: 'For whole-number counts, “less than r” is the same as “at most r − 1”.',
+  ge: 'Use the complement: “at least r” is everything except “at most r − 1”.',
+  gt: 'Use the complement: “more than r” is everything except “at most r”.',
+  bt: 'Everything up to the top of the range, minus everything below the bottom of the range.'
+};
+const RULE = {
+  eq: 'difference of two cumulative values', le: 'already cumulative', lt: 'fewer than r is at most r − 1',
+  ge: 'complement rule', gt: 'complement rule', bt: 'difference of two cumulative values'
+};
+
+const PRESETS = [
+  { label: 'Wild cats: fewer than 3', n: 10, pc: 20, type: 'lt', k: 3 },
+  { label: 'Wild cats: at least 1', n: 10, pc: 20, type: 'ge', k: 1 },
+  { label: 'Wild cats: no more than 4', n: 10, pc: 20, type: 'le', k: 4 },
+  { label: 'Rh+: exactly 4', n: 6, pc: 85, type: 'eq', k: 4 },
+  { label: 'Rh+: at least 5', n: 6, pc: 85, type: 'ge', k: 5 },
+  { label: 'Rh+: between 2 and 5', n: 6, pc: 85, type: 'bt', a: 2, b: 5 }
+];
+
+function stepperHTML(id, label, val) {
+  return `<div><p class="label">${label}</p><div class="stepper"><button class="step-btn" data-id="${id}" data-d="-1" type="button" aria-label="Decrease ${id}">&minus;</button><span class="step-value">${val}</span><button class="step-btn" data-id="${id}" data-d="1" type="button" aria-label="Increase ${id}">+</button></div></div>`;
+}
+
+function clampAll() {
+  k = Math.max(0, Math.min(n, k));
+  a = Math.max(0, Math.min(n, a));
+  b = Math.max(0, Math.min(n, b));
+  if (a > b) [a, b] = [b, a];
+}
+
+function signed(t, i, c) {
+  return (i === 0 && c === 0) ? (t.s > 0 ? '' : '− ') : (t.s > 0 ? '+ ' : '− ');
+}
+
+function render() {
+  clampAll();
+  document.getElementById('nValue').textContent = n;
+  document.getElementById('nMinus').disabled = n <= 1;
+  document.getElementById('nPlus').disabled = n >= 20;
+  document.getElementById('pValue').textContent = pStr(pc);
+  document.getElementById('pMinus').disabled = pc <= 5;
+  document.getElementById('pPlus').disabled = pc >= 95;
+  document.getElementById('model').textContent = `Y ~ Binomial(${n}, ${pStr(pc)})`;
+  document.querySelectorAll('#typeSeg .pill').forEach(bt => {
+    bt.classList.toggle('active', bt.dataset.type === type);
+    bt.setAttribute('aria-pressed', bt.dataset.type === type ? 'true' : 'false');
+  });
+
+  const kv = document.getElementById('kvals');
+  kv.innerHTML = type === 'bt' ? stepperHTML('a', 'Lower value, a', a) + stepperHTML('b', 'Upper value, b', b) : stepperHTML('k', 'Value, k', k);
+  kv.querySelectorAll('.step-btn').forEach(btn => {
+    const id = btn.dataset.id, d = parseInt(btn.dataset.d, 10);
+    const cur = id === 'k' ? k : id === 'a' ? a : b;
+    btn.disabled = (d < 0 && cur <= 0) || (d > 0 && cur >= n);
+    btn.addEventListener('click', () => {
+      if (id === 'k') k += d; else if (id === 'a') a += d; else b += d;
+      render();
+    });
+  });
+
+  const question = eventStr(type, k, 'Y', a, b);
+  document.getElementById('question').innerHTML = `${question} <span>where Y ~ Binomial(${n}, ${pStr(pc)})</span>`;
+
+  // ---- flip if p > 0.5 ----
+  const flipped = pc > 50;
+  const name = flipped ? 'X' : 'Y';
+  const q = flipped ? 100 - pc : pc;
+  let ev = { t: type, v: k, lo: a, hi: b };
+  if (flipped) ev = Object.assign({ v: undefined, lo: undefined, hi: undefined }, flipEvent(type, k, a, b));
+  const cum = toCumulative(ev.t, ev.v, ev.lo, ev.hi);
+  const evStr = eventStr(ev.t, ev.v, name, ev.lo, ev.hi);
+
+  // ---- steps ----
+  const steps = [];
+  if (flipped) {
+    const plural = (m, word) => `${m} ${word}${m === 1 ? '' : (word === 'success' ? 'es' : 's')}`;
+    const translate = type === 'bt'
+      ? `${a} to ${b} successes is the same as ${n - b} to ${n - a} failures`
+      : `${plural(k, 'success')} is the same as ${plural(n - k, 'failure')} (out of ${n})`;
+    steps.push({
+      title: 'Is p in the tables?',
+      body: `No: the tables only go up to p = 0.50, and here p = ${pStr(pc)}. So count <span class="flip">failures</span> instead.<br>Let X = number of failures = ${n} − Y. Then <strong>X ~ Binomial(${n}, ${pStr(q)})</strong>, since 1 − ${pStr(pc)} = ${pStr(q)}.<br>Translate the question: ${translate}, and the inequality turns around:<br><span class="eq">${question} = ${evStr}</span>`
+    });
+  } else {
+    steps.push({ title: 'Is p in the tables?', body: `Yes: p = ${pStr(pc)} is at most 0.50, so we can use Y directly.` });
+  }
+
+  const termStr = cum.terms.map((t, i) => `${signed(t, i, cum.c)}<span class="${t.s > 0 ? 'plus' : 'minus'}">Pr(${name} ≤ ${fmtR(t.r)})</span>`).join(' ');
+  const rewrite = (cum.c ? '1 ' : '') + termStr;
+  // explain why the table is read at r, which can differ from the k in the question
+  const qVals = type === 'bt' ? `a = ${a} and b = ${b}` : `k = ${k}`;
+  const rList = cum.terms.map(t => `r = ${fmtR(t.r)}`).join(' and ');
+  let rNow = (!flipped && type === 'le')
+    ? `Here the two agree: ${question} is already in table form, so r = k = ${k}.`
+    : `Here the question has ${qVals}, but after ${flipped ? 'switching to failures and ' : ''}rewriting, the table is read at ${rList}.`;
+  if (cum.terms.some(t => t.r < 0)) rNow += ' A value below 0 lies outside the table; Step 3 explains it.';
+  const aside = `<div class="aside">
+      <p class="aside-title">Why r and not k?</p>
+      <p>The table is organised by r: the column headed r gives Pr(${name} ≤ r). The question is written in terms of ${type === 'bt' ? 'a and b' : 'k'}, and rewriting it into table form can shift the value you look up (for example, <span class="lk">Pr(Y &lt; 3)</span> becomes <span class="lk">Pr(Y ≤ 2)</span>), so the column you read need not match the number in the question.</p>
+      <p class="aside-now">${rNow}</p>
+    </div>`;
+  steps.push({
+    title: 'Rewrite using only Pr(≤ r)',
+    body: `${WHY[ev.t]}<br><span class="eq">${ev.t === 'le' ? rewrite : `${evStr} = ${rewrite}`}</span>${aside}`
+  });
+
+  const lookups = cum.terms.map(t => {
+    const val = tab(t.r, n, q / 100);
+    let note = '';
+    if (t.r < 0) note = ' (impossible: a count can’t be negative)';
+    else if (t.r >= n) note = ` (certain: ${name} can’t exceed ${n})`;
+    return { ...t, val, note };
+  });
+  steps.push({
+    title: `Look up the table: n = ${n}, p = ${pStr(q)}`,
+    body: lookups.map(t => `<span class="lk ${t.s > 0 ? 'plus' : 'minus'}">Pr(${name} ≤ ${fmtR(t.r)}) = ${f4(t.val)}</span>${t.note}`).join('<br>')
+  });
+
+  let result = cum.c;
+  lookups.forEach(t => { result += t.s * t.val; });
+  result = Math.max(0, Math.round(result * 10000) / 10000);
+  const arith = (cum.c ? '1 ' : '') + lookups.map((t, i) => `${signed(t, i, cum.c)}${f4(t.val)}`).join(' ');
+
+  // the answer as one derivation chain, with the rule used at each line
+  // only the first line carries the question on the left, and a step is skipped when it would
+  // repeat the line above (a question already in Pr(<= r) form needs no rewriting)
+  const rows = [];
+  const add = (r, w, res) => rows.push({ l: rows.length ? '' : question, r, w, res });
+  if (flipped) add(`= ${evStr}`, `count failures: X = ${n} − Y ~ Binomial(${n}, ${pStr(q)})`);
+  if (ev.t !== 'le') add(`= ${rewrite}`, RULE[ev.t]);
+  if (lookups.length > 1 || cum.c) add(`= ${arith}`, `table values for n = ${n}, p = ${pStr(q)}`);
+  add(`= ${f4(result)}`, (lookups.length > 1 || cum.c) ? '' : `table value for n = ${n}, p = ${pStr(q)}`, true);
+  steps.push({
+    title: 'Answer',
+    body: '<div class="deriv"><div class="d-grid">' + rows.map(d =>
+      `<span class="d-l">${d.l || ''}</span><span class="d-r${d.res ? ' res' : ''}">${d.r}</span><span class="d-w">${d.w || ''}</span>`
+    ).join('') + '</div></div>'
+  });
+
+  document.getElementById('steps').innerHTML = steps.map((s, i) =>
+    `<div class="step"><span class="step-num">${i + 1}</span><div><p class="step-title">${s.title}</p><div class="step-body">${s.body}</div></div></div>`).join('');
+
+  // ---- table in the style of the printed Binomial tables ----
+  const used = {};
+  lookups.forEach(t => { if (t.r >= 0 && t.r <= n) used[t.r] = t.s > 0 ? 'use-plus' : 'use-minus'; });
+  document.getElementById('tableTitle').textContent = `Binomial table: n = ${n}, values of Pr(${name} ≤ r)`;
+  let h = '<table class="ncst"><tr><th class="plabel">p \\ r</th>';
+  for (let r = 0; r <= n; r++) h += `<th class="${used[r] ? 'col-hl ' + (used[r] === 'use-plus' ? 'plus' : 'minus') : ''}">${r}</th>`;
+  h += '</tr>';
+  for (let pp = 5; pp <= 50; pp += 5) {
+    const isRow = pp === q;
+    h += `<tr class="${isRow ? 'row-hl' : ''}"><td class="plabel">${pStr(pp)}</td>`;
+    for (let r = 0; r <= n; r++) {
+      const cls = isRow && used[r] ? used[r] : (used[r] ? 'col-hl' : '');
+      h += `<td class="${cls}">${f4(tab(r, n, pp / 100))}</td>`;
+    }
+    h += '</tr>';
+  }
+  document.getElementById('tableWrap').innerHTML = h + '</table>';
+  const cols = Object.keys(used);
+  document.getElementById('tableNote').innerHTML = cols.length
+    ? `Find the table for n = ${n}, go to the row for p = ${pStr(q)}, then the column${cols.length > 1 ? 's' : ''} for r = ${cols.join(' and r = ')}. <span class="plus">Amber</span> values are added and <span class="minus">steel-blue</span> values are subtracted. The tables stop at p = 0.50, which is why a larger p needs the failure trick.`
+    : `No table value is needed here: the event is ${cum.c ? 'certain' : 'impossible'} for a count between 0 and ${n}. The tables stop at p = 0.50, which is why a larger p needs the failure trick.`;
+
+  renderChart(flipped, q, ev);
+}
+
+// ---- pmf chart of the variable actually used ----
+function renderChart(flipped, q, ev) {
+  const small = window.innerWidth < 560;
+  const FS = small ? 17 : 11;
+  document.getElementById('chartTitle').textContent = flipped
+    ? `The distribution used: X ~ Binomial(${n}, ${pStr(q)}), the number of failures`
+    : `The distribution: Y ~ Binomial(${n}, ${pStr(pc)})`;
+  const svg = document.getElementById('chart');
+  const W = 620;
+  const rowH = FS + 8;
+  const ML = small ? 70 : 52, MR = 14, MT = small ? 30 : 24;
+  const MB = flipped ? rowH * 2 + FS + 20 : rowH + FS + 16;
+  const H = (small ? 300 : 250) + (flipped ? rowH : 0);
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.innerHTML = '';
+  const plotW = W - ML - MR, plotH = H - MT - MB, base = MT + plotH;
+  const vals = [];
+  for (let x = 0; x <= n; x++) vals.push(pmf(x, n, q / 100));
+  // round tick steps (0.05, 0.1, 0.2 …) instead of quarters of the tallest bar
+  const top = Math.max(...vals) * 1.15;
+  const tickStep = [0.02, 0.05, 0.1, 0.2, 0.25, 0.5].find(st => top / st <= 5) || 0.5;
+  const yMax = Math.ceil(top / tickStep) * tickStep;
+  const y = v => MT + plotH - (v / yMax) * plotH;
+  const gap = n > 12 ? 3 : 6;
+  const bw = (plotW - gap * n) / (n + 1);
+  const labelEvery = small ? (n > 14 ? 4 : n > 8 ? 2 : 1) : (n > 16 ? 2 : 1);
+
+  for (let v = 0; v <= yMax + 1e-9; v += tickStep) {
+    svg.appendChild(el('line', { x1: ML, x2: W - MR, y1: y(v), y2: y(v), stroke: 'var(--line-2)', 'stroke-width': 1 }));
+    svg.appendChild(el('text', { x: ML - 10, y: y(v) + FS * 0.35, 'text-anchor': 'end', 'font-size': FS, 'letter-spacing': '.04em', 'font-family': MONO, fill: 'var(--mute)' }, v.toFixed(2)));
+  }
+  vals.forEach((v, x) => {
+    const bx = ML + x * (bw + gap);
+    const on = inEvent(ev.t, ev.v, ev.lo, ev.hi, x);
+    svg.appendChild(el('rect', { x: bx, y: y(v), width: bw, height: Math.max(base - y(v), 0), rx: 1.5, fill: on ? 'var(--amber)' : 'var(--mute-2)' }));
+    if (n <= 12 && !small) svg.appendChild(el('text', { x: bx + bw / 2, y: y(v) - 6, 'text-anchor': 'middle', 'font-size': FS - 1.5, 'font-family': MONO, fill: on ? 'var(--amber)' : 'var(--mute)' }, v.toFixed(3)));
+    if (x % labelEvery === 0 || x === n) {
+      svg.appendChild(el('text', { x: bx + bw / 2, y: base + FS + 6, 'text-anchor': 'middle', 'font-size': FS, 'font-family': MONO, fill: on ? 'var(--amber)' : 'var(--haze-dim)' }, x));
+      if (flipped) svg.appendChild(el('text', { x: bx + bw / 2, y: base + FS + 6 + rowH, 'text-anchor': 'middle', 'font-size': FS - 1, 'font-family': MONO, fill: 'var(--steel-text)' }, n - x));
+    }
+  });
+  svg.appendChild(el('line', { x1: ML, x2: W - MR, y1: base, y2: base, stroke: 'var(--haze-dim)', 'stroke-width': 1.4 }));
+  if (flipped) {
+    svg.appendChild(el('text', { x: ML - 10, y: base + FS + 6, 'text-anchor': 'end', 'font-size': FS, 'font-family': MONO, fill: 'var(--haze-dim)' }, 'x'));
+    svg.appendChild(el('text', { x: ML - 10, y: base + FS + 6 + rowH, 'text-anchor': 'end', 'font-size': FS - 1, 'font-family': MONO, fill: 'var(--steel-text)' }, 'y'));
+    svg.appendChild(el('text', { x: (ML + W - MR) / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': FS - 1, 'letter-spacing': '.1em', 'font-family': MONO, fill: 'var(--mute-2)' }, 'x = FAILURES (TOP ROW) · y = n − x SUCCESSES (BOTTOM ROW)'));
+  } else {
+    svg.appendChild(el('text', { x: (ML + W - MR) / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': FS - 1, 'letter-spacing': '.14em', 'font-family': MONO, fill: 'var(--mute-2)' }, 'y = NUMBER OF SUCCESSES'));
+  }
+}
+
+// ---- wiring ----
+document.getElementById('nMinus').addEventListener('click', () => { if (n > 1) { n--; render(); } });
+document.getElementById('nPlus').addEventListener('click', () => { if (n < 20) { n++; render(); } });
+document.getElementById('pMinus').addEventListener('click', () => { if (pc > 5) { pc -= 5; render(); } });
+document.getElementById('pPlus').addEventListener('click', () => { if (pc < 95) { pc += 5; render(); } });
+document.querySelectorAll('#typeSeg .pill').forEach(btn => btn.addEventListener('click', () => { type = btn.dataset.type; render(); }));
+
+const presetWrap = document.getElementById('presets');
+PRESETS.forEach(ps => {
+  const btn = document.createElement('button');
+  btn.className = 'pill'; btn.type = 'button'; btn.textContent = ps.label;
+  btn.addEventListener('click', () => {
+    n = ps.n; pc = ps.pc; type = ps.type;
+    if (ps.type === 'bt') { a = ps.a; b = ps.b; } else { k = ps.k; }
+    render();
+  });
+  presetWrap.appendChild(btn);
+});
+
+let resizeTimer;
+window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(render, 150); });
+
+render();
+</script>
+
+</body>
+</html>

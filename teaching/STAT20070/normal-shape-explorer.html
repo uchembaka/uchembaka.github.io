@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>(function(){try{var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark"){t=(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+<title>Normal Shape Explorer — Uche Mbaka</title>
+<meta name="description" content="A companion tool for STAT 20070: move μ and σ to see how the mean sets the location of a Normal curve, and how the standard deviation sets both its width and its height.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#080A0F;
+    --ink-rgb:8,10,15;
+    --ink-2:#0D1017;
+    --haze:#E9E6DF;
+    --haze-dim:#B9B6AE;
+    --mute:#6A7180;
+    --mute-2:#454B58;
+    --line:rgba(233,230,223,.09);
+    --line-2:rgba(233,230,223,.16);
+    --amber:#CFA15F;
+    --amber-soft:rgba(207,161,95,.18);
+    --steel:#5C7585;
+    --steel-text:#8FA6B5;
+    --steel-soft:rgba(92,117,133,.26);
+    --ok:#7E9E82;
+    --terra:#C98A6B;
+    --on-accent:#080A0F;
+  }
+  [data-theme="light"]{
+    --ink:#F3F0E9;
+    --ink-rgb:243,240,233;
+    --ink-2:#FBFAF5;
+    --haze:#1B1C20;
+    --haze-dim:#4A4C54;
+    --mute:#6E727D;
+    --mute-2:#9A9DA6;
+    --line:rgba(20,21,26,.10);
+    --line-2:rgba(20,21,26,.18);
+    --amber:#9E6B22;
+    --amber-soft:rgba(158,107,34,.13);
+    --steel:#4A6377;
+    --steel-text:#4A6377;
+    --steel-soft:rgba(74,99,119,.14);
+    --ok:#3F6B4F;
+    --terra:#A0502F;
+    --on-accent:#FBFAF5;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    min-height:100vh;
+    background:var(--ink);
+    color:var(--haze);
+    font-family:"Newsreader",Georgia,serif;
+    font-weight:300;
+    font-size:18px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    display:flex;
+    justify-content:center;
+    padding:44px 22px 72px;
+    transition:background .35s ease, color .35s ease;
+  }
+  ::selection{background:rgba(207,161,95,.22);color:var(--haze)}
+  a{color:inherit;text-decoration:none}
+
+  .stage{width:100%;max-width:800px}
+
+  .mono{
+    font-family:"JetBrains Mono",ui-monospace,monospace;
+    font-weight:400;font-size:11px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--mute);
+  }
+
+  /* ---------- top row ---------- */
+  .toprow{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:34px}
+  .back{transition:color .25s}
+  .back:hover{color:var(--amber)}
+
+  .theme-toggle{display:inline-flex;align-items:center;gap:10px;background:none;border:0;padding:0;cursor:pointer;font:inherit;line-height:1}
+  .theme-toggle .tmode{color:var(--mute);transition:color .25s}
+  .theme-toggle:hover .tmode{color:var(--amber)}
+  .theme-toggle .track{width:40px;height:21px;border-radius:999px;border:1px solid var(--line-2);position:relative;transition:border-color .25s;flex:0 0 auto}
+  .theme-toggle:hover .track{border-color:var(--amber)}
+  .theme-toggle .knob{position:absolute;top:50%;left:3px;transform:translateY(-50%);width:13px;height:13px;border-radius:50%;background:var(--mute);transition:left .28s cubic-bezier(.4,0,.2,1),background .25s}
+  [data-theme="light"] .theme-toggle .knob{left:22px;background:var(--amber)}
+  .theme-toggle:focus-visible{outline:none}
+  .theme-toggle:focus-visible .track{outline:2px solid var(--amber);outline-offset:3px}
+
+  /* ---------- header ---------- */
+  header{margin-bottom:28px}
+  .eyebrow{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--mute-2);margin:0 0 16px;
+  }
+  h1{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;
+    font-size:clamp(30px,5.4vw,44px);line-height:1.02;letter-spacing:-.025em;
+    color:var(--haze);margin:0 0 16px;
+  }
+  .sub{font-size:17px;line-height:1.6;color:var(--haze-dim);font-weight:300;margin:0;max-width:60ch}
+  .sub b{color:var(--amber);font-weight:400}
+
+  /* ---------- cards ---------- */
+  .card{
+    background:linear-gradient(160deg, var(--ink-2), rgba(var(--ink-rgb),0));
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:26px 28px 24px;
+    margin-bottom:18px;
+  }
+  @media (max-width:480px){.card{padding:22px 18px 20px}}
+
+  .card-title{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;
+    font-size:21px;letter-spacing:-.02em;color:var(--haze);margin:0 0 18px;
+  }
+  .kicker{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--mute);margin:0 0 12px;
+  }
+
+  /* ---------- sliders ---------- */
+  .slider-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 32px}
+  @media (max-width:560px){.slider-grid{grid-template-columns:1fr}}
+  /* no uppercase: these labels name μ and σ */
+  .slider-label{
+    display:flex;justify-content:space-between;align-items:baseline;gap:12px;
+    font-family:"JetBrains Mono",monospace;font-size:12.5px;letter-spacing:.02em;color:var(--mute);
+  }
+  .slider-label strong{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;font-size:22px;
+    letter-spacing:-.02em;color:var(--amber);
+  }
+  input[type="range"]{
+    -webkit-appearance:none;appearance:none;
+    width:100%;height:3px;background:var(--line-2);border-radius:2px;
+    margin:14px 0 8px;cursor:pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb{
+    -webkit-appearance:none;appearance:none;
+    width:15px;height:15px;border-radius:50%;background:var(--amber);
+    border:3px solid var(--ink);box-shadow:0 0 0 1px var(--amber);cursor:pointer;margin-top:-6px;
+  }
+  input[type="range"]::-moz-range-thumb{
+    width:15px;height:15px;border-radius:50%;background:var(--amber);
+    border:3px solid var(--ink);box-shadow:0 0 0 1px var(--amber);cursor:pointer;
+  }
+  input[type="range"]:focus-visible{outline:2px solid var(--amber);outline-offset:6px;border-radius:4px}
+
+  /* ---------- pills ---------- */
+  .btn-block{margin-top:22px;padding-top:22px;border-top:1px solid var(--line)}
+  .btn-block + .btn-block{border-top:none;padding-top:0}
+  .presets{display:flex;gap:8px;flex-wrap:wrap}
+  .pill{
+    background:none;cursor:pointer;
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--haze);
+    border:1px solid var(--line-2);border-radius:999px;padding:10px 16px;
+    transition:.25s;
+  }
+  .pill:hover:not(:disabled){border-color:var(--amber);color:var(--amber)}
+  .pill:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+  .pill:disabled{opacity:.35;cursor:default}
+  .pill.active{background:var(--amber);border-color:var(--amber);color:var(--on-accent)}
+  /* these name μ and σ, so they keep their case */
+  .pill.case{text-transform:none;letter-spacing:.02em;font-size:13px}
+
+  .model{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;font-size:19px;
+    letter-spacing:-.01em;color:var(--amber);margin:0 0 16px;
+  }
+
+  /* ---------- chart ---------- */
+  svg.chart{width:100%;height:auto;display:block;overflow:visible}
+  .legend{
+    display:flex;gap:10px 22px;flex-wrap:wrap;margin-top:16px;
+    font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.02em;color:var(--mute);
+  }
+  .legend span{display:inline-flex;align-items:center;gap:8px}
+  .swatch{width:18px;height:3px;display:inline-block;border-radius:2px;flex:0 0 auto}
+  .swatch.dash{height:0;border-radius:0;border-top:2px dashed var(--mute)}
+
+  /* ---------- readout ---------- */
+  .readout{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  @media (max-width:560px){.readout{grid-template-columns:1fr}}
+  .ro-box{padding:14px 16px;border:1px solid var(--line-2);border-radius:12px}
+  .ro-label{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.02em;color:var(--mute);margin:0 0 6px}
+  .ro-value{font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;font-size:22px;letter-spacing:-.01em;color:var(--amber);margin:0}
+  .callout{margin:18px 0 0;padding:10px 0 10px 16px;border-left:2px solid var(--amber);font-size:16.5px;line-height:1.62;color:var(--haze-dim)}
+  .callout strong{color:var(--amber);font-weight:400}
+
+  /* ---------- derivations (same layout as the other worked examples) ---------- */
+  .d-title{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;font-size:17px;
+    letter-spacing:-.01em;color:var(--haze);margin:22px 0 10px;
+  }
+  .d-title:first-of-type{margin-top:0}
+  .deriv{border-left:2px solid var(--amber);padding:6px 0 6px 20px}
+  .d-grid{
+    display:grid;grid-template-columns:max-content minmax(0,1fr);
+    column-gap:10px;row-gap:6px;align-items:baseline;
+  }
+  .d-l,.d-r{font-family:"JetBrains Mono",monospace;font-size:13.5px;letter-spacing:.01em;color:var(--haze)}
+  .d-l{text-align:right;white-space:nowrap}
+  .d-r{overflow-wrap:anywhere}
+  .d-r.res{color:var(--amber);font-weight:500;font-size:18px}
+  .d-w{grid-column:2;margin:-2px 0 6px;font-size:15px;line-height:1.4;font-style:italic;color:var(--haze-dim)}
+  .d-w:empty{display:none}
+  @media (max-width:520px){
+    .d-grid{grid-template-columns:minmax(0,1fr)}
+    .d-l{text-align:left;white-space:normal}
+    .d-l:empty{display:none}
+    .d-w{grid-column:1}
+  }
+  .note{font-size:16px;line-height:1.58;color:var(--haze-dim);margin:16px 0 0}
+
+  @media (prefers-reduced-motion:reduce){*{transition:none !important}}
+</style>
+</head>
+<body>
+
+<div class="stage">
+
+  <div class="toprow">
+    <a class="back mono" href="../STAT20070.html">← STAT 20070</a>
+    <button class="theme-toggle" id="themeToggle" aria-label="Switch between light and dark theme" aria-pressed="false"><span class="tmode mono" id="tmode">Dark</span><span class="track"><span class="knob"></span></span></button>
+  </div>
+
+  <header>
+    <p class="eyebrow">Section 2 · Lecture 07 · Normal Distribution</p>
+    <h1>Normal Shape Explorer</h1>
+    <p class="sub">Every Normal distribution is determined by two numbers. The mean μ sets its <b>location</b> and the standard deviation σ sets its <b>width</b>. Because the total area under the curve must always equal 1, σ also sets its <b>height</b>.</p>
+  </header>
+
+  <div class="card">
+    <div class="slider-grid">
+      <div>
+        <div class="slider-label"><span>Mean, μ (location)</span><strong id="muLabel"></strong></div>
+        <input type="range" id="muSlider" min="-5" max="5" step="0.5" value="0" aria-label="Mean μ">
+      </div>
+      <div>
+        <div class="slider-label"><span>Standard deviation, σ (width)</span><strong id="sdLabel"></strong></div>
+        <input type="range" id="sdSlider" min="0.5" max="4" step="0.25" value="1" aria-label="Standard deviation σ">
+      </div>
+    </div>
+
+    <div class="btn-block">
+      <p class="kicker">Compare curves</p>
+      <div class="presets">
+        <button class="pill" id="pinBtn" type="button">Pin this curve</button>
+        <button class="pill" id="clearPins" type="button">Clear pinned curves</button>
+        <button class="pill case active" id="sigmaToggle" type="button" aria-pressed="true">Show μ ± σ</button>
+      </div>
+    </div>
+    <div class="btn-block">
+      <p class="kicker">Presets</p>
+      <div class="presets">
+        <button class="pill case" id="presetSigma" type="button">Same μ, different σ</button>
+        <button class="pill case" id="presetMu" type="button">Different μ, same σ</button>
+        <button class="pill" id="resetBtn" type="button">Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="model" id="notation"></p>
+    <svg id="chart" class="chart" role="img" aria-label="Normal density curve with adjustable mean and standard deviation"></svg>
+    <div class="legend" id="legend"></div>
+  </div>
+
+  <div class="card">
+    <div class="readout">
+      <div class="ro-box"><p class="ro-label">Mean = median = mode</p><p class="ro-value" id="roCentre"></p></div>
+      <div class="ro-box"><p class="ro-label">Peak height, f(μ)</p><p class="ro-value" id="roPeak"></p></div>
+      <div class="ro-box"><p class="ro-label">Total area under the curve</p><p class="ro-value" id="roArea"></p></div>
+    </div>
+    <p class="callout" id="callout"></p>
+  </div>
+
+  <div class="card">
+    <p class="card-title">Working it out</p>
+    <p class="d-title" id="t1"></p>
+    <div class="deriv"><div class="d-grid" id="deriv1"></div></div>
+    <p class="d-title">Compared with the reference N(0, 1)</p>
+    <div class="deriv"><div class="d-grid" id="deriv2"></div></div>
+    <p class="note">μ does not appear in the peak height, so sliding the curve left or right never changes its shape. Only σ changes the height: doubling σ doubles the width and halves the peak, which keeps the total area equal to 1.</p>
+  </div>
+</div>
+
+<script>
+/* ---------- theme toggle (shares the site's stored preference) ---------- */
+(function(){
+  var root = document.documentElement;
+  var btn  = document.getElementById('themeToggle');
+  function current(){ return root.getAttribute('data-theme') === 'light' ? 'light' : 'dark'; }
+  function sync(){
+    var t = current();
+    btn.setAttribute('aria-pressed', t === 'light' ? 'true' : 'false');
+    document.getElementById('tmode').textContent = t === 'light' ? 'Light' : 'Dark';
+  }
+  sync();
+  btn.addEventListener('click', function(){
+    var t = current() === 'light' ? 'dark' : 'light';
+    root.setAttribute('data-theme', t);
+    try{ localStorage.setItem('theme', t); }catch(e){}
+    sync();
+  });
+})();
+
+const NS = 'http://www.w3.org/2000/svg';
+const MONO = "'JetBrains Mono', monospace";
+function el(tag, attrs, text) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) if (attrs[k] !== undefined && attrs[k] !== null) e.setAttribute(k, attrs[k]);
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+function f(y, mu, sd) { return Math.exp(-((y - mu) ** 2) / (2 * sd * sd)) / (sd * Math.sqrt(2 * Math.PI)); }
+// trim to 2 dp and use a true minus sign
+function fmt(v) { const s = String(parseFloat(v.toFixed(2))); return s.startsWith('-') ? '−' + s.slice(1) : s; }
+
+const PIN_COLOURS = ['var(--steel-text)', 'var(--ok)', 'var(--terra)'];
+let mu = 0, sd = 1, showSigma = true;
+let pins = [];
+
+const XMIN = -10, XMAX = 10, YMAX = 0.85;
+const svg = document.getElementById('chart');
+
+function render() {
+  document.getElementById('muLabel').textContent = fmt(mu);
+  document.getElementById('sdLabel').textContent = fmt(sd);
+  document.getElementById('notation').textContent = `Y ~ N(${fmt(mu)}, ${fmt(sd)}²), so μ = ${fmt(mu)} and σ² = ${fmt(sd * sd)}`;
+  const peak = f(mu, mu, sd);
+
+  renderChart(peak);
+
+  // legend
+  let lg = `<span><span class="swatch" style="background:var(--amber)"></span>N(${fmt(mu)}, ${fmt(sd)}²)</span>`;
+  pins.forEach((p, i) => { lg += `<span><span class="swatch" style="background:${PIN_COLOURS[i]}"></span>pinned N(${fmt(p.mu)}, ${fmt(p.sd)}²)</span>`; });
+  lg += '<span><span class="swatch dash"></span>reference N(0, 1)</span>';
+  document.getElementById('legend').innerHTML = lg;
+
+  // readouts (area by the trapezium rule over μ ± 8σ)
+  let area = 0;
+  const steps = 2000, lo = mu - 8 * sd, w = (16 * sd) / steps;
+  for (let i = 0; i < steps; i++) area += 0.5 * (f(lo + i * w, mu, sd) + f(lo + (i + 1) * w, mu, sd)) * w;
+  document.getElementById('roCentre').textContent = fmt(mu);
+  document.getElementById('roPeak').textContent = peak.toFixed(3);
+  document.getElementById('roArea').textContent = area.toFixed(3);
+
+  // callout
+  let msg = '';
+  if (sd === 1 && mu === 0) {
+    msg = 'This is the <strong>standard Normal</strong>, N(0, 1). Move the sliders and compare with the dashed reference curve.';
+  } else {
+    if (mu !== 0) msg += `The curve has moved <strong>${fmt(Math.abs(mu))} ${mu > 0 ? 'to the right' : 'to the left'}</strong>: changing μ slides the curve along without changing its shape. `;
+    if (sd > 1) msg += `With σ = ${fmt(sd)}, the curve is <strong>${fmt(sd)} times as wide</strong> as the reference, so it must be <strong>${fmt(sd)} times lower</strong> (peak ${peak.toFixed(3)} against 0.399) to keep the total area equal to 1.`;
+    else if (sd < 1) msg += `With σ = ${fmt(sd)}, the curve is narrower than the reference, so it must be <strong>${fmt(1 / sd)} times taller</strong> (peak ${peak.toFixed(3)} against 0.399) to keep the total area equal to 1.`;
+    else msg += 'The width and height are unchanged, since σ is still 1.';
+  }
+  document.getElementById('callout').innerHTML = msg;
+
+  renderDerivations(peak);
+
+  document.getElementById('pinBtn').disabled = pins.length >= PIN_COLOURS.length;
+  const tg = document.getElementById('sigmaToggle');
+  tg.classList.toggle('active', showSigma);
+  tg.setAttribute('aria-pressed', showSigma);
+}
+
+// ---- the peak height as aligned derivations, with the rule named on each line ----
+function renderDerivations(peak) {
+  const S = fmt(sd), M = fmt(mu);
+  const grid = (id, lhs, rows) => {
+    document.getElementById(id).innerHTML = rows.map((d, i) =>
+      `<span class="d-l">${i ? '' : lhs}</span><span class="d-r${d[2] ? ' res' : ''}">${d[0]}</span><span class="d-w">${d[1] || ''}</span>`).join('');
+  };
+  document.getElementById('t1').textContent = `Peak height of N(${M}, ${S}²)`;
+  grid('deriv1', 'f(μ)', [
+    ['= [1/(σ√(2π))] · e^(−(μ − μ)²/(2σ²))', 'Normal density f(y), evaluated at y = μ'],
+    ['= [1/(σ√(2π))] · e⁰', 'the exponent is 0, since μ − μ = 0'],
+    ['= 1/(σ√(2π))', 'e⁰ = 1'],
+    [`= 1/(${S} × 2.5066)`, `σ = ${S} and √(2π) ≈ 2.5066`],
+    [`= ${peak.toFixed(3)}`, '', true]
+  ]);
+  grid('deriv2', 'f(μ) ÷ φ(0)', [
+    ['= [1/(σ√(2π))] ÷ [1/√(2π)]', 'φ(0) = 1/√(2π) ≈ 0.399 is the peak of N(0, 1)'],
+    ['= 1/σ', '√(2π) cancels'],
+    [`= 1/${S}`, `σ = ${S}`],
+    [`= ${(1 / sd).toFixed(3)}`, sd === 1 ? 'the same height as the reference' : sd > 1 ? `so the peak is ${S} times lower` : `so the peak is ${fmt(1 / sd)} times taller`, true]
+  ]);
+}
+
+// ---- chart ----
+function renderChart(peak) {
+  const small = window.innerWidth < 560;
+  const FS = small ? 18 : 12;
+  const W = 620, H = small ? 360 : 300;
+  const ML = small ? 74 : 50, MR = 16, MT = FS + 16, MB = FS * 2 + 30;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.innerHTML = '';
+  const plotW = W - ML - MR, plotH = H - MT - MB, base = MT + plotH;
+  // inset the y-range from the axis ends so the −10 label clears the 0.0 label in the corner
+  const PAD = FS * 1.4;
+  const x = v => ML + PAD + ((v - XMIN) / (XMAX - XMIN)) * (plotW - 2 * PAD);
+  const y = v => MT + plotH - (v / YMAX) * plotH;
+
+  for (let v = 0; v <= 0.8 + 1e-9; v += 0.2) {
+    svg.appendChild(el('line', { x1: ML, x2: W - MR, y1: y(v), y2: y(v), stroke: 'var(--line-2)', 'stroke-width': 1 }));
+    svg.appendChild(el('text', { x: ML - 10, y: y(v) + FS * 0.35, 'text-anchor': 'end', 'font-size': FS, 'font-family': MONO, fill: 'var(--mute)' }, v.toFixed(1)));
+  }
+  svg.appendChild(el('line', { x1: ML, x2: W - MR, y1: base, y2: base, stroke: 'var(--haze-dim)', 'stroke-width': 1.2 }));
+  for (let v = XMIN; v <= XMAX; v += 2) {
+    svg.appendChild(el('line', { x1: x(v), x2: x(v), y1: base, y2: base + 5, stroke: 'var(--haze-dim)', 'stroke-width': 1 }));
+    svg.appendChild(el('text', { x: x(v), y: base + FS + 10, 'text-anchor': 'middle', 'font-size': FS, 'font-family': MONO, fill: 'var(--haze-dim)' }, fmt(v)));
+  }
+  svg.appendChild(el('text', { x: (ML + W - MR) / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': FS, 'font-family': MONO, fill: 'var(--mute)' }, 'y'));
+  const midY = MT + plotH / 2;
+  svg.appendChild(el('text', { x: FS * 0.8, y: midY, 'text-anchor': 'middle', 'font-size': FS - 1, 'letter-spacing': '.04em', 'font-family': MONO, fill: 'var(--mute)', transform: `rotate(-90 ${FS * 0.8} ${midY})` }, 'density f(y)'));
+
+  function curvePts(m, s) {
+    let pts = '';
+    for (let i = 0; i <= 400; i++) { const v = XMIN + (i / 400) * (XMAX - XMIN); pts += `${x(v)},${y(f(v, m, s))} `; }
+    return pts.trim();
+  }
+
+  // reference N(0, 1)
+  svg.appendChild(el('polyline', { points: curvePts(0, 1), fill: 'none', stroke: 'var(--mute)', 'stroke-width': 1.5, 'stroke-dasharray': '5,4' }));
+  // pinned curves
+  pins.forEach((p, i) => svg.appendChild(el('polyline', { points: curvePts(p.mu, p.sd), fill: 'none', stroke: PIN_COLOURS[i], 'stroke-width': 2.2 })));
+  // current curve with fill
+  svg.appendChild(el('polygon', { points: `${x(XMIN)},${base} ${curvePts(mu, sd)} ${x(XMAX)},${base}`, fill: 'var(--amber)', 'fill-opacity': 0.16 }));
+  svg.appendChild(el('polyline', { points: curvePts(mu, sd), fill: 'none', stroke: 'var(--amber)', 'stroke-width': 2.8 }));
+
+  // mean = median = mode line
+  svg.appendChild(el('line', { x1: x(mu), x2: x(mu), y1: base, y2: y(peak), stroke: 'var(--amber)', 'stroke-width': 1.5, 'stroke-dasharray': '4,3' }));
+  svg.appendChild(el('text', { x: x(mu), y: y(peak) - 9, 'text-anchor': 'middle', 'font-size': FS, 'font-family': MONO, 'font-weight': 500, fill: 'var(--amber)' }, `μ = ${fmt(mu)}`));
+
+  // μ ± σ bracket
+  if (showSigma) {
+    const hy = y(f(mu + sd, mu, sd));
+    [mu - sd, mu + sd].forEach(v => svg.appendChild(el('line', { x1: x(v), x2: x(v), y1: base, y2: hy, stroke: 'var(--haze-dim)', 'stroke-width': 1.3, 'stroke-dasharray': '3,3' })));
+    const by = base - FS - 4;
+    const x0 = x(mu - sd), x1 = x(mu + sd);
+    svg.appendChild(el('line', { x1: x0, x2: x1, y1: by, y2: by, stroke: 'var(--haze-dim)', 'stroke-width': 1.5 }));
+    [x0, x1].forEach(xx => svg.appendChild(el('line', { x1: xx, x2: xx, y1: by - 4, y2: by + 4, stroke: 'var(--haze-dim)', 'stroke-width': 1.5 })));
+    // a wide, low curve puts the μ label down near the bracket, so the bracket label moves beside the bracket,
+    // on whichever side has more room
+    const lowPeak = y(peak) - 9 > by - 7 - FS * 2.4;
+    const leftRoom = x0 - (ML + PAD), rightRoom = (W - MR) - x1;
+    const lab = !lowPeak ? { x: (x0 + x1) / 2, y: by - 7, a: 'middle' }
+      : leftRoom >= rightRoom ? { x: x0 - 8, y: by + FS * 0.35, a: 'end' }
+      : { x: x1 + 8, y: by + FS * 0.35, a: 'start' };
+    svg.appendChild(el('text', { x: lab.x, y: lab.y, 'text-anchor': lab.a, 'font-size': FS - 1, 'font-family': MONO, fill: 'var(--haze)' }, 'μ ± σ'));
+  }
+}
+
+// ---- wiring ----
+document.getElementById('muSlider').addEventListener('input', e => { mu = parseFloat(e.target.value); render(); });
+document.getElementById('sdSlider').addEventListener('input', e => { sd = parseFloat(e.target.value); render(); });
+document.getElementById('pinBtn').addEventListener('click', () => { if (pins.length < PIN_COLOURS.length) pins.push({ mu, sd }); render(); });
+document.getElementById('clearPins').addEventListener('click', () => { pins = []; render(); });
+document.getElementById('sigmaToggle').addEventListener('click', () => { showSigma = !showSigma; render(); });
+
+function setSliders(m, s) {
+  mu = m; sd = s;
+  document.getElementById('muSlider').value = m;
+  document.getElementById('sdSlider').value = s;
+}
+document.getElementById('presetSigma').addEventListener('click', () => { pins = [{ mu: 0, sd: 0.5 }, { mu: 0, sd: 2 }]; setSliders(0, 1); render(); });
+document.getElementById('presetMu').addEventListener('click', () => { pins = [{ mu: -4, sd: 1 }, { mu: 4, sd: 1 }]; setSliders(0, 1); render(); });
+document.getElementById('resetBtn').addEventListener('click', () => { pins = []; setSliders(0, 1); render(); });
+
+let resizeTimer;
+window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(render, 150); });
+
+render();
+</script>
+
+</body>
+</html>
