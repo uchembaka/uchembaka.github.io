@@ -501,7 +501,8 @@ function render() {
   if (cum.terms.some(t => t.r < 0)) rNow += ' A value below 0 lies outside the table; Step 3 explains it.';
   const aside = `<div class="aside">
       <p class="aside-title">Why r and not k?</p>
-      <p>The table is organised by r: the column headed r gives Pr(${name} ≤ r). The question is written in terms of ${type === 'bt' ? 'a and b' : 'k'}, and rewriting it into table form can shift the value you look up (for example, <span class="lk">Pr(Y &lt; 3)</span> becomes <span class="lk">Pr(Y ≤ 2)</span>), so the column you read need not match the number in the question.</p>
+      <p>The table is organised by r: the column headed r gives Pr(${name} ≤ r). This value is cumulative, since it adds up the probabilities of every outcome from 0 up to r:<br><span class="eq">Pr(${name} ≤ r) = Pr(${name} = 0) + Pr(${name} = 1) + … + Pr(${name} = r)</span></p>
+      <p>The question is written in terms of ${type === 'bt' ? 'a and b' : 'k'}, and rewriting it into table form can shift the value you look up (for example, <span class="lk">Pr(Y &lt; 3)</span> becomes <span class="lk">Pr(Y ≤ 2)</span>), so the column you read need not match the number in the question.</p>
       <p class="aside-now">${rNow}</p>
     </div>`;
   steps.push({
@@ -531,7 +532,7 @@ function render() {
   // repeat the line above (a question already in Pr(<= r) form needs no rewriting)
   const rows = [];
   const add = (r, w, res) => rows.push({ l: rows.length ? '' : question, r, w, res });
-  if (flipped) add(`= ${evStr}`, `count failures: X = ${n} − Y ~ Binomial(${n}, ${pStr(q)})`);
+  if (flipped) add(`= ${evStr}`, `count failures: X = ${n} − Y, where X ~ Binomial(${n}, ${pStr(q)})`);
   if (ev.t !== 'le') add(`= ${rewrite}`, RULE[ev.t]);
   if (lookups.length > 1 || cum.c) add(`= ${arith}`, `table values for n = ${n}, p = ${pStr(q)}`);
   add(`= ${f4(result)}`, (lookups.length > 1 || cum.c) ? '' : `table value for n = ${n}, p = ${pStr(q)}`, true);
