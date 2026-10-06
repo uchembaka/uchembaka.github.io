@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>(function(){try{var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark"){t=(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+<title>Normal Approximation to the Binomial — Uche Mbaka</title>
+<meta name="description" content="A companion tool for STAT 20070: lay a Normal curve over Binomial bars, check when n is large enough, and compare the approximate probability for a count or a proportion, with or without a continuity correction, against the exact one.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#080A0F;
+    --ink-rgb:8,10,15;
+    --ink-2:#0D1017;
+    --haze:#E9E6DF;
+    --haze-dim:#B9B6AE;
+    --mute:#6A7180;
+    --mute-2:#454B58;
+    --line:rgba(233,230,223,.09);
+    --line-2:rgba(233,230,223,.16);
+    --amber:#CFA15F;
+    --amber-soft:rgba(207,161,95,.18);
+    --steel:#5C7585;
+    --steel-text:#8FA6B5;
+    --steel-soft:rgba(92,117,133,.26);
+    --ok:#7E9E82;
+    --ok-soft:rgba(126,158,130,.14);
+    --terra:#C98A6B;
+    --terra-soft:rgba(201,138,107,.14);
+    --on-accent:#080A0F;
+  }
+  [data-theme="light"]{
+    --ink:#F3F0E9;
+    --ink-rgb:243,240,233;
+    --ink-2:#FBFAF5;
+    --haze:#1B1C20;
+    --haze-dim:#4A4C54;
+    --mute:#6E727D;
+    --mute-2:#9A9DA6;
+    --line:rgba(20,21,26,.10);
+    --line-2:rgba(20,21,26,.18);
+    --amber:#9E6B22;
+    --amber-soft:rgba(158,107,34,.13);
+    --steel:#4A6377;
+    --steel-text:#4A6377;
+    --steel-soft:rgba(74,99,119,.14);
+    --ok:#3F6B4F;
+    --ok-soft:rgba(63,107,79,.10);
+    --terra:#A0502F;
+    --terra-soft:rgba(160,80,47,.10);
+    --on-accent:#FBFAF5;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    min-height:100vh;
+    background:var(--ink);
+    color:var(--haze);
+    font-family:"Newsreader",Georgia,serif;
+    font-weight:300;
+    font-size:18px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    display:flex;
+    justify-content:center;
+    padding:44px 22px 72px;
+    transition:background .35s ease, color .35s ease;
+  }
+  ::selection{background:rgba(207,161,95,.22);color:var(--haze)}
+  a{color:inherit;text-decoration:none}
+
+  .stage{width:100%;max-width:800px}
+
+  .mono{
+    font-family:"JetBrains Mono",ui-monospace,monospace;
+    font-weight:400;font-size:11px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--mute);
+  }
+
+  /* ---------- top row ---------- */
+  .toprow{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:34px}
+  .back{transition:color .25s}
+  .back:hover{color:var(--amber)}
+
+  .theme-toggle{display:inline-flex;align-items:center;gap:10px;background:none;border:0;padding:0;cursor:pointer;font:inherit;line-height:1}
+  .theme-toggle .tmode{color:var(--mute);transition:color .25s}
+  .theme-toggle:hover .tmode{color:var(--amber)}
+  .theme-toggle .track{width:40px;height:21px;border-radius:999px;border:1px solid var(--line-2);position:relative;transition:border-color .25s;flex:0 0 auto}
+  .theme-toggle:hover .track{border-color:var(--amber)}
+  .theme-toggle .knob{position:absolute;top:50%;left:3px;transform:translateY(-50%);width:13px;height:13px;border-radius:50%;background:var(--mute);transition:left .28s cubic-bezier(.4,0,.2,1),background .25s}
+  [data-theme="light"] .theme-toggle .knob{left:22px;background:var(--amber)}
+  .theme-toggle:focus-visible{outline:none}
+  .theme-toggle:focus-visible .track{outline:2px solid var(--amber);outline-offset:3px}
+
+  /* ---------- header ---------- */
+  header{margin-bottom:28px}
+  .eyebrow{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--mute-2);margin:0 0 16px;
+  }
+  h1{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;
+    font-size:clamp(30px,5.4vw,44px);line-height:1.02;letter-spacing:-.025em;
+    color:var(--haze);margin:0 0 16px;
+  }
+  .sub{font-size:17px;line-height:1.6;color:var(--haze-dim);font-weight:300;margin:0;max-width:60ch}
+  .sub b{color:var(--amber);font-weight:400}
+  .lk{font-family:"JetBrains Mono",monospace;font-size:.86em;white-space:nowrap}
+
+  /* ---------- cards ---------- */
+  .card{
+    background:linear-gradient(160deg, var(--ink-2), rgba(var(--ink-rgb),0));
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:26px 28px 24px;
+    margin-bottom:18px;
+  }
+  @media (max-width:480px){.card{padding:22px 18px 20px}}
+
+  .card-title{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;
+    font-size:21px;letter-spacing:-.02em;color:var(--haze);margin:0 0 18px;
+  }
+  .kicker{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--mute);margin:0 0 12px;
+  }
+  /* no uppercase: these labels name n, p and k */
+  .label{font-family:"JetBrains Mono",monospace;font-size:12.5px;letter-spacing:.02em;color:var(--mute);margin:0 0 12px}
+
+  /* ---------- pills ---------- */
+  .presets{display:flex;gap:8px;flex-wrap:wrap}
+  .pill{
+    background:none;cursor:pointer;
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--haze);
+    border:1px solid var(--line-2);border-radius:999px;padding:10px 16px;
+    transition:.25s;
+  }
+  .pill:hover{border-color:var(--amber);color:var(--amber)}
+  .pill:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+  .pill.active{background:var(--amber);border-color:var(--amber);color:var(--on-accent)}
+  /* these contain n, p, k and Y, so they keep their case */
+  .pill.case{text-transform:none;letter-spacing:.02em;font-size:13px}
+
+  /* ---------- sliders ---------- */
+  .slider-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 32px;margin-top:24px;padding-top:22px;border-top:1px solid var(--line)}
+  @media (max-width:560px){.slider-grid{grid-template-columns:1fr}}
+  .slider-label{
+    display:flex;justify-content:space-between;align-items:baseline;gap:12px;
+    font-family:"JetBrains Mono",monospace;font-size:12.5px;letter-spacing:.02em;color:var(--mute);
+  }
+  .slider-label strong{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;font-size:22px;
+    letter-spacing:-.02em;color:var(--amber);
+  }
+  input[type="range"]{
+    -webkit-appearance:none;appearance:none;
+    width:100%;height:3px;background:var(--line-2);border-radius:2px;
+    margin:14px 0 8px;cursor:pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb{
+    -webkit-appearance:none;appearance:none;
+    width:15px;height:15px;border-radius:50%;background:var(--amber);
+    border:3px solid var(--ink);box-shadow:0 0 0 1px var(--amber);cursor:pointer;margin-top:-6px;
+  }
+  input[type="range"]::-moz-range-thumb{
+    width:15px;height:15px;border-radius:50%;background:var(--amber);
+    border:3px solid var(--ink);box-shadow:0 0 0 1px var(--amber);cursor:pointer;
+  }
+  input[type="range"]:focus-visible{outline:2px solid var(--amber);outline-offset:6px;border-radius:4px}
+
+  .rule-row{margin-top:18px}
+  .rule{display:flex;gap:10px;flex-wrap:wrap}
+  .badge{font-family:"JetBrains Mono",monospace;font-size:13px;padding:7px 13px;border-radius:999px;border:1px solid}
+  .badge.ok{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
+  .badge.no{background:var(--terra-soft);border-color:var(--terra);color:var(--terra)}
+
+  /* ---------- question controls ---------- */
+  .qrow{display:flex;gap:18px 28px;align-items:flex-end;flex-wrap:wrap}
+  .seg{display:flex;gap:8px;flex-wrap:wrap}
+  .stepper{display:flex;align-items:center;gap:10px}
+  .step-btn{
+    width:34px;height:34px;border-radius:50%;
+    border:1px solid var(--line-2);background:none;color:var(--haze);
+    font-family:"JetBrains Mono",monospace;font-size:16px;line-height:1;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;transition:.25s;
+  }
+  .step-btn:hover:not(:disabled){border-color:var(--amber);color:var(--amber)}
+  .step-btn:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+  .step-btn:disabled{opacity:.3;cursor:default}
+  .k-input{
+    width:76px;padding:6px 8px;text-align:center;
+    border:1px solid var(--line-2);border-radius:10px;background:none;color:var(--amber);
+    font-family:"Space Grotesk",system-ui,sans-serif;font-size:22px;font-weight:500;
+    -moz-appearance:textfield;
+  }
+  .k-input::-webkit-outer-spin-button,.k-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  .k-input:focus{outline:none;border-color:var(--amber)}
+  .cc-note{margin:22px 0 0;padding-top:18px;border-top:1px solid var(--line);font-size:16px;line-height:1.58;color:var(--haze-dim)}
+  .cc-note strong{color:var(--haze);font-weight:400}
+  .cc-note .ph{font-family:"JetBrains Mono",monospace;font-size:.88em}
+
+  /* ---------- chart ---------- */
+  svg.chart{width:100%;height:auto;display:block;overflow:visible}
+  .legend{
+    display:flex;gap:10px 22px;flex-wrap:wrap;margin-top:16px;
+    font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.02em;color:var(--mute);
+  }
+  .legend span{display:inline-flex;align-items:center;gap:8px}
+  .swatch{width:14px;height:12px;display:inline-block;border-radius:3px;flex:0 0 auto}
+  .swatch.line{height:3px;border-radius:2px;width:18px}
+
+  /* ---------- readout ---------- */
+  .readout{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  @media (max-width:600px){.readout{grid-template-columns:1fr}}
+  .ro-box{padding:14px 16px;border:1px solid var(--line-2);border-radius:12px}
+  .ro-label{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.02em;color:var(--mute);margin:0 0 6px}
+  .ro-value{font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;font-size:22px;letter-spacing:-.01em;color:var(--haze);margin:0}
+  .ro-value.stl{color:var(--steel-text)}
+  .ro-value.amb{color:var(--amber)}
+  .callout{margin:18px 0 0;padding:10px 0 10px 16px;border-left:2px solid var(--amber);font-size:16.5px;line-height:1.62;color:var(--haze-dim)}
+  .callout strong{color:var(--amber);font-weight:400}
+
+  /* ---------- steps ---------- */
+  .question{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;
+    font-size:clamp(20px,3.4vw,26px);letter-spacing:-.02em;color:var(--haze);margin:0 0 20px;
+  }
+  .question span{color:var(--haze-dim);font-weight:400;font-size:.72em}
+  .step{display:grid;grid-template-columns:34px 1fr;gap:14px;padding:18px 0;border-top:1px solid var(--line)}
+  .step:first-child{border-top:none;padding-top:0}
+  .step-num{
+    width:28px;height:28px;border-radius:50%;border:1px solid var(--amber);color:var(--amber);
+    font-family:"JetBrains Mono",monospace;font-size:12.5px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .step-title{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;font-size:17px;
+    letter-spacing:-.01em;color:var(--haze);margin:2px 0 6px;
+  }
+  .step-body{font-size:16.5px;line-height:1.62;color:var(--haze-dim)}
+  .step-body strong{color:var(--haze);font-weight:400}
+
+  /* ---------- derivations (same layout as the other worked examples) ---------- */
+  .deriv{border-left:2px solid var(--amber);padding:6px 0 6px 20px;margin-top:8px}
+  .d-grid{
+    display:grid;grid-template-columns:max-content minmax(0,1fr);
+    column-gap:10px;row-gap:6px;align-items:baseline;
+  }
+  .d-l,.d-r{font-family:"JetBrains Mono",monospace;font-size:13.5px;letter-spacing:.01em;color:var(--haze)}
+  .d-l{text-align:right;white-space:nowrap}
+  .d-r{overflow-wrap:anywhere}
+  .d-r.res{color:var(--amber);font-weight:500;font-size:18px}
+  .d-w{grid-column:2;margin:-2px 0 6px;font-size:15px;line-height:1.4;font-style:italic;color:var(--haze-dim)}
+  .d-w:empty{display:none}
+  @media (max-width:520px){
+    .d-grid{grid-template-columns:minmax(0,1fr)}
+    .d-l{text-align:left;white-space:normal}
+    .d-l:empty{display:none}
+    .d-w{grid-column:1}
+  }
+
+  @media (prefers-reduced-motion:reduce){*{transition:none !important}}
+</style>
+</head>
+<body>
+
+<div class="stage">
+
+  <div class="toprow">
+    <a class="back mono" href="../STAT20070.html">← STAT 20070</a>
+    <button class="theme-toggle" id="themeToggle" aria-label="Switch between light and dark theme" aria-pressed="false"><span class="tmode mono" id="tmode">Dark</span><span class="track"><span class="knob"></span></span></button>
+  </div>
+
+  <header>
+    <p class="eyebrow">Section 2 · Lecture 09 · Sampling Distribution</p>
+    <h1>Normal Approximation to the Binomial</h1>
+    <p class="sub">When n is large, the Binomial distribution looks like a Normal curve with the same mean and variance, <span class="lk">Y ≈ N(np, np(1 − p))</span>, and the sample proportion follows <span class="lk">p̂ ≈ N(p, p(1 − p)/n)</span>. Change n and p to see <b>when the curve fits the bars</b>, and how close the approximate answer is to the exact one.</p>
+  </header>
+
+  <div class="card">
+    <p class="kicker">Examples</p>
+    <div class="presets" id="presets"></div>
+
+    <div class="slider-grid">
+      <div>
+        <div class="slider-label"><span>Number of trials, n</span><strong id="nLab"></strong></div>
+        <input type="range" id="nSlider" min="1" max="200" step="1" aria-label="Number of trials n">
+      </div>
+      <div>
+        <div class="slider-label"><span>Probability of success, p</span><strong id="pLab"></strong></div>
+        <input type="range" id="pSlider" min="0.05" max="0.95" step="0.05" aria-label="Probability of success p">
+      </div>
+    </div>
+    <div class="rule-row">
+      <p class="label">Is n large enough? Both must be at least 5.</p>
+      <div class="rule" id="rule"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="card-title">Calculate a probability</p>
+    <div class="qrow">
+      <div>
+        <p class="label">Work with</p>
+        <div class="seg" id="scaleSeg">
+          <button class="pill case active" data-scale="count" type="button">Count, Y</button>
+          <button class="pill case" data-scale="prop" type="button">Proportion, p̂ = Y/n</button>
+        </div>
+      </div>
+      <div>
+        <p class="label">Question type</p>
+        <div class="seg" id="typeSeg"></div>
+      </div>
+      <div>
+        <p class="label">Continuity correction</p>
+        <div class="seg" id="ccSeg">
+          <button class="pill active" data-cc="0" type="button">Off</button>
+          <button class="pill" data-cc="1" type="button">On</button>
+        </div>
+      </div>
+    </div>
+    <div class="qrow" id="valueRow" style="margin-top:20px"></div>
+    <p class="cc-note"><strong>About the continuity correction.</strong> Y takes only whole numbers, so each value k is a bar running from k − 0.5 to k + 0.5, while the Normal curve is continuous. The correction moves each boundary half a unit outwards (0.5/n on the <span class="ph">p̂</span> scale) so that the Normal area covers every bar in the event. It is optional and usually brings the approximation closer to the exact answer. It is off by default, matching the lecture example.</p>
+  </div>
+
+  <div class="card">
+    <p class="card-title" id="chartTitle"></p>
+    <svg id="chart" class="chart" role="img" aria-label="Binomial distribution with the approximating Normal curve"></svg>
+    <div class="legend" id="legend"></div>
+  </div>
+
+  <div class="card">
+    <div class="readout">
+      <div class="ro-box"><p class="ro-label">Exact (Binomial)</p><p class="ro-value stl" id="cExact"></p></div>
+      <div class="ro-box"><p class="ro-label">Normal approximation</p><p class="ro-value amb" id="cApprox"></p></div>
+      <div class="ro-box"><p class="ro-label">Difference, approximate − exact</p><p class="ro-value" id="cDiff"></p></div>
+    </div>
+    <p class="callout" id="callout"></p>
+  </div>
+
+  <div class="card">
+    <p class="card-title">The approximation, step by step</p>
+    <p class="question" id="question"></p>
+    <div id="steps"></div>
+  </div>
+</div>
+
+<script>
+/* ---------- theme toggle (shares the site's stored preference) ---------- */
+(function(){
+  var root = document.documentElement;
+  var btn  = document.getElementById('themeToggle');
+  function current(){ return root.getAttribute('data-theme') === 'light' ? 'light' : 'dark'; }
+  function sync(){
+    var t = current();
+    btn.setAttribute('aria-pressed', t === 'light' ? 'true' : 'false');
+    document.getElementById('tmode').textContent = t === 'light' ? 'Light' : 'Dark';
+  }
+  sync();
+  btn.addEventListener('click', function(){
+    var t = current() === 'light' ? 'dark' : 'light';
+    root.setAttribute('data-theme', t);
+    try{ localStorage.setItem('theme', t); }catch(e){}
+    sync();
+  });
+})();
+
+const NS = 'http://www.w3.org/2000/svg';
+const MONO = "'JetBrains Mono', monospace";
+function el(tag, attrs, text) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) if (attrs[k] !== undefined && attrs[k] !== null) e.setAttribute(k, attrs[k]);
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+// erf: Maclaurin series near 0, and a Chebyshev fit to erfc in the tails (relative error about 1e-7),
+// so Φ is right to well beyond the 5 dp the tables print
+function erf(x) {
+  const ax = Math.abs(x);
+  if (ax < 2) {
+    let term = x, sum = x;
+    for (let n = 1; n < 200; n++) { term *= -x * x / n; const add = term / (2 * n + 1); sum += add; if (Math.abs(add) < 1e-17) break; }
+    return 2 / Math.sqrt(Math.PI) * sum;
+  }
+  const t = 1 / (1 + 0.5 * ax);
+  const erfc = t * Math.exp(-ax * ax - 1.26551223 + t * (1.00002368 + t * (0.37409196 + t * (0.09678418 + t * (-0.18628806 + t * (0.27886807 + t * (-1.13520398 + t * (1.48851587 + t * (-0.82215223 + t * 0.17087277)))))))));
+  return Math.sign(x) * (1 - erfc);
+}
+function Phi(z) { return 0.5 * (1 + erf(z / Math.SQRT2)); }
+// round half away from zero, so ±0.625 both become ±0.63; the epsilon stops a value
+// such as 0.625 being stored just below the half
+function rnd(v, dp) { const f = 10 ** dp; return Math.sign(v) * Math.round(Math.abs(v) * f + 1e-7) / f; }
+// the Normal table prints 4 dp, and 5 dp from z = 2.00 on
+function tabDp(z) { return z >= 2 ? 5 : 4; }
+function phiTab(z) { return rnd(Phi(z), tabDp(z)); }
+function logChoose(n, k) { let s = 0; for (let i = 0; i < k; i++) s += Math.log(n - i) - Math.log(i + 1); return s; }
+function pmf(k, n, p) { return Math.exp(logChoose(n, k) + k * Math.log(p) + (n - k) * Math.log(1 - p)); }
+// trimmed, with a true minus sign
+function fmt(v, dp) { const s = String(parseFloat(rnd(v, dp).toFixed(dp))); return s.startsWith('-') ? '−' + s.slice(1) : s; }
+// fixed dp, with a true minus sign
+function fx(v, dp) { const s = rnd(v, dp).toFixed(dp); return s.startsWith('-') && parseFloat(s) !== 0 ? '−' + s.slice(1) : s.replace(/^-/, ''); }
+
+// values are held as counts; on the p̂ scale they are shown as count/n
+// opens on the lecture's blood type example, Pr(Y < 25), with the continuity correction off as on the slides
+let n = 100, pc = 30, scale = 'count', type = 'lt', k = 25, a = 20, b = 30, cc = false;
+const P = () => pc / 100;
+
+const PRESETS = [
+  { label: 'Blood type: fewer than 25, n = 100, p = 0.30', n: 100, pc: 30, scale: 'count', type: 'lt', k: 25 },
+  { label: 'CMV: Pr(0.6 ≤ p̂ ≤ 0.8), n = 15, p = 0.5', n: 15, pc: 50, scale: 'prop', type: 'bt', a: 9, b: 12 },
+  { label: 'Too small: n = 10, p = 0.30', n: 10, pc: 30, scale: 'count', type: 'le', k: 2 },
+  { label: 'Skewed: n = 20, p = 0.05', n: 20, pc: 5, scale: 'count', type: 'le', k: 1 }
+];
+
+const V = () => scale === 'count' ? 'Y' : 'p̂';
+// a count shown on the current scale
+function sv(c) { return scale === 'count' ? fmt(c, 4) : fmt(c / n, 4); }
+// a strict inequality is worked as the matching ≤ or ≥ one step along: Y < 25 is Y ≤ 24
+const effT = () => type === 'lt' ? 'le' : type === 'gt' ? 'ge' : type;
+const effK = () => type === 'lt' ? k - 1 : type === 'gt' ? k + 1 : k;
+const SYM = { le: '≤', lt: '<', ge: '≥', gt: '>' };
+function inEvent(i) { const T = effT(), K = effK(); return T === 'le' ? i <= K : T === 'ge' ? i >= K : (i >= a && i <= b); }
+function questionStr(onScale) {
+  const show = onScale ? sv : (c => fmt(c, 0));
+  const name = onScale ? V() : 'Y';
+  if (type === 'bt') return `Pr(${show(a)} ≤ ${name} ≤ ${show(b)})`;
+  return `Pr(${name} ${SYM[type]} ${show(k)})`;
+}
+
+function stepperHTML(id, label, c) {
+  return `<div><p class="label">${label}</p><div class="stepper"><button class="step-btn" data-id="${id}" data-d="-1" type="button" aria-label="Decrease ${id}">&minus;</button><input class="k-input" data-id="${id}" type="number" inputmode="decimal" step="${scale === 'count' ? 1 : 'any'}" aria-label="Value ${id}" value="${scale === 'count' ? c : fmt(c / n, 4)}"><button class="step-btn" data-id="${id}" data-d="1" type="button" aria-label="Increase ${id}">+</button></div></div>`;
+}
+function clampAll() {
+  const cl = v => Math.max(0, Math.min(n, Math.round(v)));
+  k = cl(k); a = cl(a); b = cl(b);
+  if (a > b) [a, b] = [b, a];
+}
+
+function renderControls() {
+  document.getElementById('nLab').textContent = n;
+  document.getElementById('pLab').textContent = P().toFixed(2);
+  document.getElementById('nSlider').value = n;
+  document.getElementById('pSlider').value = P();
+  const q = V();
+  const ts = document.getElementById('typeSeg');
+  ts.innerHTML = [['le', `Pr(${q} ≤ k)`], ['lt', `Pr(${q} < k)`], ['ge', `Pr(${q} ≥ k)`], ['gt', `Pr(${q} > k)`], ['bt', `Pr(a ≤ ${q} ≤ b)`]]
+    .map(([t, l]) => `<button class="pill case${t === type ? ' active' : ''}" data-type="${t}" type="button" aria-pressed="${t === type}">${l}</button>`).join('');
+  ts.querySelectorAll('.pill').forEach(bt => bt.addEventListener('click', () => { type = bt.dataset.type; render(); }));
+  document.querySelectorAll('#scaleSeg .pill').forEach(bt => { const on = bt.dataset.scale === scale; bt.classList.toggle('active', on); bt.setAttribute('aria-pressed', on); });
+  document.querySelectorAll('#ccSeg .pill').forEach(bt => { const on = (bt.dataset.cc === '1') === cc; bt.classList.toggle('active', on); bt.setAttribute('aria-pressed', on); });
+
+  // rebuild the value boxes only when their layout changes, so typing is not interrupted
+  const vr = document.getElementById('valueRow');
+  const sig = `${type}|${scale}|${n}`;
+  const unit = scale === 'count' ? '' : ` (steps of 1/n = ${fmt(1 / n, 4)})`;
+  if (vr.dataset.sig !== sig) {
+    vr.dataset.sig = sig;
+    vr.innerHTML = type === 'bt'
+      ? stepperHTML('a', `Lower value, a${unit}`, a) + stepperHTML('b', `Upper value, b${unit}`, b)
+      : stepperHTML('k', `Value, k${unit}`, k);
+    vr.querySelectorAll('.step-btn').forEach(btn => btn.addEventListener('click', () => {
+      const d = parseInt(btn.dataset.d, 10);
+      if (btn.dataset.id === 'k') k += d; else if (btn.dataset.id === 'a') a += d; else b += d;
+      render();
+    }));
+    vr.querySelectorAll('.k-input').forEach(inp => {
+      inp.addEventListener('input', () => {
+        const v = parseFloat(inp.value);
+        if (!isFinite(v)) return;
+        const c = scale === 'count' ? Math.round(v) : Math.round(v * n);   // a p̂ value snaps to the nearest r/n
+        if (inp.dataset.id === 'k') k = c; else if (inp.dataset.id === 'a') a = c; else b = c;
+        render(true);
+      });
+      inp.addEventListener('change', () => render());
+    });
+  }
+  vr.querySelectorAll('.step-btn').forEach(btn => {
+    const cur = btn.dataset.id === 'k' ? k : btn.dataset.id === 'a' ? a : b;
+    btn.disabled = (btn.dataset.d === '-1' && cur <= 0) || (btn.dataset.d === '1' && cur >= n);
+  });
+}
+function syncInputs() {
+  document.querySelectorAll('#valueRow .k-input').forEach(inp => {
+    const c = inp.dataset.id === 'k' ? k : inp.dataset.id === 'a' ? a : b;
+    inp.value = scale === 'count' ? c : fmt(c / n, 4);
+  });
+}
+
+// Φ at z, read from the table: Φ(|z|) for z ≥ 0, 1 − Φ(|z|) for z < 0
+function tableCdf(z) { const az = Math.abs(z); return { val: z >= 0 ? phiTab(az) : 1 - phiTab(az), dp: tabDp(az), az, neg: z < 0 }; }
+
+function render(typing) {
+  clampAll();
+  renderControls();
+  if (!typing) syncInputs();
+  const p = P();
+  const isP = scale === 'prop';
+  const mu = n * p, v = n * p * (1 - p), sd = Math.sqrt(v);
+  const nq = n * (1 - p);
+  const ok1 = mu >= 5 - 1e-9, ok2 = nq >= 5 - 1e-9;
+  document.getElementById('rule').innerHTML =
+    `<span class="badge ${ok1 ? 'ok' : 'no'}">np = ${fmt(mu, 2)} ${ok1 ? '≥' : '<'} 5 ${ok1 ? '✓' : '✗'}</span>` +
+    `<span class="badge ${ok2 ? 'ok' : 'no'}">n(1 − p) = ${fmt(nq, 2)} ${ok2 ? '≥' : '<'} 5 ${ok2 ? '✓' : '✗'}</span>`;
+
+  // the Normal model on the chosen scale
+  const M = isP ? p : mu, VAR = isP ? p * (1 - p) / n : v, SD = Math.sqrt(VAR);
+  const half = isP ? 0.5 / n : 0.5;
+  const sc = c => isP ? c / n : c;            // a count on the chosen scale
+
+  // exact
+  let exact = 0;
+  for (let i = 0; i <= n; i++) if (inEvent(i)) exact += pmf(i, n, p);
+
+  // boundaries on the chosen scale, with the continuity correction if on
+  const lowB = type === 'bt' ? sc(a) - (cc ? half : 0) : null;
+  const upB = type === 'bt' ? sc(b) + (cc ? half : 0) : null;
+  const T = effT(), K = effK();
+  const oneB = T === 'le' ? sc(K) + (cc ? half : 0) : T === 'ge' ? sc(K) - (cc ? half : 0) : null;
+
+  const zOf = x => { const raw = (x - M) / SD; return { raw, z: rnd(raw, 2) }; };
+  let approx, dp;
+  const rows = [];
+  const add = (r, w, res) => rows.push({ l: rows.length ? '' : questionStr(true), r, w, res });
+  const bDp = isP ? 4 : 1;
+  const bStr = x => cc ? fmt(x, bDp) : sv(Math.round(isP ? x * n : x));
+  const Ms = fmt(M, 4), SDs = fmt(SD, 4), VARs = fmt(VAR, isP ? 5 : 4);
+  const modelNote = `Normal approximation ${V()} ≈ N(${Ms}, ${VARs}), standardised with Z = (${V()} − μ)/σ`;
+  const ccNote = (bar, used) => `; continuity correction: the bar for ${sv(bar)} runs from ${fmt(sc(bar) - half, bDp)} to ${fmt(sc(bar) + half, bDp)}, so use ${fmt(used, bDp)}`;
+
+  if (type === 'bt') {
+    const za = zOf(lowB), zb = zOf(upB);
+    const A = tableCdf(za.z), B = tableCdf(zb.z);
+    // a difference is only as precise as its less precise term, so 4 dp when a 4 dp value is involved
+    dp = Math.min(A.dp, B.dp);
+    approx = rnd(B.val - A.val, dp);
+    add(`≈ Pr((${bStr(lowB)} − ${Ms})/${SDs} ≤ Z ≤ (${bStr(upB)} − ${Ms})/${SDs})`, modelNote + (cc ? ccNote(a, lowB) + ' at the bottom and ' + fmt(upB, bDp) + ' at the top' : ''));
+    add(`= Pr(${fx(za.raw, 4)} ≤ Z ≤ ${fx(zb.raw, 4)})`, '');
+    add(`≈ Pr(${fx(za.z, 2)} ≤ Z ≤ ${fx(zb.z, 2)})`, 'round z to 2 dp to use the Normal table');
+    add(`= Φ(${fx(zb.z, 2)}) − Φ(${fx(za.z, 2)})`, 'difference of two cumulative probabilities');
+    const term = T => T.neg ? `[1 − Φ(${fx(T.az, 2)})]` : `Φ(${fx(T.az, 2)})`;
+    if (A.neg || B.neg) add(`= ${term(B)} − ${term(A)}`, 'symmetry: Φ(−z) = 1 − Φ(z)');
+    const num = T => T.neg ? `[1 − ${phiTab(T.az).toFixed(T.dp)}]` : phiTab(T.az).toFixed(T.dp);
+    add(`= ${num(B)} − ${num(A)}`, 'Normal table');
+    if (A.neg || B.neg) add(`= ${B.val.toFixed(B.dp)} − ${A.val.toFixed(A.dp)}`, '');
+    add(`= ${approx.toFixed(dp)}`, '', true);
+  } else {
+    const sign = T === 'le' ? '≤' : '≥';
+    if (type === 'lt' || type === 'gt') add(`= Pr(${V()} ${sign} ${sv(K)})`,
+      isP ? `p̂ only takes the values r/${n}, so ${SYM[type] === '<' ? 'below' : 'above'} ${sv(k)} means ${SYM[type] === '<' ? 'at most' : 'at least'} ${sv(K)}`
+          : `Y counts whole numbers, so ${type === 'lt' ? 'fewer than' : 'more than'} ${k} means ${type === 'lt' ? 'at most' : 'at least'} ${K}`);
+    const zz = zOf(oneB);
+    const az = Math.abs(zz.z);
+    const phiVal = phiTab(az);
+    dp = tabDp(az);
+    const usesOneMinus = T === 'le' ? zz.z < 0 : zz.z >= 0;
+    approx = usesOneMinus ? 1 - phiVal : phiVal;
+    const phiExpr = `Φ(${fx(az, 2)})`;
+    add(`≈ Pr(Z ${sign} (${bStr(oneB)} − ${Ms})/${SDs})`, modelNote + (cc ? ccNote(K, oneB) + ' to include it' : ''));
+    add(`= Pr(Z ${sign} ${fx(zz.raw, 4)})`, '');
+    add(`≈ Pr(Z ${sign} ${fx(zz.z, 2)})`, 'round z to 2 dp to use the Normal table');
+    if (T === 'le') add(zz.z >= 0 ? `= ${phiExpr}` : `= 1 − ${phiExpr}`, zz.z >= 0 ? 'Φ(z) = Pr(Z ≤ z)' : 'symmetry: Pr(Z ≤ −z) = 1 − Φ(z)');
+    else add(zz.z >= 0 ? `= 1 − ${phiExpr}` : `= ${phiExpr}`, zz.z >= 0 ? 'complement rule: Pr(Z ≥ z) = 1 − Φ(z)' : 'symmetry: Pr(Z ≥ −z) = Φ(z)');
+    if (usesOneMinus) add(`= 1 − ${phiVal.toFixed(dp)}`, `${phiExpr} from the Normal table`);
+    add(`= ${approx.toFixed(dp)}`, usesOneMinus ? '' : `${phiExpr} from the Normal table`, true);
+  }
+
+  document.getElementById('cExact').textContent = exact.toFixed(4);
+  document.getElementById('cApprox').textContent = approx.toFixed(dp);
+  const diff = approx - exact;
+  document.getElementById('cDiff').textContent = (diff >= 0 ? '+' : '−') + Math.abs(diff).toFixed(4);
+
+  let msg;
+  if (!ok1 || !ok2) {
+    msg = '<strong>n is not large enough here</strong>, so the Normal curve does not match the bars well (look at the skew), and the approximation can be poor. Use the Binomial formula or the tables instead.';
+  } else if (Math.abs(diff) < 0.01) {
+    msg = `The rule np ≥ 5 and n(1 − p) ≥ 5 holds, and the approximation is within 0.01 of the exact answer${cc ? '' : '. Try the continuity correction to see whether it comes closer still'}.`;
+  } else {
+    msg = `The rule holds, but the approximation is still off by ${Math.abs(diff).toFixed(4)}. It is an <strong>approximation</strong>, not the exact answer. ` +
+      (cc ? 'With n this size the curve still does not fit the bars perfectly.' : 'Part of the gap comes from treating whole-number bars as a smooth curve; try the continuity correction to see how much it helps.');
+  }
+  document.getElementById('callout').innerHTML = msg;
+
+  // ---- steps ----
+  const qStr = questionStr(true);
+  document.getElementById('question').innerHTML = `${qStr} <span>where ${isP ? `p̂ = Y/${n} and ` : ''}Y ~ Binomial(${n}, ${p.toFixed(2)})</span>`;
+  const grid = rs => '<div class="deriv"><div class="d-grid">' + rs.map(d =>
+    `<span class="d-l">${d.l || ''}</span><span class="d-r${d.res ? ' res' : ''}">${d.r}</span><span class="d-w">${d.w || ''}</span>`).join('') + '</div></div>';
+  const steps = [];
+  if (isP) {
+    steps.push({ t: 'Mean and variance of p̂', b: grid([
+      { l: 'E(p̂)', r: `= p = ${p.toFixed(2)}`, w: 'p̂ is centred on p' },
+      { l: 'Var(p̂)', r: `= p(1 − p)/n = ${p.toFixed(2)} × ${(1 - p).toFixed(2)}/${n} = ${fmt(VAR, 5)}`, w: 'Var(Y)/n², since p̂ = Y/n' },
+      { l: 'SE(p̂)', r: `= √${fmt(VAR, 5)} = ${fmt(SD, 4)}`, w: 'the standard error is the square root of the variance' }
+    ]) + `<p style="margin:10px 0 0">So <strong>p̂ ≈ N(${Ms}, ${VARs})</strong>.</p>` });
+  } else {
+    steps.push({ t: 'Mean and variance of the Binomial', b: grid([
+      { l: 'μ', r: `= np = ${n} × ${p.toFixed(2)} = ${fmt(mu, 4)}`, w: 'mean of a Binomial' },
+      { l: 'σ²', r: `= np(1 − p) = ${n} × ${p.toFixed(2)} × ${(1 - p).toFixed(2)} = ${fmt(v, 4)}`, w: 'variance of a Binomial' },
+      { l: 'σ', r: `= √${fmt(v, 4)} = ${fmt(sd, 4)}`, w: 'standard deviation is the square root of the variance' }
+    ]) + `<p style="margin:10px 0 0">So <strong>Y ≈ N(${fmt(mu, 4)}, ${fmt(v, 4)})</strong>.</p>` });
+  }
+  steps.push({ t: 'Check that n is large enough', b: `np = ${fmt(mu, 2)} and n(1 − p) = ${fmt(nq, 2)}. ${ok1 && ok2 ? 'Both are at least 5, so the approximation is reasonable.' : 'At least one is below 5, so the approximation may be poor.'}` });
+  steps.push({ t: `Standardise and use the Normal table${cc ? ', with the continuity correction' : ''}`, b: grid(rows) });
+
+  const cmp = [];
+  if (isP) cmp.push({ l: qStr, r: `= ${questionStr(false)}`, w: `p̂ = Y/n, so multiply through by n = ${n}` });
+  cmp.push({ l: isP ? '' : qStr, r: `= ${exact.toFixed(4)}`, w: `exact, summing Binomial(${n}, ${p.toFixed(2)}) probabilities` });
+  cmp.push({ l: 'difference', r: `= ${approx.toFixed(dp)} − ${exact.toFixed(4)} = ${diff >= 0 ? '' : '−'}${Math.abs(diff).toFixed(4)}`, w: 'approximate minus exact' });
+  steps.push({ t: 'Compare with the exact answer', b: grid(cmp) });
+  document.getElementById('steps').innerHTML = steps.map((s, i) =>
+    `<div class="step"><span class="step-num">${i + 1}</span><div><p class="step-title">${s.t}</p><div class="step-body">${s.b}</div></div></div>`).join('');
+
+  // the chart is drawn on the count scale; on the p̂ scale only the axis labels change
+  const toCount = x => isP ? x * n : x;
+  renderChart(mu, v, sd, type === 'bt' ? [toCount(lowB), toCount(upB)] : [toCount(oneB)]);
+}
+
+// ---- chart ----
+function renderChart(mu, v, sd, bounds) {
+  const p = P();
+  const isP = scale === 'prop';
+  const small = window.innerWidth < 560;
+  // on a phone the drawing is narrower, so it is scaled down less and the text stays readable
+  const FS = small ? 15 : 12;
+  document.getElementById('chartTitle').textContent = isP
+    ? `p̂ = Y/${n} with Y ~ Binomial(${n}, ${p.toFixed(2)}), and N(${fmt(p, 4)}, ${fmt(p * (1 - p) / n, 5)})`
+    : `Binomial(${n}, ${p.toFixed(2)}) and N(${fmt(mu, 2)}, ${fmt(v, 2)})`;
+  document.getElementById('legend').innerHTML =
+    '<span><span class="swatch" style="background:var(--steel)"></span>bars in the event (exact probability)</span>' +
+    '<span><span class="swatch" style="background:var(--mute-2)"></span>other bars</span>' +
+    `<span><span class="swatch line" style="background:var(--amber)"></span>Normal curve ${isP ? 'N(p, p(1 − p)/n)' : 'N(np, np(1 − p))'}</span>` +
+    '<span><span class="swatch" style="background:var(--amber);opacity:.3"></span>Normal area (approximation)</span>';
+  const svg = document.getElementById('chart');
+  const W = small ? 400 : 640, H = small ? 300 : 290;
+  const ML = small ? 50 : 58, MR = 16, MT = FS + 12, MB = FS * 2 + 26;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.innerHTML = '';
+  const plotW = W - ML - MR, plotH = H - MT - MB, base = MT + plotH;
+  const lo = Math.max(0, Math.floor(mu - 4.5 * sd) - 1), hi = Math.min(n, Math.ceil(mu + 4.5 * sd) + 1);
+  const xmin = lo - 0.5, xmax = hi + 0.5;
+  const x = val => ML + ((val - xmin) / (xmax - xmin)) * plotW;
+  const bars = [];
+  for (let i = lo; i <= hi; i++) bars.push(pmf(i, n, p));
+  const dens = t => Math.exp(-((t - mu) ** 2) / (2 * v)) / (sd * Math.sqrt(2 * Math.PI));
+  // round tick steps instead of quarters of the tallest bar
+  const top = Math.max(...bars, dens(mu)) * 1.12;
+  const tickStep = [0.01, 0.02, 0.05, 0.1, 0.2, 0.25, 0.5].find(st => top / st <= 5) || 0.5;
+  const yMax = Math.ceil(top / tickStep) * tickStep;
+  const y = val => MT + plotH - (val / yMax) * plotH;
+
+  for (let val = 0; val <= yMax + 1e-9; val += tickStep) {
+    svg.appendChild(el('line', { x1: ML, x2: W - MR, y1: y(val), y2: y(val), stroke: 'var(--line-2)', 'stroke-width': 1 }));
+    svg.appendChild(el('text', { x: ML - 10, y: y(val) + FS * 0.35, 'text-anchor': 'end', 'font-size': FS, 'font-family': MONO, fill: 'var(--mute)' }, val.toFixed(2)));
+  }
+  // Normal area for the approximation, clipped to the plotted range
+  const [aLo, aHi] = type === 'bt' ? [Math.max(xmin, bounds[0]), Math.min(xmax, bounds[1])]
+    : effT() === 'le' ? [xmin, Math.min(xmax, bounds[0])] : [Math.max(xmin, bounds[0]), xmax];
+  if (aHi > aLo) {
+    const pts = [`${x(aLo)},${base}`];
+    for (let i = 0; i <= 160; i++) { const t = aLo + (i / 160) * (aHi - aLo); pts.push(`${x(t)},${y(dens(t))}`); }
+    pts.push(`${x(aHi)},${base}`);
+    svg.appendChild(el('polygon', { points: pts.join(' '), fill: 'var(--amber)', 'fill-opacity': 0.26 }));
+  }
+  const gap = (hi - lo) > 40 ? 0.4 : 1.2;
+  bars.forEach((bv, j) => {
+    const i = lo + j;
+    const on = inEvent(i);
+    svg.appendChild(el('rect', { x: x(i - 0.5) + gap / 2, y: y(bv), width: Math.max(x(i + 0.5) - x(i - 0.5) - gap, 0.5), height: Math.max(base - y(bv), 0), fill: on ? 'var(--steel)' : 'var(--mute-2)', 'fill-opacity': on ? 0.8 : 0.7 }));
+  });
+  let curve = '';
+  for (let i = 0; i <= 300; i++) { const t = xmin + (i / 300) * (xmax - xmin); curve += `${x(t)},${y(dens(t))} `; }
+  svg.appendChild(el('polyline', { points: curve.trim(), fill: 'none', stroke: 'var(--amber)', 'stroke-width': 2.4 }));
+  // the boundaries used in the approximation, only when they fall inside the plotted range
+  const shown = bounds.filter(bd => bd >= xmin && bd <= xmax).sort((u, w) => u - w);
+  let firstAnchor = null;
+  shown.forEach((bd, i) => {
+    svg.appendChild(el('line', { x1: x(bd), x2: x(bd), y1: base, y2: MT - 2, stroke: 'var(--amber)', 'stroke-width': 1.5, 'stroke-dasharray': '4,3' }));
+    const lab = isP ? fmt(bd / n, 4) : fmt(bd, 1);
+    const w = lab.length * FS * 0.62;
+    let anchor = shown.length === 2 && i === 0 ? 'end' : 'start';
+    let tx = x(bd) + (anchor === 'end' ? -6 : 6);
+    if (anchor === 'start' && tx + w > W - 2) { anchor = 'end'; tx = x(bd) - 6; }
+    if (anchor === 'end' && tx - w < ML) { anchor = 'start'; tx = x(bd) + 6; }
+    // two close boundaries near an edge both turn the same way, so the second label drops a row
+    const ty = (i === 1 && anchor === firstAnchor) ? MT + FS * 1.7 : MT + FS * 0.2;
+    if (i === 0) firstAnchor = anchor;
+    svg.appendChild(el('text', { x: tx, y: ty, 'text-anchor': anchor, 'font-size': FS, 'font-family': MONO, 'font-weight': 500, fill: 'var(--amber)' }, lab));
+  });
+  svg.appendChild(el('line', { x1: ML, x2: W - MR, y1: base, y2: base, stroke: 'var(--haze-dim)', 'stroke-width': 1.2 }));
+  // ticks: whole counts, or round proportions on the p̂ scale, spaced so the labels never touch
+  const pxPer = plotW / (xmax - xmin);
+  if (isP) {
+    const stepP = [0.01, 0.02, 0.05, 0.1, 0.2, 0.25, 0.5].find(s => s * n * pxPer >= FS * 3.4) || 0.5;
+    for (let t = Math.ceil((lo / n) / stepP - 1e-9) * stepP; t <= hi / n + 1e-9; t += stepP) {
+      const c = t * n;
+      svg.appendChild(el('line', { x1: x(c), x2: x(c), y1: base, y2: base + 5, stroke: 'var(--haze-dim)', 'stroke-width': 1 }));
+      svg.appendChild(el('text', { x: x(c), y: base + FS + 8, 'text-anchor': 'middle', 'font-size': FS, 'font-family': MONO, fill: 'var(--haze-dim)' }, fmt(t, 2)));
+    }
+  } else {
+    const step = [1, 2, 5, 10, 20, 25, 50].find(s => s * pxPer >= FS * 2.6) || 50;
+    for (let t = Math.ceil(lo / step) * step; t <= hi; t += step) {
+      svg.appendChild(el('line', { x1: x(t), x2: x(t), y1: base, y2: base + 5, stroke: 'var(--haze-dim)', 'stroke-width': 1 }));
+      svg.appendChild(el('text', { x: x(t), y: base + FS + 8, 'text-anchor': 'middle', 'font-size': FS, 'font-family': MONO, fill: 'var(--haze-dim)' }, t));
+    }
+  }
+  svg.appendChild(el('text', { x: (ML + W - MR) / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': FS - 1, 'letter-spacing': '.04em', 'font-family': MONO, fill: 'var(--mute)' }, isP ? 'p̂ = proportion of successes' : 'y = number of successes'));
+}
+
+// ---- wiring ----
+const presetWrap = document.getElementById('presets');
+PRESETS.forEach(ps => {
+  const btn = document.createElement('button');
+  btn.className = 'pill case'; btn.type = 'button'; btn.textContent = ps.label;
+  btn.addEventListener('click', () => {
+    n = ps.n; pc = ps.pc; scale = ps.scale; type = ps.type; cc = false;
+    if (ps.type === 'bt') { a = ps.a; b = ps.b; } else { k = ps.k; }
+    render();
+  });
+  presetWrap.appendChild(btn);
+});
+// values are held as counts, so switching scale converts what was entered (e.g. 9 becomes 0.6 when n = 15)
+document.querySelectorAll('#scaleSeg .pill').forEach(btn => btn.addEventListener('click', () => { scale = btn.dataset.scale; render(); }));
+document.getElementById('nSlider').addEventListener('input', e => {
+  const old = n; n = parseInt(e.target.value, 10);
+  // on the p̂ scale, keep the proportions roughly where they were when n changes
+  if (scale === 'prop' && old !== n) { k = Math.round(k / old * n); a = Math.round(a / old * n); b = Math.round(b / old * n); }
+  render();
+});
+document.getElementById('pSlider').addEventListener('input', e => { pc = Math.round(parseFloat(e.target.value) * 100); render(); });
+document.querySelectorAll('#ccSeg .pill').forEach(btn => btn.addEventListener('click', () => { cc = btn.dataset.cc === '1'; render(); }));
+
+let resizeTimer;
+window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(render, 150); });
+
+render();
+</script>
+
+</body>
+</html>

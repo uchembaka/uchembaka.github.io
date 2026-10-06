@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>(function(){try{var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark"){t=(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+<title>Sampling Distribution of a Proportion — Uche Mbaka</title>
+<meta name="description" content="A companion tool for STAT 20070: draw repeated random samples and watch the sample proportion vary around the fixed population proportion, building its sampling distribution.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#080A0F;
+    --ink-rgb:8,10,15;
+    --ink-2:#0D1017;
+    --haze:#E9E6DF;
+    --haze-dim:#B9B6AE;
+    --mute:#6A7180;
+    --mute-2:#454B58;
+    --line:rgba(233,230,223,.09);
+    --line-2:rgba(233,230,223,.16);
+    --amber:#CFA15F;
+    --amber-soft:rgba(207,161,95,.18);
+    --steel:#5C7585;
+    --steel-text:#8FA6B5;
+    --steel-soft:rgba(92,117,133,.26);
+    --dot:#2A2F39;
+    --on-accent:#080A0F;
+  }
+  [data-theme="light"]{
+    --ink:#F3F0E9;
+    --ink-rgb:243,240,233;
+    --ink-2:#FBFAF5;
+    --haze:#1B1C20;
+    --haze-dim:#4A4C54;
+    --mute:#6E727D;
+    --mute-2:#9A9DA6;
+    --line:rgba(20,21,26,.10);
+    --line-2:rgba(20,21,26,.18);
+    --amber:#9E6B22;
+    --amber-soft:rgba(158,107,34,.13);
+    --steel:#4A6377;
+    --steel-text:#4A6377;
+    --steel-soft:rgba(74,99,119,.14);
+    --dot:#D9D6CE;
+    --on-accent:#FBFAF5;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    min-height:100vh;
+    background:var(--ink);
+    color:var(--haze);
+    font-family:"Newsreader",Georgia,serif;
+    font-weight:300;
+    font-size:18px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    display:flex;
+    justify-content:center;
+    padding:44px 22px 72px;
+    transition:background .35s ease, color .35s ease;
+  }
+  ::selection{background:rgba(207,161,95,.22);color:var(--haze)}
+  a{color:inherit;text-decoration:none}
+
+  .stage{width:100%;max-width:800px}
+
+  .mono{
+    font-family:"JetBrains Mono",ui-monospace,monospace;
+    font-weight:400;font-size:11px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--mute);
+  }
+
+  /* ---------- top row ---------- */
+  .toprow{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:34px}
+  .back{transition:color .25s}
+  .back:hover{color:var(--amber)}
+
+  .theme-toggle{display:inline-flex;align-items:center;gap:10px;background:none;border:0;padding:0;cursor:pointer;font:inherit;line-height:1}
+  .theme-toggle .tmode{color:var(--mute);transition:color .25s}
+  .theme-toggle:hover .tmode{color:var(--amber)}
+  .theme-toggle .track{width:40px;height:21px;border-radius:999px;border:1px solid var(--line-2);position:relative;transition:border-color .25s;flex:0 0 auto}
+  .theme-toggle:hover .track{border-color:var(--amber)}
+  .theme-toggle .knob{position:absolute;top:50%;left:3px;transform:translateY(-50%);width:13px;height:13px;border-radius:50%;background:var(--mute);transition:left .28s cubic-bezier(.4,0,.2,1),background .25s}
+  [data-theme="light"] .theme-toggle .knob{left:22px;background:var(--amber)}
+  .theme-toggle:focus-visible{outline:none}
+  .theme-toggle:focus-visible .track{outline:2px solid var(--amber);outline-offset:3px}
+
+  /* ---------- header ---------- */
+  header{margin-bottom:28px}
+  .eyebrow{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--mute-2);margin:0 0 16px;
+  }
+  h1{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;
+    font-size:clamp(30px,5.4vw,44px);line-height:1.02;letter-spacing:-.025em;
+    color:var(--haze);margin:0 0 16px;
+  }
+  .sub{font-size:17px;line-height:1.6;color:var(--haze-dim);font-weight:300;margin:0;max-width:60ch}
+  .sub b{color:var(--amber);font-weight:400}
+  .sub i{color:var(--steel-text);font-style:normal;font-weight:400}
+
+  /* ---------- cards ---------- */
+  .card{
+    background:linear-gradient(160deg, var(--ink-2), rgba(var(--ink-rgb),0));
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:26px 28px 24px;
+    margin-bottom:18px;
+  }
+  @media (max-width:480px){.card{padding:22px 18px 20px}}
+
+  .card-title{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;
+    font-size:21px;letter-spacing:-.02em;color:var(--haze);margin:0 0 18px;
+  }
+  .kicker{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--mute);margin:0 0 12px;
+  }
+  /* no uppercase: these labels name p, p̂, n and r */
+  .label{font-family:"JetBrains Mono",monospace;font-size:12.5px;letter-spacing:.02em;color:var(--mute);margin:0 0 12px}
+  .note{font-size:16px;line-height:1.58;color:var(--haze-dim);margin:14px 0 0}
+  .note strong{color:var(--haze);font-weight:400}
+  /* the serif body font sets the hat of p̂ loose, so p̂ in running text uses the mono face */
+  .ph{font-family:"JetBrains Mono",monospace;font-style:normal;font-size:.88em;letter-spacing:0}
+
+  /* ---------- controls ---------- */
+  .controls{display:grid;grid-template-columns:auto 1fr;gap:22px 36px;align-items:start}
+  @media (max-width:600px){.controls{grid-template-columns:1fr}}
+  .stepper{display:flex;align-items:center;gap:12px}
+  .step-btn{
+    width:34px;height:34px;border-radius:50%;
+    border:1px solid var(--line-2);background:none;color:var(--haze);
+    font-family:"JetBrains Mono",monospace;font-size:16px;line-height:1;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;transition:.25s;
+  }
+  .step-btn:hover:not(:disabled){border-color:var(--amber);color:var(--amber)}
+  .step-btn:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+  .step-btn:disabled{opacity:.3;cursor:default}
+  .step-value{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;font-size:24px;
+    letter-spacing:-.02em;color:var(--amber);min-width:56px;text-align:center;
+  }
+
+  .presets{display:flex;gap:8px;flex-wrap:wrap}
+  .pill{
+    background:none;cursor:pointer;
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--haze);
+    border:1px solid var(--line-2);border-radius:999px;padding:10px 16px;
+    transition:.25s;
+  }
+  .pill:hover{border-color:var(--amber);color:var(--amber)}
+  .pill:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+  .pill.active,.pill.primary{background:var(--amber);border-color:var(--amber);color:var(--on-accent)}
+  .pill.primary:hover{color:var(--on-accent);filter:brightness(1.08)}
+  .seg{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;max-width:360px}
+  .seg .pill{text-transform:none;letter-spacing:.02em;font-size:14px;padding:10px 6px}
+  .draw-row{margin-top:24px;padding-top:22px;border-top:1px solid var(--line)}
+
+  /* ---------- population and sample ---------- */
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:30px}
+  @media (max-width:600px){.two{grid-template-columns:1fr;gap:26px}}
+  .people{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;max-width:300px}
+  .people.wide{grid-template-columns:repeat(20,1fr);gap:3px}
+  .person{aspect-ratio:1;border-radius:50%;background:var(--dot)}
+  .person.a{background:var(--amber)}
+  .people.sample .person.a{background:var(--steel-text)}
+  .param{font-family:"JetBrains Mono",monospace;font-size:14px;color:var(--haze-dim);margin:14px 0 0}
+  .param strong{font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;font-size:22px;letter-spacing:-.01em}
+  .param.fixed strong{color:var(--amber)}
+  .param.varies strong{color:var(--steel-text)}
+  .empty{font-size:16px;color:var(--haze-dim);font-style:italic;padding:18px 0;margin:0}
+  .history{font-family:"JetBrains Mono",monospace;font-size:12.5px;color:var(--mute);margin-top:10px;line-height:1.7;overflow-wrap:anywhere}
+
+  /* ---------- chart ---------- */
+  svg.chart{width:100%;height:auto;display:block;overflow:visible}
+  .legend{
+    display:flex;gap:10px 22px;flex-wrap:wrap;margin-top:16px;
+    font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.02em;color:var(--mute);
+  }
+  .legend span{display:inline-flex;align-items:center;gap:8px}
+  .swatch{width:14px;height:12px;display:inline-block;border-radius:3px;flex:0 0 auto}
+  .swatch.dash{background:none;border:1.5px dashed var(--haze-dim)}
+  .swatch.line{width:3px;height:14px;border-radius:0}
+
+  /* ---------- readout ---------- */
+  .readout{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  @media (max-width:600px){.readout{grid-template-columns:1fr}}
+  .ro-box{padding:14px 16px;border:1px solid var(--line-2);border-radius:12px}
+  .ro-label{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.02em;color:var(--mute);margin:0 0 6px}
+  .ro-value{font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;font-size:22px;letter-spacing:-.01em;color:var(--steel-text);margin:0}
+  .ro-sub{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--mute);margin:6px 0 0}
+  .callout{margin:18px 0 0;padding:10px 0 10px 16px;border-left:2px solid var(--amber);font-size:16.5px;line-height:1.62;color:var(--haze-dim)}
+  .callout strong{color:var(--amber);font-weight:400}
+
+  /* ---------- derivations (same layout as the other worked examples) ---------- */
+  .d-title{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;font-size:17px;
+    letter-spacing:-.01em;color:var(--haze);margin:24px 0 10px;
+  }
+  .card-title + .d-title{margin-top:0}
+  .deriv{border-left:2px solid var(--amber);padding:6px 0 6px 20px}
+  .d-grid{
+    display:grid;grid-template-columns:max-content minmax(0,1fr);
+    column-gap:10px;row-gap:6px;align-items:baseline;
+  }
+  .d-l,.d-r{font-family:"JetBrains Mono",monospace;font-size:13.5px;letter-spacing:.01em;color:var(--haze)}
+  .d-l{text-align:right;white-space:nowrap}
+  .d-r{overflow-wrap:anywhere}
+  .d-r.res{color:var(--amber);font-weight:500;font-size:18px}
+  .d-w{grid-column:2;margin:-2px 0 6px;font-size:15px;line-height:1.4;font-style:italic;color:var(--haze-dim)}
+  .d-w:empty{display:none}
+  @media (max-width:520px){
+    .d-grid{grid-template-columns:minmax(0,1fr)}
+    .d-l{text-align:left;white-space:normal}
+    .d-l:empty{display:none}
+    .d-w{grid-column:1}
+  }
+
+  /* ---------- table ---------- */
+  .table-wrap{overflow-x:auto;border-radius:10px}
+  table.data{border-collapse:separate;border-spacing:0;font-family:"JetBrains Mono",monospace;font-size:13px}
+  table.data th,table.data td{padding:8px 10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap;color:var(--haze-dim)}
+  table.data th{color:var(--mute);font-weight:400;border-bottom:1px solid var(--line-2)}
+  /* the row labels stay put while the table scrolls sideways on a phone */
+  table.data .rl{position:sticky;left:0;z-index:1;text-align:left;color:var(--mute);background:var(--ink-2);border-right:1px solid var(--line-2)}
+  table.data tr.th-row td{color:var(--haze)}
+  table.data tr.obs-row td{color:var(--steel-text)}
+  table.data tr.obs-row td.rl{color:var(--mute)}
+
+  @media (prefers-reduced-motion:reduce){*{transition:none !important}}
+</style>
+</head>
+<body>
+
+<div class="stage">
+
+  <div class="toprow">
+    <a class="back mono" href="../STAT20070.html">← STAT 20070</a>
+    <button class="theme-toggle" id="themeToggle" aria-label="Switch between light and dark theme" aria-pressed="false"><span class="tmode mono" id="tmode">Dark</span><span class="track"><span class="knob"></span></span></button>
+  </div>
+
+  <header>
+    <p class="eyebrow">Section 2 · Lecture 09 · Sampling Distribution</p>
+    <h1>Sampling Distribution of a Proportion</h1>
+    <p class="sub">In the population, the proportion of people with blood type A is a <b>fixed</b> number, the parameter p. Each random sample gives a sample proportion <span class="ph">p̂</span>, a statistic that <i>changes from sample to sample</i>. Collect many samples to build the sampling distribution of <span class="ph">p̂</span>.</p>
+  </header>
+
+  <div class="card">
+    <div class="controls">
+      <div>
+        <p class="label">Population proportion, p (fixed)</p>
+        <div class="stepper"><button class="step-btn" id="pMinus" type="button" aria-label="Decrease p">&minus;</button><span class="step-value" id="pValue"></span><button class="step-btn" id="pPlus" type="button" aria-label="Increase p">+</button></div>
+      </div>
+      <div>
+        <p class="label">Sample size, n</p>
+        <div class="seg" id="nSeg">
+          <button class="pill active" data-n="5" type="button">5</button>
+          <button class="pill" data-n="10" type="button">10</button>
+          <button class="pill" data-n="25" type="button">25</button>
+          <button class="pill" data-n="100" type="button">100</button>
+        </div>
+      </div>
+    </div>
+    <div class="draw-row">
+      <p class="kicker">Take samples</p>
+      <div class="presets">
+        <button class="pill primary" id="draw1" type="button">Draw 1 sample</button>
+        <button class="pill" id="draw100" type="button">Draw 100 samples</button>
+        <button class="pill" id="draw1000" type="button">Draw 1,000 samples</button>
+        <button class="pill" id="resetBtn" type="button">Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="two">
+      <div>
+        <p class="card-title">The population</p>
+        <div class="people" id="popGrid"></div>
+        <p class="param fixed">Parameter: p = <strong id="pShow"></strong></p>
+        <p class="note">Each dot stands for 1% of a large population. <strong>This never changes.</strong></p>
+      </div>
+      <div>
+        <p class="card-title">The latest sample</p>
+        <div id="sampleArea"></div>
+        <p class="param varies" id="phatLine"></p>
+        <div class="history" id="history"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="card-title">The sampling distribution of p̂</p>
+    <svg id="chart" class="chart" role="img" aria-label="Distribution of the sample proportions"></svg>
+    <div class="legend">
+      <span><span class="swatch" style="background:var(--steel)"></span>observed proportion of samples</span>
+      <span><span class="swatch dash"></span>theory: Pr(p̂ = r/n) = Pr(Y = r)</span>
+      <span><span class="swatch line" style="background:var(--amber)"></span>true p</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="readout">
+      <div class="ro-box"><p class="ro-label">Samples drawn</p><p class="ro-value" id="sTotal">0</p></div>
+      <div class="ro-box"><p class="ro-label">Average of all the p̂ values</p><p class="ro-value" id="sMean">—</p><p class="ro-sub" id="sMeanSub"></p></div>
+      <div class="ro-box"><p class="ro-label">Samples with p̂ within ±0.10 of p</p><p class="ro-value" id="sWithin">—</p><p class="ro-sub" id="sWithinSub"></p></div>
+    </div>
+    <p class="callout" id="insight"></p>
+  </div>
+
+  <div class="card">
+    <p class="card-title">Working it out</p>
+    <p class="d-title" id="t1"></p>
+    <div class="deriv"><div class="d-grid" id="deriv1"></div></div>
+    <p class="note" id="derivNote"></p>
+    <p class="d-title">Where the distribution is centred</p>
+    <div class="deriv"><div class="d-grid" id="deriv2"></div></div>
+  </div>
+
+  <div class="card">
+    <p class="card-title">The distribution of p̂ in a table</p>
+    <div class="table-wrap" id="distTable"></div>
+  </div>
+</div>
+
+<script>
+/* ---------- theme toggle (shares the site's stored preference) ---------- */
+(function(){
+  var root = document.documentElement;
+  var btn  = document.getElementById('themeToggle');
+  function current(){ return root.getAttribute('data-theme') === 'light' ? 'light' : 'dark'; }
+  function sync(){
+    var t = current();
+    btn.setAttribute('aria-pressed', t === 'light' ? 'true' : 'false');
+    document.getElementById('tmode').textContent = t === 'light' ? 'Light' : 'Dark';
+  }
+  sync();
+  btn.addEventListener('click', function(){
+    var t = current() === 'light' ? 'dark' : 'light';
+    root.setAttribute('data-theme', t);
+    try{ localStorage.setItem('theme', t); }catch(e){}
+    sync();
+  });
+})();
+
+const NS = 'http://www.w3.org/2000/svg';
+const MONO = "'JetBrains Mono', monospace";
+function el(tag, attrs, text) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) if (attrs[k] !== undefined && attrs[k] !== null) e.setAttribute(k, attrs[k]);
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+function choose(n, k) { let r = 1; for (let i = 0; i < k; i++) r = r * (n - i) / (i + 1); return r; }
+function pmf(r, n, p) { return choose(n, r) * Math.pow(p, r) * Math.pow(1 - p, n - r); }
+function cdf(r, n, p) { if (r < 0) return 0; let s = 0; for (let k = 0; k <= Math.min(r, n); k++) s += pmf(k, n, p); return s; }
+// round half up to 4 dp; the epsilon stops values such as 0.36015 being stored just below the half
+function r4(v) { return (Math.round(v * 10000 + 1e-7) / 10000).toFixed(4); }
+function f2(v) { return v.toFixed(2); }
+// wrap p̂ for running text set in the serif face
+function ph(t) { return t.replace(/p̂/g, '<span class="ph">p̂</span>'); }
+
+let pc = 30, n = 5;          // p in hundredths, so the steps stay exact
+let counts, total, last, recent;
+const P = () => pc / 100;
+const EPS = 1e-9;
+
+function reset() {
+  counts = new Array(n + 1).fill(0);
+  total = 0; last = null; recent = [];
+}
+
+// independent draws from a large population, so the count of type A is Binomial(n, p)
+function drawSamples(m) {
+  const p = P();
+  for (let s = 0; s < m; s++) {
+    const sample = [];
+    let r = 0;
+    for (let i = 0; i < n; i++) { const a = Math.random() < p; sample.push(a); if (a) r++; }
+    counts[r]++; total++;
+    last = sample;
+    recent.push(r / n);
+  }
+  if (recent.length > 12) recent = recent.slice(-12);
+  render();
+}
+
+// fixed population picture: 100 dots, 100p of them type A, in a fixed scattered order
+function popOrder() {
+  const idx = [...Array(100).keys()];
+  let seed = 12345;
+  for (let i = 99; i > 0; i--) { seed = (seed * 16807) % 2147483647; const j = seed % (i + 1); [idx[i], idx[j]] = [idx[j], idx[i]]; }
+  return idx;
+}
+const ORDER = popOrder();
+
+// the whole-number range of Y with p̂ within ±0.10 of p
+function withinRange() {
+  const p = P();
+  const lo = Math.max(0, Math.ceil(n * (p - 0.1) - EPS));
+  const hi = Math.min(n, Math.floor(n * (p + 0.1) + EPS));
+  return { lo, hi };
+}
+
+function renderControls() {
+  document.getElementById('pValue').textContent = f2(P());
+  document.getElementById('pMinus').disabled = pc <= 5;
+  document.getElementById('pPlus').disabled = pc >= 95;
+  document.querySelectorAll('#nSeg .pill').forEach(b => {
+    const on = parseInt(b.dataset.n, 10) === n;
+    b.classList.toggle('active', on); b.setAttribute('aria-pressed', on);
+  });
+}
+
+function renderPopulation() {
+  const isA = new Array(100).fill(false);
+  for (let i = 0; i < pc; i++) isA[ORDER[i]] = true;
+  document.getElementById('popGrid').innerHTML = isA.map(a => `<div class="person ${a ? 'a' : ''}"></div>`).join('');
+  document.getElementById('pShow').textContent = f2(P());
+}
+
+function renderSample() {
+  const area = document.getElementById('sampleArea');
+  if (!last) {
+    area.innerHTML = `<p class="empty">Press “Draw 1 sample” to take a random sample of size ${n}.</p>`;
+    document.getElementById('phatLine').innerHTML = '';
+    document.getElementById('history').textContent = '';
+    return;
+  }
+  area.innerHTML = `<div class="people sample ${n === 100 ? 'wide' : ''}">${last.map(a => `<div class="person ${a ? 'a' : ''}"></div>`).join('')}</div>`;
+  const r = last.filter(Boolean).length;
+  document.getElementById('phatLine').innerHTML = `Statistic: p̂ = ${r}/${n} = <strong>${f2(r / n)}</strong>`;
+  document.getElementById('history').textContent = 'Recent p̂ values: ' + recent.map(f2).join(', ');
+}
+
+function renderChart() {
+  const p = P();
+  const small = window.innerWidth < 560;
+  const FS = small ? 18 : 12;
+  const svg = document.getElementById('chart');
+  const W = 640, H = small ? 340 : 280;
+  const ML = small ? 74 : 52, MR = 16, MT = FS + 16, MB = FS * 2 + 26;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.innerHTML = '';
+  const plotW = W - ML - MR, plotH = H - MT - MB, base = MT + plotH;
+  const theory = [];
+  for (let r = 0; r <= n; r++) theory.push(pmf(r, n, p));
+  const obs = counts.map(c => total ? c / total : 0);
+  // round tick steps instead of quarters of the tallest bar
+  const top = Math.max(...theory, ...obs) * 1.12;
+  const tickStep = [0.02, 0.05, 0.1, 0.2, 0.25, 0.5].find(st => top / st <= 5) || 0.5;
+  const yMax = Math.ceil(top / tickStep) * tickStep;
+  // bars are centred on r/n, so the axis is inset by half a bar at each end
+  const bw = Math.max(2, Math.min(40, (plotW / (n + 1)) * 0.7));
+  const PAD = Math.max(bw / 2 + 4, FS * 1.2);
+  const x = v => ML + PAD + v * (plotW - 2 * PAD);
+  const y = v => MT + plotH - (v / yMax) * plotH;
+
+  for (let v = 0; v <= yMax + 1e-9; v += tickStep) {
+    svg.appendChild(el('line', { x1: ML, x2: W - MR, y1: y(v), y2: y(v), stroke: 'var(--line-2)', 'stroke-width': 1 }));
+    svg.appendChild(el('text', { x: ML - 10, y: y(v) + FS * 0.35, 'text-anchor': 'end', 'font-size': FS, 'font-family': MONO, fill: 'var(--mute)' }, v.toFixed(2)));
+  }
+  for (let r = 0; r <= n; r++) {
+    const cx = x(r / n);
+    if (total) svg.appendChild(el('rect', { x: cx - bw / 2, y: y(obs[r]), width: bw, height: Math.max(base - y(obs[r]), 0), rx: 1.5, fill: 'var(--steel)', 'fill-opacity': 0.85 }));
+    svg.appendChild(el('rect', { x: cx - bw / 2, y: y(theory[r]), width: bw, height: Math.max(base - y(theory[r]), 0), fill: 'none', stroke: 'var(--haze-dim)', 'stroke-width': 1.5, 'stroke-dasharray': '4,3' }));
+  }
+  svg.appendChild(el('line', { x1: x(p), x2: x(p), y1: base, y2: MT - 4, stroke: 'var(--amber)', 'stroke-width': 2 }));
+  svg.appendChild(el('text', { x: x(p), y: MT - 9, 'text-anchor': 'middle', 'font-size': FS, 'font-family': MONO, 'font-weight': 500, fill: 'var(--amber)' }, `p = ${f2(p)}`));
+  svg.appendChild(el('line', { x1: ML, x2: W - MR, y1: base, y2: base, stroke: 'var(--haze-dim)', 'stroke-width': 1.2 }));
+  const every = small ? 0.2 : 0.1;
+  for (let i = 0; i <= Math.round(1 / every); i++) {
+    const v = i * every;
+    svg.appendChild(el('line', { x1: x(v), x2: x(v), y1: base, y2: base + 5, stroke: 'var(--haze-dim)', 'stroke-width': 1 }));
+    svg.appendChild(el('text', { x: x(v), y: base + FS + 8, 'text-anchor': 'middle', 'font-size': FS, 'font-family': MONO, fill: 'var(--haze-dim)' }, v.toFixed(1)));
+  }
+  svg.appendChild(el('text', { x: (ML + W - MR) / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': FS - 1, 'letter-spacing': '.04em', 'font-family': MONO, fill: 'var(--mute)' }, 'sample proportion, p̂'));
+}
+
+function theoryWithin() { const { lo, hi } = withinRange(); return lo > hi ? 0 : cdf(hi, n, P()) - cdf(lo - 1, n, P()); }
+
+function renderStats() {
+  const p = P(), tw = theoryWithin();
+  document.getElementById('sTotal').textContent = total.toLocaleString('en-GB');
+  document.getElementById('sWithinSub').textContent = `theory: ${(tw * 100).toFixed(1)}%`;
+  document.getElementById('sMeanSub').textContent = `true p = ${f2(p)}`;
+  if (!total) {
+    document.getElementById('sMean').textContent = '—';
+    document.getElementById('sWithin').textContent = '—';
+  } else {
+    let sum = 0, within = 0;
+    counts.forEach((c, r) => { sum += c * (r / n); if (Math.abs(r / n - p) <= 0.1 + EPS) within += c; });
+    document.getElementById('sMean').textContent = (sum / total).toFixed(3);
+    document.getElementById('sWithin').textContent = `${(within / total * 100).toFixed(1)}%`;
+  }
+  const ins = document.getElementById('insight');
+  if (total < 50) {
+    ins.innerHTML = 'Draw a few single samples first and notice that <strong><span class="ph">p̂</span> is different every time</strong>, while p stays the same. Then draw 1,000 samples to see the whole distribution.';
+  } else {
+    ins.innerHTML = ph(`The values of p̂ centre on the true p = ${f2(p)}. With n = ${n}, about ${(tw * 100).toFixed(0)}% of samples give a p̂ within ±0.10 of p. ` +
+      (n < 100 ? '<strong>Try a larger n</strong>: the distribution of p̂ becomes narrower, so a single sample is more likely to land close to p.' : 'With n = 100 the distribution is narrow, so a single sample is very likely to land close to p.'));
+  }
+}
+
+// ---- the theory as aligned derivations, with the rule named on each line ----
+function renderDerivations() {
+  const p = P(), P2 = f2(p);
+  const grid = (id, lhs, rows) => {
+    document.getElementById(id).innerHTML = rows.map((d, i) =>
+      `<span class="d-l">${i ? '' : lhs}</span><span class="d-r${d[2] ? ' res' : ''}">${d[0]}</span><span class="d-w">${ph(d[1] || '')}</span>`).join('');
+  };
+  const a = p - 0.1, b = p + 0.1;
+  const { lo, hi } = withinRange();
+  const na = n * a, nb = n * b;
+  const whole = Math.abs(na - Math.round(na)) < EPS && Math.abs(nb - Math.round(nb)) < EPS;
+  const fmtB = v => String(parseFloat(v.toFixed(2))).replace(/^-/, '−');
+  const fmtP = v => v.toFixed(2).replace(/^-/, "−");
+  const exact = theoryWithin();
+
+  document.getElementById('t1').textContent = `Chance that p̂ lands within ±0.10 of p = ${P2}, with n = ${n}`;
+  const rows = [
+    [`= Pr(${fmtP(a)} ≤ p̂ ≤ ${fmtP(b)})`, `p = ${P2}`],
+    [`= Pr(${fmtP(a)} ≤ Y/${n} ≤ ${fmtP(b)})`, 'p̂ = Y/n, where Y ~ Binomial(n, p) counts type A'],
+  ];
+  let note = '';
+  if (lo > hi) {
+    rows.push([`= Pr(${fmtB(na)} ≤ Y ≤ ${fmtB(nb)})`, `multiply through by n = ${n}`]);
+    rows.push(['= 0', 'no whole number lies in this range', true]);
+  } else {
+    const ev = lo === hi ? `Y = ${lo}` : `${lo} ≤ Y ≤ ${hi}`;
+    rows.push(whole
+      ? [`= Pr(${ev})`, `multiply through by n = ${n}`]
+      : [`= Pr(${ev})`, `multiply through by n = ${n} to get ${fmtB(na)} ≤ Y ≤ ${fmtB(nb)}, and Y is a whole number from 0 to ${n}`]);
+    const terms = [];
+    for (let r = lo; r <= hi; r++) terms.push(r);
+    if (terms.length <= 3) {
+      if (terms.length > 1) rows.push([`= ${terms.map(r => `Pr(Y = ${r})`).join(' + ')}`, 'the values of Y are mutually exclusive']);
+      rows.push([`= ${terms.map(r => r4(pmf(r, n, p))).join(' + ')}`, `Binomial probabilit${terms.length > 1 ? "ies" : "y"} with n = ${n}, p = ${P2}`]);
+      const fromTerms = terms.reduce((s, r) => s + parseFloat(r4(pmf(r, n, p))), 0);
+      if (terms.length > 1) rows.push([`= ${r4(exact)}`, '', true]);
+      else rows[rows.length - 1][2] = true;
+      if (terms.length > 1 && r4(fromTerms) !== r4(exact)) note = `Adding the rounded terms gives ${r4(fromTerms)}; the exact sum is ${r4(exact)}.`;
+    } else {
+      rows.push([`= Pr(Y ≤ ${hi}) − Pr(Y ≤ ${lo - 1})`, 'difference of two cumulative probabilities']);
+      rows.push([`= ${r4(cdf(hi, n, p))} − ${r4(cdf(lo - 1, n, p))}`, `cumulative Binomial probabilities with n = ${n}, p = ${P2}`]);
+      rows.push([`= ${r4(exact)}`, '', true]);
+      const fromParts = parseFloat(r4(cdf(hi, n, p))) - parseFloat(r4(cdf(lo - 1, n, p)));
+      if (r4(fromParts) !== r4(exact)) note = `Subtracting the rounded values gives ${r4(fromParts)}; the exact difference is ${r4(exact)}.`;
+    }
+  }
+  grid('deriv1', `Pr(|p̂ − p| ≤ 0.10)`, rows);
+  document.getElementById('derivNote').innerHTML = note || `So about ${(exact * 100).toFixed(1)}% of samples of size ${n} give a <span class="ph">p̂</span> within ±0.10 of p. Compare this with the observed percentage above.`;
+
+  grid('deriv2', 'E(p̂)', [
+    ['= E(Y/n)', 'p̂ = Y/n'],
+    ['= E(Y)/n', 'n is a constant, so it comes outside the expectation'],
+    ['= np/n', 'mean of a Binomial: E(Y) = np'],
+    [`= p = ${P2}`, 'so the average of many p̂ values settles on p', true]
+  ]);
+}
+
+function renderTable() {
+  const p = P();
+  const wrap = document.getElementById('distTable');
+  if (n > 10) {
+    wrap.innerHTML = `<p class="note" style="margin:0">With n = ${n} there are ${n + 1} possible values of <span class="ph">p̂</span>, too many for a table. Choose n = 5 or 10 to see it.</p>`;
+    return;
+  }
+  let h = '<table class="data"><tr><th class="rl">r, number with type A</th>';
+  for (let r = 0; r <= n; r++) h += `<th>${r}</th>`;
+  h += '</tr><tr><td class="rl">p̂ = r/n</td>';
+  for (let r = 0; r <= n; r++) h += `<td>${f2(r / n)}</td>`;
+  h += '</tr><tr class="th-row"><td class="rl">Pr(p̂ = r/n) = Pr(Y = r)</td>';
+  for (let r = 0; r <= n; r++) h += `<td>${r4(pmf(r, n, p))}</td>`;
+  h += '</tr><tr class="obs-row"><td class="rl">observed proportion</td>';
+  for (let r = 0; r <= n; r++) h += `<td>${total ? (counts[r] / total).toFixed(4) : '—'}</td>`;
+  wrap.innerHTML = h + '</tr></table>';
+}
+
+function render() { renderControls(); renderPopulation(); renderSample(); renderChart(); renderStats(); renderDerivations(); renderTable(); }
+
+// ---- wiring ----
+document.getElementById('pMinus').addEventListener('click', () => { if (pc > 5) { pc -= 5; reset(); render(); } });
+document.getElementById('pPlus').addEventListener('click', () => { if (pc < 95) { pc += 5; reset(); render(); } });
+document.querySelectorAll('#nSeg .pill').forEach(b => b.addEventListener('click', () => { n = parseInt(b.dataset.n, 10); reset(); render(); }));
+document.getElementById('draw1').addEventListener('click', () => drawSamples(1));
+document.getElementById('draw100').addEventListener('click', () => drawSamples(100));
+document.getElementById('draw1000').addEventListener('click', () => drawSamples(1000));
+document.getElementById('resetBtn').addEventListener('click', () => { reset(); render(); });
+
+let resizeTimer;
+window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(renderChart, 150); });
+
+reset();
+render();
+</script>
+
+</body>
+</html>

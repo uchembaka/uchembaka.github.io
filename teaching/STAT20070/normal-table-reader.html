@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>(function(){try{var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark"){t=(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+<title>Normal Table Reader — Uche Mbaka</title>
+<meta name="description" content="A companion tool for STAT 20070: standardise any Normal probability, rewrite it into the form Table 4 gives and read it off, or work backwards from a percentage with Table 5.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#080A0F;
+    --ink-rgb:8,10,15;
+    --ink-2:#0D1017;
+    --haze:#E9E6DF;
+    --haze-dim:#B9B6AE;
+    --mute:#6A7180;
+    --mute-2:#454B58;
+    --line:rgba(233,230,223,.09);
+    --line-2:rgba(233,230,223,.16);
+    --amber:#CFA15F;
+    --amber-soft:rgba(207,161,95,.18);
+    --steel:#5C7585;
+    --steel-text:#8FA6B5;
+    --steel-soft:rgba(92,117,133,.26);
+    --hl:rgba(233,230,223,.11);
+    --hl-edge:rgba(233,230,223,.32);
+    --hl-solid:#25282D; /* the tint above, flattened, for the sticky x column */
+    --on-accent:#080A0F;
+  }
+  [data-theme="light"]{
+    --ink:#F3F0E9;
+    --ink-rgb:243,240,233;
+    --ink-2:#FBFAF5;
+    --haze:#1B1C20;
+    --haze-dim:#4A4C54;
+    --mute:#6E727D;
+    --mute-2:#9A9DA6;
+    --line:rgba(20,21,26,.10);
+    --line-2:rgba(20,21,26,.18);
+    --amber:#9E6B22;
+    --amber-soft:rgba(158,107,34,.13);
+    --steel:#4A6377;
+    --steel-text:#4A6377;
+    --steel-soft:rgba(74,99,119,.14);
+    --hl:rgba(20,21,26,.075);
+    --hl-edge:rgba(20,21,26,.28);
+    --hl-solid:#E9E9E5;
+    --on-accent:#FBFAF5;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    min-height:100vh;
+    background:var(--ink);
+    color:var(--haze);
+    font-family:"Newsreader",Georgia,serif;
+    font-weight:300;
+    font-size:18px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    display:flex;
+    justify-content:center;
+    padding:44px 22px 72px;
+    transition:background .35s ease, color .35s ease;
+  }
+  ::selection{background:rgba(207,161,95,.22);color:var(--haze)}
+  a{color:inherit;text-decoration:none}
+
+  .stage{width:100%;max-width:800px}
+
+  .mono{
+    font-family:"JetBrains Mono",ui-monospace,monospace;
+    font-weight:400;font-size:11px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--mute);
+  }
+
+  /* ---------- top row ---------- */
+  .toprow{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:34px}
+  .back{transition:color .25s}
+  .back:hover{color:var(--amber)}
+
+  .theme-toggle{display:inline-flex;align-items:center;gap:10px;background:none;border:0;padding:0;cursor:pointer;font:inherit;line-height:1}
+  .theme-toggle .tmode{color:var(--mute);transition:color .25s}
+  .theme-toggle:hover .tmode{color:var(--amber)}
+  .theme-toggle .track{width:40px;height:21px;border-radius:999px;border:1px solid var(--line-2);position:relative;transition:border-color .25s;flex:0 0 auto}
+  .theme-toggle:hover .track{border-color:var(--amber)}
+  .theme-toggle .knob{position:absolute;top:50%;left:3px;transform:translateY(-50%);width:13px;height:13px;border-radius:50%;background:var(--mute);transition:left .28s cubic-bezier(.4,0,.2,1),background .25s}
+  [data-theme="light"] .theme-toggle .knob{left:22px;background:var(--amber)}
+  .theme-toggle:focus-visible{outline:none}
+  .theme-toggle:focus-visible .track{outline:2px solid var(--amber);outline-offset:3px}
+
+  /* ---------- header ---------- */
+  header{margin-bottom:28px}
+  .eyebrow{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--mute-2);margin:0 0 16px;
+  }
+  h1{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;
+    font-size:clamp(30px,5.4vw,44px);line-height:1.02;letter-spacing:-.025em;
+    color:var(--haze);margin:0 0 16px;
+  }
+  .sub{font-size:17px;line-height:1.6;color:var(--haze-dim);font-weight:300;margin:0;max-width:60ch}
+  .sub b{color:var(--amber);font-weight:400}
+
+  /* ---------- cards ---------- */
+  .card{
+    background:linear-gradient(160deg, var(--ink-2), rgba(var(--ink-rgb),0));
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:26px 28px 24px;
+    margin-bottom:18px;
+  }
+  @media (max-width:480px){.card{padding:22px 18px 20px}}
+
+  .card-title{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;
+    font-size:21px;letter-spacing:-.02em;color:var(--haze);margin:0 0 18px;
+  }
+  .kicker{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--mute);margin:0 0 12px;
+  }
+  /* no uppercase: these labels name μ, σ, y, a, b and P */
+  .label{font-family:"JetBrains Mono",monospace;font-size:12.5px;letter-spacing:.02em;color:var(--mute);margin:0 0 10px}
+
+  /* ---------- mode tabs ---------- */
+  .tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px}
+  @media (max-width:520px){.tabs{grid-template-columns:1fr}}
+  .tab{
+    background:none;cursor:pointer;text-align:center;
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;font-size:15.5px;letter-spacing:-.01em;
+    color:var(--haze-dim);border:1px solid var(--line-2);border-radius:999px;padding:12px 16px;transition:.25s;
+  }
+  .tab:hover{border-color:var(--amber);color:var(--amber)}
+  .tab:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+  .tab.active{background:var(--amber);border-color:var(--amber);color:var(--on-accent)}
+
+  /* ---------- pills ---------- */
+  .presets{display:flex;gap:8px;flex-wrap:wrap}
+  .preset-group{flex-basis:100%;font-family:"JetBrains Mono",monospace;font-size:12.5px;letter-spacing:.02em;color:var(--steel-text);margin:10px 0 2px}
+  .preset-group:first-child{margin-top:0}
+  .pill{
+    background:none;cursor:pointer;
+    font-family:"JetBrains Mono",monospace;font-size:13px;letter-spacing:.02em;
+    color:var(--haze);
+    border:1px solid var(--line-2);border-radius:999px;padding:9px 15px;
+    transition:.25s;
+  }
+  .pill:hover{border-color:var(--amber);color:var(--amber)}
+  .pill:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+  .pill.active{background:var(--amber);border-color:var(--amber);color:var(--on-accent)}
+  .seg{display:flex;gap:8px;flex-wrap:wrap}
+
+  /* ---------- inputs ---------- */
+  .controls{margin-top:24px;padding-top:22px;border-top:1px solid var(--line);display:grid;gap:20px}
+  .inputs{display:flex;gap:16px 26px;flex-wrap:wrap;align-items:flex-end}
+  .field{display:flex;flex-direction:column;gap:8px;font-family:"JetBrains Mono",monospace;font-size:12.5px;letter-spacing:.02em;color:var(--mute)}
+  .field input,.field select{
+    width:110px;padding:8px 12px;border:1px solid var(--line-2);border-radius:10px;
+    background:none;color:var(--amber);
+    font-family:"Space Grotesk",system-ui,sans-serif;font-size:19px;font-weight:500;
+  }
+  .field select{width:120px;cursor:pointer}
+  .field[hidden]{display:none}
+  .field select option{background:var(--ink-2);color:var(--haze)}
+  .field input:focus,.field select:focus{outline:none;border-color:var(--amber)}
+
+  .question{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;
+    font-size:clamp(20px,3.4vw,26px);letter-spacing:-.02em;color:var(--haze);margin:0;
+  }
+  .question span{color:var(--haze-dim);font-weight:400;font-size:.72em}
+
+  /* ---------- charts ---------- */
+  .curves{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media (max-width:620px){.curves{grid-template-columns:1fr;gap:22px}}
+  .curve-title{font-family:"JetBrains Mono",monospace;font-size:13px;letter-spacing:.02em;color:var(--haze-dim);margin:0 0 6px;text-align:center}
+  svg.chart{width:100%;height:auto;display:block;overflow:visible}
+  .legend{
+    display:flex;gap:10px 22px;flex-wrap:wrap;margin-top:16px;
+    font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.02em;color:var(--mute);
+  }
+  .legend span{display:inline-flex;align-items:center;gap:8px}
+  .swatch{width:14px;height:12px;display:inline-block;border-radius:3px;flex:0 0 auto}
+  .swatch.dash{background:var(--steel-soft);border:1.5px dashed var(--steel-text)}
+
+  /* ---------- steps ---------- */
+  .step{display:grid;grid-template-columns:34px 1fr;gap:14px;padding:18px 0;border-top:1px solid var(--line)}
+  .step:first-child{border-top:none;padding-top:0}
+  .step-num{
+    width:28px;height:28px;border-radius:50%;border:1px solid var(--amber);color:var(--amber);
+    font-family:"JetBrains Mono",monospace;font-size:12.5px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .step-title{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;font-size:17px;
+    letter-spacing:-.01em;color:var(--haze);margin:2px 0 6px;
+  }
+  .step-body{font-size:16.5px;line-height:1.62;color:var(--haze-dim)}
+  .step-body strong{color:var(--haze);font-weight:400}
+  .eq{
+    display:inline-block;margin:8px 0 2px;padding:8px 14px;
+    font-family:"JetBrains Mono",monospace;font-size:13.5px;color:var(--haze);
+    border:1px solid var(--line-2);border-radius:10px;
+  }
+  .sym{color:var(--steel-text);font-weight:400}
+
+  /* ---------- answer derivation (same layout as the other worked examples) ---------- */
+  .deriv{border-left:2px solid var(--amber);padding:6px 0 6px 20px;margin-top:4px}
+  .d-grid{
+    display:grid;grid-template-columns:max-content minmax(0,1fr);
+    column-gap:10px;row-gap:6px;align-items:baseline;
+  }
+  .d-l,.d-r{font-family:"JetBrains Mono",monospace;font-size:13.5px;letter-spacing:.01em;color:var(--haze)}
+  .d-l{text-align:right;white-space:nowrap}
+  .d-r{overflow-wrap:anywhere}
+  .d-r.res{color:var(--amber);font-weight:500;font-size:18px}
+  .d-w{grid-column:2;margin:-2px 0 6px;font-size:15px;line-height:1.4;font-style:italic;color:var(--haze-dim)}
+  .d-w:empty{display:none}
+  @media (max-width:520px){
+    .d-grid{grid-template-columns:minmax(0,1fr)}
+    .d-l{text-align:left;white-space:normal}
+    .d-l:empty{display:none}
+    .d-w{grid-column:1}
+  }
+
+  /* ---------- tables ---------- */
+  .table-wrap{overflow-x:auto;border-radius:10px}
+  .table-wrap table + table{margin-top:14px}
+  table.nt{border-collapse:separate;border-spacing:0;font-family:"JetBrains Mono",monospace;font-size:12px}
+  table.nt th,table.nt td{padding:7px 9px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap;color:var(--haze-dim)}
+  table.nt th{color:var(--mute);font-weight:400;border-bottom:1px solid var(--line-2)}
+  /* the x column stays put while the table scrolls sideways on a phone */
+  table.nt .xlabel{position:sticky;left:0;z-index:1;text-align:left;color:var(--mute);background:var(--ink-2);border-right:1px solid var(--line-2)}
+  /* row and column form a crosshair: a tint plus edge lines, so both read in dark mode */
+  table.nt tr.row-hl td{background:var(--hl);color:var(--haze);box-shadow:inset 0 1px 0 var(--hl-edge), inset 0 -1px 0 var(--hl-edge)}
+  table.nt tr.row-hl td.xlabel{color:var(--amber);font-weight:500;background:var(--hl-solid)}
+  table.nt td.col-hl,table.nt th.col-hl{background:var(--hl);color:var(--haze);box-shadow:inset 1px 0 0 var(--hl-edge), inset -1px 0 0 var(--hl-edge)}
+  table.nt th.col-hl{color:var(--amber);font-weight:500}
+  table.nt td.hit{background:var(--amber-soft) !important;color:var(--amber) !important;font-weight:500;box-shadow:inset 0 0 0 1.5px var(--amber) !important}
+  table.nt.t5 td,table.nt.t5 th{text-align:right;padding:6px 14px}
+  .table-note{font-size:16px;line-height:1.58;color:var(--haze-dim);margin:16px 0 0}
+  .table-note strong{color:var(--haze);font-weight:400}
+
+  @media (prefers-reduced-motion:reduce){*{transition:none !important}}
+</style>
+</head>
+<body>
+
+<div class="stage">
+
+  <div class="toprow">
+    <a class="back mono" href="../STAT20070.html">← STAT 20070</a>
+    <button class="theme-toggle" id="themeToggle" aria-label="Switch between light and dark theme" aria-pressed="false"><span class="tmode mono" id="tmode">Dark</span><span class="track"><span class="knob"></span></span></button>
+  </div>
+
+  <header>
+    <p class="eyebrow">Section 2 · Lecture 09 · Sampling Distribution</p>
+    <h1>Normal Table Reader</h1>
+    <p class="sub">Normal tables are printed only for the <b>standard</b> Normal, Z ~ N(0, 1), and only for positive values. So every question is solved the same way: standardise, rewrite it into the form the table gives, and look it up. To work backwards from a percentage, follow the same steps in reverse.</p>
+  </header>
+
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-mode="prob" type="button">Find a probability (Table 4)</button>
+    <button class="tab" data-mode="quant" type="button">Work backwards (Table 5)</button>
+  </div>
+
+  <div class="card">
+    <p class="kicker">Examples from the lectures</p>
+    <div class="presets" id="presets"></div>
+
+    <div class="controls">
+      <div class="inputs">
+        <label class="field">Mean, μ<input type="number" id="muIn" step="any" inputmode="decimal"></label>
+        <label class="field">Standard deviation, σ<input type="number" id="sdIn" step="any" min="0.01" inputmode="decimal"></label>
+        <label class="field" id="nField">Sample size, n<input type="number" id="nIn" step="1" min="1" inputmode="numeric"></label>
+      </div>
+
+      <div id="probControls">
+        <p class="label">Question type</p>
+        <div class="seg" id="typeSeg">
+          <button class="pill" data-type="le" type="button">Pr(Y ≤ y)</button>
+          <button class="pill" data-type="ge" type="button">Pr(Y ≥ y)</button>
+          <button class="pill" data-type="bt" type="button">Pr(a ≤ Y ≤ b)</button>
+        </div>
+        <div class="inputs" id="valueInputs" style="margin-top:18px"></div>
+      </div>
+
+      <div id="quantControls" hidden>
+        <p class="label">Question type</p>
+        <div class="seg" id="dirSeg">
+          <button class="pill" data-dir="above" type="button">P% of values lie above y</button>
+          <button class="pill" data-dir="below" type="button">P% of values lie below y</button>
+        </div>
+        <div class="inputs" style="margin-top:18px">
+          <label class="field">Percentage, P<select id="pSel"></select></label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="kicker">We want</p>
+    <p class="question" id="question"></p>
+  </div>
+
+  <div class="card">
+    <div class="curves">
+      <div><p class="curve-title" id="yTitle"></p><svg id="yChart" class="chart" role="img" aria-label="Distribution of Y"></svg></div>
+      <div><p class="curve-title">Z ~ N(0, 1)</p><svg id="zChart" class="chart" role="img" aria-label="Standard Normal distribution"></svg></div>
+    </div>
+    <div class="legend" id="legend"></div>
+  </div>
+
+  <div class="card">
+    <p class="card-title">Step by step</p>
+    <div id="steps"></div>
+  </div>
+
+  <div class="card">
+    <p class="card-title" id="tableTitle"></p>
+    <div class="table-wrap" id="tableWrap"></div>
+    <p class="table-note" id="tableNote"></p>
+  </div>
+</div>
+
+<script>
+/* ---------- theme toggle (shares the site's stored preference) ---------- */
+(function(){
+  var root = document.documentElement;
+  var btn  = document.getElementById('themeToggle');
+  function current(){ return root.getAttribute('data-theme') === 'light' ? 'light' : 'dark'; }
+  function sync(){
+    var t = current();
+    btn.setAttribute('aria-pressed', t === 'light' ? 'true' : 'false');
+    document.getElementById('tmode').textContent = t === 'light' ? 'Light' : 'Dark';
+  }
+  sync();
+  btn.addEventListener('click', function(){
+    var t = current() === 'light' ? 'dark' : 'light';
+    root.setAttribute('data-theme', t);
+    try{ localStorage.setItem('theme', t); }catch(e){}
+    sync();
+  });
+})();
+
+const NS = 'http://www.w3.org/2000/svg';
+const MONO = "'JetBrains Mono', monospace";
+function el(tag, attrs, text) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) if (attrs[k] !== undefined && attrs[k] !== null) e.setAttribute(k, attrs[k]);
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+// erf: Maclaurin series near 0, and a Chebyshev fit to erfc in the tails (relative error about 1e-7),
+// so Φ and the percentage points are right to the 4 and 5 dp the tables print
+function erf(x) {
+  const ax = Math.abs(x);
+  if (ax < 2) {
+    let term = x, sum = x;
+    for (let n = 1; n < 200; n++) { term *= -x * x / n; const add = term / (2 * n + 1); sum += add; if (Math.abs(add) < 1e-17) break; }
+    return 2 / Math.sqrt(Math.PI) * sum;
+  }
+  const t = 1 / (1 + 0.5 * ax);
+  const erfc = t * Math.exp(-ax * ax - 1.26551223 + t * (1.00002368 + t * (0.37409196 + t * (0.09678418 + t * (-0.18628806 + t * (0.27886807 + t * (-1.13520398 + t * (1.48851587 + t * (-0.82215223 + t * 0.17087277)))))))));
+  return Math.sign(x) * (1 - erfc);
+}
+function Phi(z) { return 0.5 * (1 + erf(z / Math.SQRT2)); }
+function phi(z) { return Math.exp(-z * z / 2) / Math.sqrt(2 * Math.PI); }
+// round half away from zero; the epsilon stops values such as 190.235 being stored just below the half
+function rnd(v, dp) { const f = 10 ** dp; return Math.sign(v) * Math.round(Math.abs(v) * f + 1e-7) / f; }
+// fixed dp with a true minus sign
+function fx(v, dp) { const s = rnd(v, dp).toFixed(dp); return s.startsWith('-') && parseFloat(s) !== 0 ? '−' + s.slice(1) : s.replace(/^-/, ''); }
+// trimmed, for inputs such as 170 or 2.4
+function fmt(v, dp) { const s = String(parseFloat(rnd(v, dp === undefined ? 4 : dp).toFixed(dp === undefined ? 4 : dp))); return s.startsWith('-') ? '−' + s.slice(1) : s; }
+
+/* Table 4: Φ(x) for x ≥ 0 at 2 dp; 4 dp below x = 2, 5 dp from x = 2 */
+function tabDp(x) { return x >= 2 ? 5 : 4; }
+function phiTab(x) { return rnd(Phi(x), tabDp(x)); }
+/* Table 5: x(P) with Pr(Z ≥ x(P)) = P/100, to 4 dp */
+function xOfP(P) {
+  let lo = 0, hi = 8;
+  for (let i = 0; i < 100; i++) { const m = (lo + hi) / 2; if (1 - Phi(m) > P / 100) lo = m; else hi = m; }
+  return rnd((lo + hi) / 2, 4);
+}
+const P_LIST = [50, 45, 40, 35, 30, 25, 20, 15, 10, 5, 4, 3, 2.5, 2, 1, 0.5, 0.25, 0.1, 0.05, 0.01];
+
+const S = { mode: 'prob', mu: 170, sd: 30, n: 1, type: 'le', y: 185, a: 185, b: 200, P: 10, dir: 'above' };
+// with n > 1 the question is about the mean Ȳ of n values, which has standard error σ/√n
+const isMean = () => S.mode === 'prob' && S.n > 1;
+const seOf = () => isMean() ? S.sd / Math.sqrt(S.n) : S.sd;
+const VN = () => isMean() ? 'Ȳ' : 'Y';
+const vn = () => isMean() ? 'ȳ' : 'y';
+const seStr = () => isMean() ? fmt(seOf(), 4) : fmt(S.sd, 2);
+
+const CHOL = { mu: 170, sd: 30 }, ROHR = { mu: 2.4, sd: 0.4 }, CAPS = { mu: 75, sd: 7.07 }, BMRW = { mu: 1400, sd: 160 }, BMRM = { mu: 1800, sd: 200 };
+const PRESETS = {
+  prob: [
+    { group: 'Serum cholesterol, Y ~ N(170, 30²)', label: '(i) at most 185', ...CHOL, type: 'le', y: 185 },
+    { label: '(ii) at least 185', ...CHOL, type: 'ge', y: 185 },
+    { label: '(iii) between 185 and 200', ...CHOL, type: 'bt', a: 185, b: 200 },
+    { label: '(iv) at most 110', ...CHOL, type: 'le', y: 110 },
+    { group: 'Rohrer’s index, Y ~ N(2.4, 0.4²)', label: '(i) below 2', ...ROHR, type: 'le', y: 2 },
+    { label: '(ii) between 2 and 3', ...ROHR, type: 'bt', a: 2, b: 3 },
+    { group: 'Capsules for endoscopy, Y ~ N(75, 50), so σ = √50 ≈ 7.07', label: '(i) greater than 80', ...CAPS, type: 'ge', y: 80 },
+    { label: '(ii) less than 60', ...CAPS, type: 'le', y: 60 },
+    { group: 'Basal metabolic rate (BMR) in Kcal, men M ~ N(1800, 200²) and women F ~ N(1400, 160²)', label: '(i) one woman between 1300 and 1500', ...BMRW, n: 1, type: 'bt', a: 1300, b: 1500 },
+    { label: '(ii) mean of 20 men above 1900', ...BMRM, n: 20, type: 'ge', y: 1900 },
+    { label: '(iii) mean of 10 women between 1300 and 1500', ...BMRW, n: 10, type: 'bt', a: 1300, b: 1500 },
+    { label: '(iv) mean of 30 women between 1300 and 1500', ...BMRW, n: 30, type: 'bt', a: 1300, b: 1500 }
+  ],
+  quant: [
+    { group: 'Serum cholesterol, Y ~ N(170, 30²)', label: '10% lie above', ...CHOL, dir: 'above', P: 10 },
+    { label: '10% lie below', ...CHOL, dir: 'below', P: 10 },
+    { label: '20% lie below', ...CHOL, dir: 'below', P: 20 },
+    { label: '25% lie above', ...CHOL, dir: 'above', P: 25 },
+    { group: 'Rohrer’s index, Y ~ N(2.4, 0.4²)', label: '(iii) 10% lie above', ...ROHR, dir: 'above', P: 10 }
+  ]
+};
+
+/* ---------------- charts ---------------- */
+let lastDraw = null;
+function drawCurve(svg, opts) {
+  const small = window.innerWidth < 620;
+  const FS = small ? 15 : 13;
+  const W = 360, H = small ? 250 : 230, ML = 14, MR = 14, MT = FS + 14, MB = FS * 2 + 22;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.innerHTML = '';
+  const plotW = W - ML - MR, plotH = H - MT - MB, base = MT + plotH;
+  const [d0, d1] = opts.domain;
+  const x = v => ML + ((v - d0) / (d1 - d0)) * plotW;
+  const peak = opts.pdf(opts.centre);
+  const y = v => MT + plotH - (v / (peak * 1.1)) * plotH;
+  const clip = v => Math.max(d0, Math.min(d1, v));
+  function region(lo, hi, style) {
+    lo = clip(lo); hi = clip(hi);
+    if (hi <= lo) return;
+    const pts = [`${x(lo)},${base}`];
+    for (let i = 0; i <= 100; i++) { const v = lo + (i / 100) * (hi - lo); pts.push(`${x(v)},${y(opts.pdf(v))}`); }
+    pts.push(`${x(hi)},${base}`);
+    svg.appendChild(el('polygon', Object.assign({ points: pts.join(' ') }, style)));
+  }
+  (opts.mirror || []).forEach(([lo, hi]) => region(lo, hi, { fill: 'var(--steel)', 'fill-opacity': 0.22, stroke: 'var(--steel-text)', 'stroke-width': 1.5, 'stroke-dasharray': '4,3' }));
+  (opts.shade || []).forEach(([lo, hi]) => region(lo, hi, { fill: 'var(--amber)', 'fill-opacity': 0.42 }));
+
+  let pts = '';
+  for (let i = 0; i <= 240; i++) { const v = d0 + (i / 240) * (d1 - d0); pts += `${x(v)},${y(opts.pdf(v))} `; }
+  svg.appendChild(el('polyline', { points: pts.trim(), fill: 'none', stroke: 'var(--haze)', 'stroke-width': 1.8 }));
+
+  svg.appendChild(el('line', { x1: ML, x2: W - MR, y1: base, y2: base, stroke: 'var(--haze-dim)', 'stroke-width': 1.2 }));
+  // label every tick if the labels fit, otherwise every other one
+  const labs = opts.ticks.map(t => fmt(t, 2));
+  const longest = Math.max(...labs.map(s => s.length));
+  const gap = x(opts.ticks[1]) - x(opts.ticks[0]);
+  const every = longest * FS * 0.62 + 8 <= gap ? 1 : 2;
+  opts.ticks.forEach((t, i) => {
+    svg.appendChild(el('line', { x1: x(t), x2: x(t), y1: base, y2: base + 5, stroke: 'var(--haze-dim)', 'stroke-width': 1 }));
+    if ((i - 3) % every === 0) svg.appendChild(el('text', { x: x(t), y: base + FS + 7, 'text-anchor': 'middle', 'font-size': FS, 'font-family': MONO, fill: 'var(--haze-dim)' }, labs[i]));
+  });
+  // marker labels sit above the curve; two close markers lean apart, and labels near an edge turn inward
+  const ms = (opts.markers || []).filter(m => m.v >= d0 && m.v <= d1).sort((a, b) => a.v - b.v);
+  let firstAnchor = null;
+  ms.forEach((m, i) => {
+    const mx = x(m.v);
+    svg.appendChild(el('line', { x1: mx, x2: mx, y1: base, y2: MT - 2, stroke: 'var(--amber)', 'stroke-width': 1.5, 'stroke-dasharray': '4,3' }));
+    const w = m.label.length * FS * 0.62;
+    let anchor = 'middle', tx = mx;
+    if (ms.length === 2) { anchor = i === 0 ? 'end' : 'start'; tx = mx + (i === 0 ? -5 : 5); }
+    if (anchor === 'middle' && mx - w / 2 < 2) { anchor = 'start'; tx = mx - 4; }
+    if (anchor === 'middle' && mx + w / 2 > W - 2) { anchor = 'end'; tx = mx + 4; }
+    if (anchor === 'end' && tx - w < 2) { anchor = 'start'; tx = mx + 5; }
+    if (anchor === 'start' && tx + w > W - 2) { anchor = 'end'; tx = mx - 5; }
+    // two close markers near an edge both turn the same way, so the second drops to a lower row,
+    // where the curve's tail leaves room
+    const ty = (i === 1 && anchor === firstAnchor) ? MT - 8 + FS + 6 : MT - 8;
+    if (i === 0) firstAnchor = anchor;
+    svg.appendChild(el('text', { x: tx, y: ty, 'text-anchor': anchor, 'font-size': FS, 'font-family': MONO, 'font-weight': 500, fill: 'var(--amber)' }, m.label));
+  });
+  svg.appendChild(el('text', { x: (ML + W - MR) / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': FS - 1, 'font-family': MONO, fill: 'var(--mute)' }, opts.axis));
+}
+function drawBoth(shadeY, shadeZ, markersY, markersZ, mirrorZ) {
+  lastDraw = [shadeY, shadeZ, markersY, markersZ, mirrorZ];
+  const mu = S.mu, sd = seOf();
+  document.getElementById('yTitle').textContent = `${VN()} ~ N(${fmt(mu, 2)}, ${seStr()}²)`;
+  drawCurve(document.getElementById('yChart'), {
+    domain: [mu - 4 * sd, mu + 4 * sd], centre: mu,
+    pdf: v => phi((v - mu) / sd) / sd,
+    ticks: [-3, -2, -1, 0, 1, 2, 3].map(k => mu + k * sd),
+    shade: shadeY, markers: markersY, axis: vn()
+  });
+  drawCurve(document.getElementById('zChart'), {
+    domain: [-4, 4], centre: 0, pdf: phi,
+    ticks: [-3, -2, -1, 0, 1, 2, 3],
+    shade: shadeZ, markers: markersZ, mirror: mirrorZ, axis: 'z'
+  });
+  document.getElementById('legend').innerHTML =
+    '<span><span class="swatch" style="background:var(--amber);opacity:.6"></span>the probability we want (the same area on both curves)</span>' +
+    (mirrorZ && mirrorZ.length ? '<span><span class="swatch dash"></span>mirror image with the same area (symmetry)</span>' : '');
+}
+
+/* ---------------- Table 4 excerpt ---------------- */
+function table4HTML(xs) {
+  let html = '';
+  xs.forEach(xv => {
+    const row = Math.floor(xv * 10 + 1e-9) / 10;
+    const col = Math.round((xv - row) * 100);
+    const rows = [];
+    for (let rr = row - 0.2; rr <= row + 0.2 + 1e-9; rr += 0.1) if (rr >= -1e-9) rows.push(Math.round(rr * 10) / 10);
+    html += `<table class="nt"><tr><th class="xlabel">x</th>`;
+    for (let c = 0; c <= 9; c++) html += `<th class="${c === col ? 'col-hl' : ''}">.0${c}</th>`;
+    html += '</tr>';
+    rows.forEach(rr => {
+      const isRow = Math.abs(rr - row) < 1e-9;
+      html += `<tr class="${isRow ? 'row-hl' : ''}"><td class="xlabel">${rr.toFixed(1)}</td>`;
+      for (let c = 0; c <= 9; c++) {
+        const v = Math.round((rr + c / 100) * 100) / 100;
+        const cls = isRow && c === col ? 'hit' : (c === col ? 'col-hl' : '');
+        html += `<td class="${cls}">${phiTab(v).toFixed(tabDp(v))}</td>`;
+      }
+      html += '</tr>';
+    });
+    html += '</table>';
+  });
+  return html;
+}
+
+/* ---------------- mode: find a probability ---------------- */
+function zOf(v) {
+  const raw = (v - S.mu) / seOf();
+  const z = rnd(raw, 2);
+  return { raw, z, exact: Math.abs(raw - z) < 1e-9 };
+}
+function zLine(v, zz) {
+  return `z = (${fmt(v, 2)} − ${fmt(S.mu, 2)})/${seStr()} = ${zz.exact ? fx(zz.z, 2) : `${fx(zz.raw, 4)} ≈ ${fx(zz.z, 2)}`}`;
+}
+// Pr(Z ≤ z) or Pr(Z ≥ z) rewritten in terms of Φ at a non-negative x
+function viaTable(kind, z) {
+  const ax = Math.abs(z);
+  const neg = z < 0;
+  if (kind === 'le') return neg ? { expr: `1 − Φ(${fx(ax, 2)})`, val: 1 - phiTab(ax), x: ax, sym: true, comp: true } : { expr: `Φ(${fx(ax, 2)})`, val: phiTab(ax), x: ax, sym: false, comp: false };
+  return neg ? { expr: `Φ(${fx(ax, 2)})`, val: phiTab(ax), x: ax, sym: true, comp: false } : { expr: `1 − Φ(${fx(ax, 2)})`, val: 1 - phiTab(ax), x: ax, sym: false, comp: true };
+}
+const grid = rows => '<div class="deriv"><div class="d-grid">' + rows.map((d, i) =>
+  `<span class="d-l">${d.l || ''}</span><span class="d-r${d.res ? ' res' : ''}">${d.r}</span><span class="d-w">${d.w || ''}</span>`).join('') + '</div></div>';
+const ROUND_NOTE = 'round z to 2 dp to use Table 4';
+
+function renderProb() {
+  const mu = S.mu, sd = S.sd;
+  const steps = [];
+  const rows = [];
+  const Vv = VN(), zForm = isMean() ? '(ȳ − μ)/SE' : '(y − μ)/σ', ZForm = isMean() ? `Z = (Ȳ − μ)/SE` : 'Z = (Y − μ)/σ';
+  if (isMean()) steps.push({ t: 'Standard error of the mean', b: grid([
+    { l: 'SE(Ȳ)', r: `= σ/√n = ${fmt(sd, 2)}/√${S.n} = ${fmt(seOf(), 4)}`, w: 'the mean of n values varies less than a single value' }
+  ]) + `<p style="margin:10px 0 0">So <strong>Ȳ ~ N(${fmt(mu, 2)}, ${fmt(seOf(), 4)}²)</strong>: the same centre μ, with σ replaced by the standard error.</p>` });
+  let question, lookups, shadeY, shadeZ, markersY, markersZ, mirrorZ = [];
+
+  if (S.type === 'bt') {
+    const a = Math.min(S.a, S.b), b = Math.max(S.a, S.b);
+    question = `Pr(${fmt(a, 2)} ≤ ${Vv} ≤ ${fmt(b, 2)})`;
+    const za = zOf(a), zb = zOf(b);
+    const tb = viaTable('le', zb.z), ta = viaTable('le', za.z);
+    steps.push({ t: 'Standardise both ends', b: `Use z = ${zForm} at each end:<br><span class="eq">${zLine(b, zb)}</span><br><span class="eq">${zLine(a, za)}</span>${za.exact && zb.exact ? '' : '<br>Each z is rounded to 2 dp to use the table.'}` });
+    let body = 'A “between” probability is everything up to the top value, minus everything up to the bottom value:' +
+      `<br><span class="eq">Pr(${fx(za.z, 2)} ≤ Z ≤ ${fx(zb.z, 2)}) = Φ(${fx(zb.z, 2)}) − Φ(${fx(za.z, 2)})</span>`;
+    const symNotes = [[zb, tb], [za, ta]].filter(([, tt]) => tt.sym).map(([zz, tt]) => `Φ(${fx(zz.z, 2)}) = ${tt.expr}`);
+    if (symNotes.length) body += `<br><span class="sym">Negative z:</span> the table has no negative values, but the curve is symmetric about 0, so Φ(−x) = 1 − Φ(x). Here ${symNotes.join(' and ')}.`;
+    steps.push({ t: 'Rewrite using only Φ(x) = Pr(Z ≤ x), with x ≥ 0', b: body });
+    lookups = [...new Set([tb.x, ta.x])].sort((p, q) => q - p);
+    steps.push({ t: 'Look up Table 4', b: lookups.map(xv => `<span class="eq">Φ(${fx(xv, 2)}) = ${phiTab(xv).toFixed(tabDp(xv))}</span>`).join('<br>') });
+
+    // a difference is only as precise as its less precise term, so 4 dp when a 4 dp value is involved
+    const dp = Math.min(tabDp(tb.x), tabDp(ta.x));
+    const pv = t => phiTab(t.x).toFixed(tabDp(t.x));
+    const add = (r, w, res) => rows.push({ l: rows.length ? '' : question, r, w, res });
+    add(`= Pr(${fx(za.z, 2)} ≤ Z ≤ ${fx(zb.z, 2)})`, `standardise both ends: ${ZForm}${za.exact && zb.exact ? '' : '; ' + ROUND_NOTE}`);
+    add(`= Φ(${fx(zb.z, 2)}) − Φ(${fx(za.z, 2)})`, 'difference of two cumulative probabilities');
+    if (ta.sym || tb.sym) add(`= ${tb.sym ? `[${tb.expr}]` : tb.expr} − ${ta.sym ? `[${ta.expr}]` : ta.expr}`, 'symmetry: Φ(−x) = 1 − Φ(x)');
+    const term = t => t.sym ? `[1 − ${pv(t)}]` : pv(t);
+    add(`= ${term(tb)} − ${term(ta)}`, 'Table 4');
+    if (ta.sym || tb.sym) add(`= ${tb.val.toFixed(tabDp(tb.x))} − ${ta.val.toFixed(tabDp(ta.x))}`, '');
+    add(`= ${rnd(tb.val - ta.val, dp).toFixed(dp)}`, '', true);
+
+    shadeY = [[a, b]]; shadeZ = [[za.z, zb.z]];
+    markersY = [{ v: a, label: fmt(a, 2) }, { v: b, label: fmt(b, 2) }];
+    markersZ = [{ v: za.z, label: fx(za.z, 2) }, { v: zb.z, label: fx(zb.z, 2) }];
+  } else {
+    const kind = S.type;
+    const sign = kind === 'le' ? '≤' : '≥';
+    question = `Pr(${Vv} ${sign} ${fmt(S.y, 2)})`;
+    const zz = zOf(S.y);
+    const tt = viaTable(kind, zz.z);
+    steps.push({ t: 'Standardise', b: `Use z = ${zForm}:<br><span class="eq">${zLine(S.y, zz)}</span><br>${zz.exact ? '' : 'z is rounded to 2 dp to use the table. '}${Vv} is continuous, so a strict inequality (“less than”, “greater than”) gives the same answer as ${sign}.` });
+    let body;
+    if (!tt.sym && !tt.comp) body = `This is already the form Table 4 gives: <span class="eq">Pr(Z ≤ ${fx(zz.z, 2)}) = Φ(${fx(zz.z, 2)})</span>`;
+    else if (!tt.sym && tt.comp) body = `Table 4 gives only Pr(Z ≤ x), so use the complement:<br><span class="eq">Pr(Z ≥ ${fx(zz.z, 2)}) = 1 − Pr(Z ≤ ${fx(zz.z, 2)}) = ${tt.expr}</span>`;
+    else if (tt.sym && tt.comp) body = `<span class="sym">Negative z:</span> the table has no negative values. The curve is symmetric about 0, so the area below ${fx(zz.z, 2)} equals the area above ${fx(tt.x, 2)} (the dashed mirror image). Then use the complement:<br><span class="eq">Pr(Z ≤ ${fx(zz.z, 2)}) = Pr(Z ≥ ${fx(tt.x, 2)}) = 1 − Φ(${fx(tt.x, 2)})</span>`;
+    else body = `<span class="sym">Negative z:</span> the table has no negative values. The curve is symmetric about 0, so the area above ${fx(zz.z, 2)} equals the area below ${fx(tt.x, 2)} (the dashed mirror image):<br><span class="eq">Pr(Z ≥ ${fx(zz.z, 2)}) = Pr(Z ≤ ${fx(tt.x, 2)}) = Φ(${fx(tt.x, 2)})</span>`;
+    steps.push({ t: 'Rewrite using only Φ(x) = Pr(Z ≤ x), with x ≥ 0', b: body });
+    lookups = [tt.x];
+    const dp = tabDp(tt.x);
+    steps.push({ t: 'Look up Table 4', b: `<span class="eq">Φ(${fx(tt.x, 2)}) = ${phiTab(tt.x).toFixed(dp)}</span>` });
+
+    const add = (r, w, res) => rows.push({ l: rows.length ? '' : question, r, w, res });
+    add(`= Pr(Z ${sign} ${fx(zz.z, 2)})`, `standardise: ${ZForm}${zz.exact ? '' : '; ' + ROUND_NOTE}`);
+    if (tt.sym) add(`= Pr(Z ${kind === 'le' ? '≥' : '≤'} ${fx(tt.x, 2)})`, 'symmetry about 0');
+    if (tt.comp) add(`= 1 − Φ(${fx(tt.x, 2)})`, 'complement rule');
+    else add(`= Φ(${fx(tt.x, 2)})`, 'Φ(x) = Pr(Z ≤ x)');
+    if (tt.comp) add(`= 1 − ${phiTab(tt.x).toFixed(dp)}`, 'Table 4');
+    add(`= ${tt.val.toFixed(dp)}`, tt.comp ? '' : 'Table 4', true);
+
+    const inf = 1e6;
+    shadeY = kind === 'le' ? [[-inf, S.y]] : [[S.y, inf]];
+    shadeZ = kind === 'le' ? [[-inf, zz.z]] : [[zz.z, inf]];
+    markersY = [{ v: S.y, label: fmt(S.y, 2) }];
+    markersZ = [{ v: zz.z, label: `z = ${fx(zz.z, 2)}` }];
+    if (tt.sym) mirrorZ = kind === 'le' ? [[tt.x, inf]] : [[-inf, tt.x]];
+  }
+  steps.push({ t: 'Answer', b: grid(rows) });
+
+  document.getElementById('question').innerHTML = `${question} <span>where ${isMean() ? `Ȳ is the mean of ${S.n} values from ` : ''}Y ~ N(${fmt(mu, 2)}, ${fmt(sd, 2)}²)</span>`;
+  drawBoth(shadeY, shadeZ, markersY, markersZ, mirrorZ);
+  renderSteps(steps);
+  document.getElementById('tableTitle').textContent = 'Table 4 (excerpt): Φ(x) = Pr(Z ≤ x)';
+  document.getElementById('tableWrap').innerHTML = table4HTML(lookups);
+  const off = lookups.some(v => v > 3.99);
+  document.getElementById('tableNote').innerHTML = 'Find the row for the first decimal of x and the column for the second decimal. The highlighted cell is the value used. Values are given to 4 dp below x = 2 and to 5 dp from x = 2 onwards.' +
+    (off ? ' Printed tables usually stop near x = 4; beyond that Φ(x) is 1.00000 to 5 dp.' : '');
+}
+
+/* ---------------- mode: work backwards ---------------- */
+function renderQuant() {
+  const mu = S.mu, sd = S.sd, P = S.P, a = P / 100;
+  const xP = xOfP(P);
+  const above = S.dir === 'above';
+  const z = above ? xP : -xP;
+  const yDp = sd < 1 ? 3 : 2;   // a small σ needs more decimals (e.g. 2.913)
+  const yv = rnd(mu + z * sd, yDp);
+  const ys = fx(yv, yDp);
+  const sign = above ? '≥' : '≤';
+  const zs = xP === 0 ? '0.0000' : (above ? xP.toFixed(4) : '−' + xP.toFixed(4));
+  const steps = [];
+  steps.push({
+    t: 'Translate the question',
+    b: `“${fmt(P, 2)}% of values lie ${above ? 'above' : 'below'} y” means we need the value y with <span class="eq">Pr(Y ${sign} y) = ${fmt(a, 4)}</span>`
+  });
+  steps.push({
+    t: 'Find z from Table 5',
+    b: `Table 5 gives x(P), the value with Pr(Z ≥ x(P)) = P/100. For P = ${fmt(P, 2)}: <span class="eq">x(${fmt(P, 2)}) = ${xP.toFixed(4)}</span>` +
+      (above
+        ? `<br>We want an <strong>upper</strong> tail, which is exactly what Table 5 gives, so z = ${xP.toFixed(4)}.`
+        : (xP === 0 ? '<br>At P = 50 the point is the centre, z = 0, for either tail.'
+          : `<br><span class="sym">We want a lower tail</span>, but Table 5 gives upper tails. By symmetry, the area below −${xP.toFixed(4)} equals the area above ${xP.toFixed(4)} (the dashed mirror image), so z = −${xP.toFixed(4)}.`))
+  });
+  steps.push({
+    t: 'Convert back to the original scale',
+    b: `Rearrange z = (y − μ)/σ to get y = μ + zσ:<br><span class="eq">y = ${fmt(mu, 2)} + (${zs})(${fmt(sd, 2)}) = ${ys}</span>`
+  });
+  const rows = [];
+  const add = (l, r, w, res) => rows.push({ l, r, w, res });
+  add(`Pr(Y ${sign} y)`, `= ${fmt(a, 4)}`, `${fmt(P, 2)}% of values lie ${above ? 'above' : 'below'} y`);
+  add('', `⇒ Pr(Z ${sign} (y − ${fmt(mu, 2)})/${fmt(sd, 2)}) = ${fmt(a, 4)}`, 'standardise: Z = (Y − μ)/σ');
+  if (above) add('', `⇒ (y − ${fmt(mu, 2)})/${fmt(sd, 2)} = x(${fmt(P, 2)}) = ${xP.toFixed(4)}`, 'Table 5: Pr(Z ≥ x(P)) = P/100');
+  else add('', `⇒ (y − ${fmt(mu, 2)})/${fmt(sd, 2)} = −x(${fmt(P, 2)}) = ${zs}`, 'symmetry: Pr(Z ≤ −x(P)) = Pr(Z ≥ x(P)) = P/100, from Table 5');
+  add('', `⇒ y = ${fmt(mu, 2)} + (${zs})(${fmt(sd, 2)})`, 'rearrange: y = μ + zσ');
+  add('y', `= ${ys}`, `so ${fmt(P, 2)}% of values lie ${above ? 'above' : 'below'} ${ys}`, true);
+  steps.push({ t: 'Answer', b: grid(rows) });
+
+  document.getElementById('question').innerHTML = `The value y with ${fmt(P, 2)}% of values ${above ? 'above' : 'below'} it <span>where Y ~ N(${fmt(mu, 2)}, ${fmt(sd, 2)}²)</span>`;
+  const inf = 1e6;
+  drawBoth(
+    above ? [[yv, inf]] : [[-inf, yv]],
+    above ? [[z, inf]] : [[-inf, z]],
+    [{ v: yv, label: `y = ${ys}` }],
+    [{ v: z, label: `z = ${zs}` }],
+    above || xP === 0 ? [] : [[xP, inf]]
+  );
+  renderSteps(steps);
+
+  document.getElementById('tableTitle').textContent = 'Table 5 (excerpt): percentage points x(P), where Pr(Z ≥ x(P)) = P/100';
+  let h = '<table class="nt t5"><tr><th>P (%)</th><th>x(P)</th></tr>';
+  P_LIST.forEach(pp => {
+    const hit = pp === P ? 'hit' : '';
+    h += `<tr><td class="${hit}">${pp}</td><td class="${hit}">${xOfP(pp).toFixed(4)}</td></tr>`;
+  });
+  document.getElementById('tableWrap').innerHTML = h + '</table>';
+  document.getElementById('tableNote').innerHTML = 'Table 5 works in the opposite direction to Table 4: you look up a <strong>probability</strong>, as the percentage P in the upper tail, and read off the <strong>z value</strong>.';
+}
+
+/* ---------------- shared ---------------- */
+function renderSteps(steps) {
+  document.getElementById('steps').innerHTML = steps.map((s, i) =>
+    `<div class="step"><span class="step-num">${i + 1}</span><div><p class="step-title">${s.t}</p><div class="step-body">${s.b}</div></div></div>`).join('');
+}
+
+function renderValueInputs() {
+  const vi = document.getElementById('valueInputs');
+  vi.innerHTML = S.type === 'bt'
+    ? `<label class="field">Lower value, a<input type="number" id="aIn" step="any" inputmode="decimal" value="${S.a}"></label><label class="field">Upper value, b<input type="number" id="bIn" step="any" inputmode="decimal" value="${S.b}"></label>`
+    : `<label class="field">Value, y<input type="number" id="yIn" step="any" inputmode="decimal" value="${S.y}"></label>`;
+  vi.querySelectorAll('input').forEach(inp => inp.addEventListener('input', () => {
+    const v = parseFloat(inp.value);
+    if (!isFinite(v)) return;
+    if (inp.id === 'yIn') S.y = v; else if (inp.id === 'aIn') S.a = v; else S.b = v;
+    renderMain();
+  }));
+}
+
+function renderPresets() {
+  const wrap = document.getElementById('presets');
+  wrap.innerHTML = '';
+  PRESETS[S.mode].forEach(ps => {
+    if (ps.group) {
+      const g = document.createElement('p');
+      g.className = 'preset-group';
+      g.textContent = ps.group;
+      wrap.appendChild(g);
+    }
+    const btn = document.createElement('button');
+    btn.className = 'pill'; btn.type = 'button'; btn.textContent = ps.label;
+    btn.addEventListener('click', () => { const { label, group, ...vals } = ps; Object.assign(S, { n: 1 }, vals); syncControls(); renderMain(); });
+    wrap.appendChild(btn);
+  });
+}
+
+function syncControls() {
+  document.getElementById('muIn').value = S.mu;
+  document.getElementById('sdIn').value = S.sd;
+  document.getElementById('nIn').value = S.n;
+  document.getElementById('nField').hidden = S.mode !== 'prob';
+  document.querySelectorAll('#typeSeg .pill').forEach(b => { const on = b.dataset.type === S.type; b.classList.toggle('active', on); b.setAttribute('aria-pressed', on); });
+  document.querySelectorAll('#dirSeg .pill').forEach(b => { const on = b.dataset.dir === S.dir; b.classList.toggle('active', on); b.setAttribute('aria-pressed', on); });
+  document.getElementById('pSel').value = String(S.P);
+  document.getElementById('probControls').hidden = S.mode !== 'prob';
+  document.getElementById('quantControls').hidden = S.mode !== 'quant';
+  document.querySelectorAll('.tab').forEach(t => { const on = t.dataset.mode === S.mode; t.classList.toggle('active', on); t.setAttribute('aria-pressed', on); });
+  renderValueInputs();
+}
+
+function renderMain() {
+  if (!(S.sd > 0)) return;
+  if (S.mode === 'prob') renderProb(); else renderQuant();
+}
+
+const pSel = document.getElementById('pSel');
+P_LIST.forEach(pp => { const o = document.createElement('option'); o.value = String(pp); o.textContent = `${pp}%`; pSel.appendChild(o); });
+pSel.addEventListener('change', () => { S.P = parseFloat(pSel.value); renderMain(); });
+document.getElementById('muIn').addEventListener('input', e => { const v = parseFloat(e.target.value); if (isFinite(v)) { S.mu = v; renderMain(); } });
+document.getElementById('nIn').addEventListener('input', e => { const v = parseInt(e.target.value, 10); if (isFinite(v) && v >= 1) { S.n = v; renderMain(); } });
+document.getElementById('sdIn').addEventListener('input', e => { const v = parseFloat(e.target.value); if (isFinite(v) && v > 0) { S.sd = v; renderMain(); } });
+document.querySelectorAll('#typeSeg .pill').forEach(b => b.addEventListener('click', () => { S.type = b.dataset.type; syncControls(); renderMain(); }));
+document.querySelectorAll('#dirSeg .pill').forEach(b => b.addEventListener('click', () => { S.dir = b.dataset.dir; syncControls(); renderMain(); }));
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => { S.mode = t.dataset.mode; renderPresets(); syncControls(); renderMain(); }));
+
+let resizeTimer;
+window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(renderMain, 150); });
+
+renderPresets();
+syncControls();
+renderMain();
+</script>
+
+</body>
+</html>

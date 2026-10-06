@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>(function(){try{var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark"){t=(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+<title>The Central Limit Theorem — Uche Mbaka</title>
+<meta name="description" content="A companion tool for STAT 20070: draw repeated samples from populations of different shapes and watch the distribution of the sample mean approach the Normal curve that the Central Limit Theorem predicts.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#080A0F;
+    --ink-rgb:8,10,15;
+    --ink-2:#0D1017;
+    --haze:#E9E6DF;
+    --haze-dim:#B9B6AE;
+    --mute:#6A7180;
+    --mute-2:#454B58;
+    --line:rgba(233,230,223,.09);
+    --line-2:rgba(233,230,223,.16);
+    --amber:#CFA15F;
+    --amber-soft:rgba(207,161,95,.18);
+    --steel:#5C7585;
+    --steel-text:#8FA6B5;
+    --steel-soft:rgba(92,117,133,.26);
+    --on-accent:#080A0F;
+  }
+  [data-theme="light"]{
+    --ink:#F3F0E9;
+    --ink-rgb:243,240,233;
+    --ink-2:#FBFAF5;
+    --haze:#1B1C20;
+    --haze-dim:#4A4C54;
+    --mute:#6E727D;
+    --mute-2:#9A9DA6;
+    --line:rgba(20,21,26,.10);
+    --line-2:rgba(20,21,26,.18);
+    --amber:#9E6B22;
+    --amber-soft:rgba(158,107,34,.13);
+    --steel:#4A6377;
+    --steel-text:#4A6377;
+    --steel-soft:rgba(74,99,119,.14);
+    --on-accent:#FBFAF5;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    min-height:100vh;
+    background:var(--ink);
+    color:var(--haze);
+    font-family:"Newsreader",Georgia,serif;
+    font-weight:300;
+    font-size:18px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    display:flex;
+    justify-content:center;
+    padding:44px 22px 72px;
+    transition:background .35s ease, color .35s ease;
+  }
+  ::selection{background:rgba(207,161,95,.22);color:var(--haze)}
+  a{color:inherit;text-decoration:none}
+
+  .stage{width:100%;max-width:800px}
+
+  .mono{
+    font-family:"JetBrains Mono",ui-monospace,monospace;
+    font-weight:400;font-size:11px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--mute);
+  }
+
+  /* ---------- top row ---------- */
+  .toprow{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:34px}
+  .back{transition:color .25s}
+  .back:hover{color:var(--amber)}
+
+  .theme-toggle{display:inline-flex;align-items:center;gap:10px;background:none;border:0;padding:0;cursor:pointer;font:inherit;line-height:1}
+  .theme-toggle .tmode{color:var(--mute);transition:color .25s}
+  .theme-toggle:hover .tmode{color:var(--amber)}
+  .theme-toggle .track{width:40px;height:21px;border-radius:999px;border:1px solid var(--line-2);position:relative;transition:border-color .25s;flex:0 0 auto}
+  .theme-toggle:hover .track{border-color:var(--amber)}
+  .theme-toggle .knob{position:absolute;top:50%;left:3px;transform:translateY(-50%);width:13px;height:13px;border-radius:50%;background:var(--mute);transition:left .28s cubic-bezier(.4,0,.2,1),background .25s}
+  [data-theme="light"] .theme-toggle .knob{left:22px;background:var(--amber)}
+  .theme-toggle:focus-visible{outline:none}
+  .theme-toggle:focus-visible .track{outline:2px solid var(--amber);outline-offset:3px}
+
+  /* ---------- header ---------- */
+  header{margin-bottom:28px}
+  .eyebrow{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--mute-2);margin:0 0 16px;
+  }
+  h1{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;
+    font-size:clamp(30px,5.4vw,44px);line-height:1.02;letter-spacing:-.025em;
+    color:var(--haze);margin:0 0 16px;
+  }
+  .sub{font-size:17px;line-height:1.6;color:var(--haze-dim);font-weight:300;margin:0;max-width:60ch}
+  .sub b{color:var(--amber);font-weight:400}
+  /* the serif body font has no reliable ȳ, so symbols in running text use the mono face */
+  .ph{font-family:"JetBrains Mono",monospace;font-style:normal;font-size:.88em;letter-spacing:0;white-space:nowrap}
+
+  /* ---------- cards ---------- */
+  .card{
+    background:linear-gradient(160deg, var(--ink-2), rgba(var(--ink-rgb),0));
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:26px 28px 24px;
+    margin-bottom:18px;
+  }
+  @media (max-width:480px){.card{padding:22px 18px 20px}}
+
+  .card-title{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;
+    font-size:21px;letter-spacing:-.02em;color:var(--haze);margin:0 0 18px;
+  }
+  .kicker{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--mute);margin:0 0 12px;
+  }
+  /* no uppercase: these labels name n, μ, σ and ȳ */
+  .label{font-family:"JetBrains Mono",monospace;font-size:12.5px;letter-spacing:.02em;color:var(--mute);margin:0 0 12px}
+  .note{font-size:16px;line-height:1.58;color:var(--haze-dim);margin:14px 0 0}
+  .note strong{color:var(--haze);font-weight:400}
+  .block + .block{margin-top:22px}
+  .block.rule{padding-top:22px;border-top:1px solid var(--line)}
+
+  /* ---------- pills ---------- */
+  .presets{display:flex;gap:8px;flex-wrap:wrap}
+  .pill{
+    background:none;cursor:pointer;
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--haze);
+    border:1px solid var(--line-2);border-radius:999px;padding:10px 16px;
+    transition:.25s;
+  }
+  .pill:hover{border-color:var(--amber);color:var(--amber)}
+  .pill:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+  .pill.active,.pill.primary{background:var(--amber);border-color:var(--amber);color:var(--on-accent)}
+  .pill.primary:hover{color:var(--on-accent);filter:brightness(1.08)}
+  .seg{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;max-width:480px}
+  @media (max-width:520px){.seg{grid-template-columns:repeat(3,1fr)}}
+  .seg .pill{text-transform:none;letter-spacing:.02em;font-size:14px;padding:10px 6px}
+
+  /* ---------- charts ---------- */
+  svg.chart{width:100%;height:auto;display:block;overflow:visible}
+  .legend{
+    display:flex;gap:10px 22px;flex-wrap:wrap;margin-top:16px;
+    font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.02em;color:var(--mute);
+  }
+  .legend span{display:inline-flex;align-items:center;gap:8px}
+  .swatch{width:14px;height:12px;display:inline-block;border-radius:3px;flex:0 0 auto}
+  .swatch.line{width:18px;height:3px;border-radius:2px}
+  .ybar-line{font-size:16.5px;line-height:1.6;color:var(--haze-dim);margin:12px 0 0}
+  .ybar-line strong{font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;font-size:20px;color:var(--steel-text)}
+
+  /* ---------- readout ---------- */
+  .readout{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  @media (max-width:600px){.readout{grid-template-columns:1fr}}
+  .ro-box{padding:14px 16px;border:1px solid var(--line-2);border-radius:12px}
+  .ro-label{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.02em;color:var(--mute);margin:0 0 6px}
+  .ro-value{font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;font-size:22px;letter-spacing:-.01em;color:var(--steel-text);margin:0}
+  .ro-sub{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--mute);margin:6px 0 0}
+  .callout{margin:18px 0 0;padding:10px 0 10px 16px;border-left:2px solid var(--amber);font-size:16.5px;line-height:1.62;color:var(--haze-dim)}
+  .callout strong{color:var(--amber);font-weight:400}
+
+  /* ---------- derivation (same layout as the other worked examples) ---------- */
+  .deriv{border-left:2px solid var(--amber);padding:6px 0 6px 20px}
+  .d-grid{
+    display:grid;grid-template-columns:max-content minmax(0,1fr);
+    column-gap:10px;row-gap:6px;align-items:baseline;
+  }
+  .d-l,.d-r{font-family:"JetBrains Mono",monospace;font-size:13.5px;letter-spacing:.01em;color:var(--haze)}
+  .d-l{text-align:right;white-space:nowrap}
+  .d-r{overflow-wrap:anywhere}
+  .d-r.res{color:var(--amber);font-weight:500;font-size:18px}
+  .d-w{grid-column:2;margin:-2px 0 6px;font-size:15px;line-height:1.4;font-style:italic;color:var(--haze-dim)}
+  .d-w:empty{display:none}
+  @media (max-width:520px){
+    .d-grid{grid-template-columns:minmax(0,1fr)}
+    .d-l{text-align:left;white-space:normal}
+    .d-l:empty{display:none}
+    .d-w{grid-column:1}
+  }
+
+  @media (prefers-reduced-motion:reduce){*{transition:none !important}}
+</style>
+</head>
+<body>
+
+<div class="stage">
+
+  <div class="toprow">
+    <a class="back mono" href="../STAT20070.html">← STAT 20070</a>
+    <button class="theme-toggle" id="themeToggle" aria-label="Switch between light and dark theme" aria-pressed="false"><span class="tmode mono" id="tmode">Dark</span><span class="track"><span class="knob"></span></span></button>
+  </div>
+
+  <header>
+    <p class="eyebrow">Section 2 · Lecture 10 · Sampling Distribution</p>
+    <h1>The Central Limit Theorem</h1>
+    <p class="sub">Take many samples of size n from a population and work out the sample mean <span class="ph">ȳ</span> of each one. Whatever shape the population has, once n is large the distribution of <span class="ph">Ȳ</span> is <b>approximately Normal</b>, <span class="ph">Ȳ ≈ N(μ, σ²/n)</span>.</p>
+  </header>
+
+  <div class="card">
+    <div class="block">
+      <p class="kicker">Population shape</p>
+      <div class="presets" id="popSeg">
+        <button class="pill active" data-pop="normal" type="button">Normal</button>
+        <button class="pill" data-pop="skew" type="button">Right skewed, like income</button>
+        <button class="pill" data-pop="days" type="button">Many zeros, like days of poor health</button>
+        <button class="pill" data-pop="uniform" type="button">Uniform</button>
+        <button class="pill" data-pop="bimodal" type="button">Two peaks</button>
+      </div>
+    </div>
+    <div class="block">
+      <p class="label">Sample size, n</p>
+      <div class="seg" id="nSeg">
+        <button class="pill" data-n="1" type="button">1</button>
+        <button class="pill" data-n="2" type="button">2</button>
+        <button class="pill active" data-n="5" type="button">5</button>
+        <button class="pill" data-n="10" type="button">10</button>
+        <button class="pill" data-n="30" type="button">30</button>
+        <button class="pill" data-n="100" type="button">100</button>
+      </div>
+    </div>
+    <div class="block rule">
+      <p class="kicker">Take samples</p>
+      <div class="presets">
+        <button class="pill primary" id="draw1" type="button">Draw 1 sample</button>
+        <button class="pill" id="draw100" type="button">Draw 100 samples</button>
+        <button class="pill" id="draw1000" type="button">Draw 1,000 samples</button>
+        <button class="pill" id="resetBtn" type="button">Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="card-title">The population, Y</p>
+    <svg id="popChart" class="chart" role="img" aria-label="Population distribution"></svg>
+    <p class="note" id="popInfo"></p>
+  </div>
+
+  <div class="card">
+    <p class="card-title">The latest sample</p>
+    <svg id="sampleChart" class="chart" role="img" aria-label="Values in the latest sample and their mean"></svg>
+    <p class="ybar-line" id="ybarLine"></p>
+  </div>
+
+  <div class="card">
+    <p class="card-title">The sampling distribution of <span class="ph">Ȳ</span></p>
+    <svg id="meanChart" class="chart" role="img" aria-label="Histogram of sample means with the Normal curve from the Central Limit Theorem"></svg>
+    <div class="legend">
+      <span><span class="swatch" style="background:var(--steel)"></span>histogram of all the sample means ȳ</span>
+      <span><span class="swatch line" style="background:var(--haze)"></span>N(μ, σ²/n), as the CLT predicts</span>
+      <span><span class="swatch line" style="background:var(--amber)"></span>population mean μ</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="readout">
+      <div class="ro-box"><p class="ro-label">Samples drawn</p><p class="ro-value" id="sTotal">0</p></div>
+      <div class="ro-box"><p class="ro-label">Average of the ȳ values</p><p class="ro-value" id="sMean">—</p><p class="ro-sub" id="sMeanSub"></p></div>
+      <div class="ro-box"><p class="ro-label">SD of the ȳ values</p><p class="ro-value" id="sSd">—</p><p class="ro-sub" id="sSdSub"></p></div>
+    </div>
+    <p class="callout" id="callout"></p>
+  </div>
+
+  <div class="card">
+    <p class="card-title">Working it out</p>
+    <div class="deriv"><div class="d-grid" id="deriv"></div></div>
+    <p class="note" id="derivNote"></p>
+  </div>
+</div>
+
+<script>
+/* ---------- theme toggle (shares the site's stored preference) ---------- */
+(function(){
+  var root = document.documentElement;
+  var btn  = document.getElementById('themeToggle');
+  function current(){ return root.getAttribute('data-theme') === 'light' ? 'light' : 'dark'; }
+  function sync(){
+    var t = current();
+    btn.setAttribute('aria-pressed', t === 'light' ? 'true' : 'false');
+    document.getElementById('tmode').textContent = t === 'light' ? 'Light' : 'Dark';
+  }
+  sync();
+  btn.addEventListener('click', function(){
+    var t = current() === 'light' ? 'dark' : 'light';
+    root.setAttribute('data-theme', t);
+    try{ localStorage.setItem('theme', t); }catch(e){}
+    sync();
+  });
+})();
+
+const NS = 'http://www.w3.org/2000/svg';
+const MONO = "'JetBrains Mono', monospace";
+function el(tag, attrs, text) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) if (attrs[k] !== undefined && attrs[k] !== null) e.setAttribute(k, attrs[k]);
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+function gauss() { let u = 0, v = 0; while (u === 0) u = Math.random(); while (v === 0) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+function npdf(x, m, s) { return Math.exp(-((x - m) ** 2) / (2 * s * s)) / (s * Math.sqrt(2 * Math.PI)); }
+function fmt(v, dp) { const s = String(parseFloat(v.toFixed(dp))); return s.startsWith('-') ? '−' + s.slice(1) : s; }
+// wrap ȳ and Ȳ for running text set in the serif face
+function ph(t) { return t.replace(/([ȳȲ])/g, '<span class="ph">$1</span>'); }
+
+// μ and σ² for each population, worked out exactly
+//   skew: exponential with mean 10, so σ = 10
+//   days: Pr(0) = 0.6, Pr(k) = 0.4/30 for k = 1 to 30; μ = 0.4 × 15.5 = 6.2, E(Y²) = 0.4 × 9455/30, σ² = 87.6267
+//   uniform on (0, 20): σ² = 20²/12
+//   bimodal: half N(5, 1.5²), half N(15, 1.5²); σ² = 1.5² + 5² = 27.25
+const POPS = {
+  normal: {
+    name: 'Normal, N(10, 2²)', range: [2, 18], mu: 10, sd: 2, v: 4,
+    sample: () => 10 + 2 * gauss(), pdf: x => npdf(x, 10, 2)
+  },
+  skew: {
+    name: 'Right skewed: most values are small, with a long tail of large values', range: [0, 50], mu: 10, sd: 10, v: 100,
+    sample: () => -10 * Math.log(1 - Math.random()), pdf: x => (x < 0 ? 0 : 0.1 * Math.exp(-x / 10))
+  },
+  days: {
+    name: 'Many zeros: 60% of people report 0 days, and the rest report anywhere from 1 to 30', range: [-0.5, 30.5], mu: 6.2, v: 0.4 * 9455 / 30 - 6.2 * 6.2,
+    sample: () => (Math.random() < 0.6 ? 0 : 1 + Math.floor(Math.random() * 30)),
+    pmf: k => (k === 0 ? 0.6 : (k >= 1 && k <= 30 ? 0.4 / 30 : 0)), discrete: true
+  },
+  uniform: {
+    name: 'Uniform: every value from 0 to 20 is equally likely', range: [-1, 21], mu: 10, v: 400 / 12,
+    sample: () => 20 * Math.random(), pdf: x => (x >= 0 && x <= 20 ? 0.05 : 0)
+  },
+  bimodal: {
+    name: 'Two peaks: half the population lies near 5 and half near 15', range: [0, 20], mu: 10, v: 27.25,
+    sample: () => (Math.random() < 0.5 ? 5 : 15) + 1.5 * gauss(), pdf: x => 0.5 * npdf(x, 5, 1.5) + 0.5 * npdf(x, 15, 1.5)
+  }
+};
+Object.values(POPS).forEach(p => { p.sd = Math.sqrt(p.v); });
+
+let popKey = 'normal', n = 5;
+let means = [], last = null;
+
+function reset() { means = []; last = null; }
+function drawSamples(m) {
+  const pop = POPS[popKey];
+  for (let s = 0; s < m; s++) {
+    const vals = [];
+    for (let i = 0; i < n; i++) vals.push(pop.sample());
+    last = vals;
+    means.push(vals.reduce((a, b) => a + b, 0) / n);
+  }
+  render();
+}
+
+// on a phone the drawing is narrower, so it is scaled down less and the text stays readable
+function frame() {
+  const small = window.innerWidth < 560;
+  const W = small ? 400 : 660, FS = small ? 15 : 12;
+  return { small, W, FS, ML: small ? 14 : 18, MR: small ? 14 : 18 };
+}
+function xScaleFor(f, range) { const plotW = f.W - f.ML - f.MR; return v => f.ML + ((v - range[0]) / (range[1] - range[0])) * plotW; }
+function axis(svg, f, range, base, H, title) {
+  const x = xScaleFor(f, range);
+  svg.appendChild(el('line', { x1: f.ML, x2: f.W - f.MR, y1: base, y2: base, stroke: 'var(--haze-dim)', 'stroke-width': 1.2 }));
+  const span = range[1] - range[0];
+  const pxPer = (f.W - f.ML - f.MR) / span;
+  const step = [1, 2, 5, 10, 20].find(s => s * pxPer >= f.FS * 2.8) || 20;
+  for (let v = Math.ceil(range[0] / step) * step; v <= range[1]; v += step) {
+    svg.appendChild(el('line', { x1: x(v), x2: x(v), y1: base, y2: base + 5, stroke: 'var(--haze-dim)', 'stroke-width': 1 }));
+    svg.appendChild(el('text', { x: x(v), y: base + f.FS + 7, 'text-anchor': 'middle', 'font-size': f.FS, 'font-family': MONO, fill: 'var(--haze-dim)' }, v));
+  }
+  if (title) svg.appendChild(el('text', { x: (f.ML + f.W - f.MR) / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': f.FS - 1, 'letter-spacing': '.04em', 'font-family': MONO, fill: 'var(--mute)' }, title));
+}
+function muLine(svg, f, range, base, top, mu) {
+  const x = xScaleFor(f, range)(mu);
+  svg.appendChild(el('line', { x1: x, x2: x, y1: base, y2: top, stroke: 'var(--amber)', 'stroke-width': 2 }));
+  svg.appendChild(el('text', { x, y: top - 6, 'text-anchor': 'middle', 'font-size': f.FS, 'font-family': MONO, 'font-weight': 500, fill: 'var(--amber)' }, `μ = ${fmt(mu, 2)}`));
+}
+
+function renderPopulation() {
+  const pop = POPS[popKey], f = frame();
+  const svg = document.getElementById('popChart');
+  const H = f.small ? 190 : 170, MT = f.FS + 12, MB = f.FS * 2 + 22, plotH = H - MT - MB, base = MT + plotH;
+  svg.setAttribute('viewBox', `0 0 ${f.W} ${H}`);
+  svg.innerHTML = '';
+  const x = xScaleFor(f, pop.range);
+  if (pop.discrete) {
+    const maxP = 0.6 * 1.1;
+    const y = v => MT + plotH - (v / maxP) * plotH;
+    for (let k = 0; k <= 30; k++) {
+      const pv = pop.pmf(k);
+      svg.appendChild(el('rect', { x: x(k - 0.38), y: y(pv), width: x(k + 0.38) - x(k - 0.38), height: base - y(pv), rx: 1, fill: 'var(--amber)', 'fill-opacity': 0.35, stroke: 'var(--amber)', 'stroke-width': 1 }));
+    }
+  } else {
+    let maxD = 0;
+    for (let i = 0; i <= 300; i++) maxD = Math.max(maxD, pop.pdf(pop.range[0] + (i / 300) * (pop.range[1] - pop.range[0])));
+    const y = v => MT + plotH - (v / (maxD * 1.1)) * plotH;
+    const pts = [`${x(pop.range[0])},${base}`];
+    for (let i = 0; i <= 300; i++) { const v = pop.range[0] + (i / 300) * (pop.range[1] - pop.range[0]); pts.push(`${x(v)},${y(pop.pdf(v))}`); }
+    pts.push(`${x(pop.range[1])},${base}`);
+    svg.appendChild(el('polygon', { points: pts.join(' '), fill: 'var(--amber)', 'fill-opacity': 0.22, stroke: 'var(--amber)', 'stroke-width': 1.5 }));
+  }
+  muLine(svg, f, pop.range, base, MT, pop.mu);
+  axis(svg, f, pop.range, base, H, 'y');
+  document.getElementById('popInfo').innerHTML = `${pop.name}. Population mean <strong>μ = ${fmt(pop.mu, 2)}</strong> and standard deviation <strong>σ = ${fmt(pop.sd, 2)}</strong>.`;
+}
+
+function renderSample() {
+  const pop = POPS[popKey], f = frame();
+  const svg = document.getElementById('sampleChart');
+  const H = f.small ? 120 : 100, MT = 14, MB = f.FS * 2 + 22, base = H - MB;
+  svg.setAttribute('viewBox', `0 0 ${f.W} ${H}`);
+  svg.innerHTML = '';
+  const x = xScaleFor(f, pop.range);
+  const line = document.getElementById('ybarLine');
+  if (!last) {
+    axis(svg, f, pop.range, base, H, 'y');
+    line.innerHTML = `Press “Draw 1 sample” to take ${n} value${n === 1 ? '' : 's'} from the population.`;
+    return;
+  }
+  const clip = v => Math.max(pop.range[0], Math.min(pop.range[1], v));
+  const band = base - MT - 10;
+  last.forEach((v, i) => {
+    const jitter = n > 1 ? (((i * 37) % 11) / 10 - 0.5) * band * 0.7 : 0;
+    svg.appendChild(el('circle', { cx: x(clip(v)), cy: MT + band / 2 + 4 + jitter, r: n > 30 ? 3.2 : 5, fill: 'var(--haze-dim)', 'fill-opacity': 0.6 }));
+  });
+  const ybar = last.reduce((a, b) => a + b, 0) / n;
+  svg.appendChild(el('line', { x1: x(clip(ybar)), x2: x(clip(ybar)), y1: base, y2: MT - 4, stroke: 'var(--steel-text)', 'stroke-width': 3 }));
+  axis(svg, f, pop.range, base, H, 'y');
+  line.innerHTML = ph(`The ${n} value${n === 1 ? '' : 's'} in this sample (the dots) have mean ȳ = <strong>${ybar.toFixed(2)}</strong>, shown by the blue line. This one number is added to the histogram below.`);
+}
+
+function renderMeans() {
+  const pop = POPS[popKey], f = frame();
+  const svg = document.getElementById('meanChart');
+  const H = f.small ? 290 : 260, MT = f.FS + 14, MB = f.FS * 2 + 24, plotH = H - MT - MB, base = MT + plotH;
+  svg.setAttribute('viewBox', `0 0 ${f.W} ${H}`);
+  svg.innerHTML = '';
+  const range = pop.range, span = range[1] - range[0];
+  const x = xScaleFor(f, range);
+  const se = pop.sd / Math.sqrt(n);
+  // bins narrow enough to show the shape at large n (a quarter of the standard error);
+  // for the whole-number population, ȳ can only be a multiple of 1/n, so each bin holds whole steps of 1/n
+  let w = Math.min(span / 60, se / 4), start = range[0];
+  if (pop.discrete) { w = Math.max(1, Math.round(w * n)) / n; start = -0.5 / n; }
+  const bins = Math.ceil((range[1] - start) / w);
+  const counts = new Array(bins).fill(0);
+  means.forEach(m => { const i = Math.floor((m - start) / w + 1e-9); if (i >= 0 && i < bins) counts[i]++; });
+  const dens = counts.map(c => (means.length ? c / (means.length * w) : 0));
+  const peak = npdf(pop.mu, pop.mu, se);
+  const yMax = Math.max(peak, ...dens) * 1.1;
+  const y = v => MT + plotH - (v / yMax) * plotH;
+  dens.forEach((d, i) => {
+    if (d <= 0) return;
+    const x0 = x(Math.max(range[0], start + i * w)), x1 = x(Math.min(range[1], start + (i + 1) * w));
+    svg.appendChild(el('rect', { x: x0, y: y(d), width: Math.max(x1 - x0 - 0.4, 0.6), height: base - y(d), fill: 'var(--steel)', 'fill-opacity': 0.85 }));
+  });
+  let pts = '';
+  for (let i = 0; i <= 600; i++) { const v = range[0] + (i / 600) * span; pts += `${x(v)},${y(npdf(v, pop.mu, se))} `; }
+  svg.appendChild(el('polyline', { points: pts.trim(), fill: 'none', stroke: 'var(--haze)', 'stroke-width': 2 }));
+  muLine(svg, f, range, base, MT, pop.mu);
+  axis(svg, f, range, base, H, 'sample mean, ȳ');
+}
+
+function renderStats() {
+  const pop = POPS[popKey];
+  const se = pop.sd / Math.sqrt(n);
+  const N = means.length;
+  document.getElementById('sTotal').textContent = N.toLocaleString('en-GB');
+  document.getElementById('sMeanSub').textContent = `CLT: μ = ${fmt(pop.mu, 2)}`;
+  document.getElementById('sSdSub').textContent = `CLT: σ/√n = ${fmt(pop.sd, 2)}/√${n} = ${se.toFixed(3)}`;
+  if (N < 2) {
+    document.getElementById('sMean').textContent = N ? means[0].toFixed(3) : '—';
+    document.getElementById('sSd').textContent = '—';
+  } else {
+    const m = means.reduce((a, b) => a + b, 0) / N;
+    const sd = Math.sqrt(means.reduce((a, b) => a + (b - m) ** 2, 0) / (N - 1));
+    document.getElementById('sMean').textContent = m.toFixed(3);
+    document.getElementById('sSd').textContent = sd.toFixed(3);
+  }
+
+  let msg;
+  if (N < 100) {
+    msg = 'Draw a few single samples to see how each one gives a different ȳ. Then draw 1,000 samples to build the whole distribution.';
+  } else if (n === 1) {
+    msg = 'With <strong>n = 1</strong>, each “mean” is just one value from the population, so the histogram simply copies the population’s shape. ' +
+      (popKey === 'normal' ? 'Here the population is Normal, so the curve already fits.' : 'The Normal curve does not fit it at all. Now increase n.');
+  } else if (popKey === 'normal') {
+    msg = 'The population is Normal, so Ȳ is <strong>exactly</strong> Normal for any n, with standard error σ/√n. Try a larger n: the histogram stays bell shaped but becomes narrower.';
+  } else if (n < 30) {
+    msg = `With n = ${n} the histogram is already more bell shaped than the population, but some of the population’s shape may still show. A common rule of thumb for the CLT is n ≥ 30.`;
+  } else {
+    msg = `<strong>The Central Limit Theorem in action:</strong> the population is far from Normal, yet with n = ${n} the sample means follow the Normal curve closely, centred at μ with standard error σ/√n = ${se.toFixed(3)}.`;
+  }
+  document.getElementById('callout').innerHTML = ph(msg);
+}
+
+// ---- the CLT prediction as an aligned derivation, with the rule named on each line ----
+function renderDerivation() {
+  const pop = POPS[popKey];
+  const v = pop.v, se = pop.sd / Math.sqrt(n);
+  const M = fmt(pop.mu, 2), V = fmt(v, 2), VN = fmt(v / n, 4);
+  const rows = [
+    { l: 'E(Ȳ)', r: `= μ = ${M}`, w: 'the sample mean is centred on the population mean' },
+    { l: 'Var(Ȳ)', r: `= σ²/n = ${V}/${n} = ${VN}`, w: 'averaging n independent values divides the variance by n' },
+    { l: 'SE(Ȳ)', r: `= σ/√n = √${VN} = ${se.toFixed(4)}`, w: 'the standard error is the square root of Var(Ȳ)' },
+    { l: 'Ȳ', r: `${popKey === 'normal' ? '~' : '≈'} N(${M}, ${VN})`, w: popKey === 'normal' ? 'exactly Normal, since the population is Normal' : `approximately Normal by the CLT${n < 30 ? ', once n is large' : ''}`, res: true }
+  ];
+  document.getElementById('deriv').innerHTML = rows.map(d =>
+    `<span class="d-l">${d.l}</span><span class="d-r${d.res ? ' res' : ''}">${d.r}</span><span class="d-w">${d.w}</span>`).join('');
+  document.getElementById('derivNote').innerHTML = ph(`Compare these with the simulation above: the average of the ȳ values should settle near ${M}, and their standard deviation near ${se.toFixed(3)}. Multiplying n by 4 halves the standard error.`);
+}
+
+function render() {
+  renderPopulation(); renderSample(); renderMeans(); renderStats(); renderDerivation();
+  document.querySelectorAll('#popSeg .pill').forEach(b => { const on = b.dataset.pop === popKey; b.classList.toggle('active', on); b.setAttribute('aria-pressed', on); });
+  document.querySelectorAll('#nSeg .pill').forEach(b => { const on = parseInt(b.dataset.n, 10) === n; b.classList.toggle('active', on); b.setAttribute('aria-pressed', on); });
+}
+
+document.querySelectorAll('#popSeg .pill').forEach(b => b.addEventListener('click', () => { popKey = b.dataset.pop; reset(); render(); }));
+document.querySelectorAll('#nSeg .pill').forEach(b => b.addEventListener('click', () => { n = parseInt(b.dataset.n, 10); reset(); render(); }));
+document.getElementById('draw1').addEventListener('click', () => drawSamples(1));
+document.getElementById('draw100').addEventListener('click', () => drawSamples(100));
+document.getElementById('draw1000').addEventListener('click', () => drawSamples(1000));
+document.getElementById('resetBtn').addEventListener('click', () => { reset(); render(); });
+
+let resizeTimer;
+window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(render, 150); });
+
+reset();
+render();
+</script>
+
+</body>
+</html>
