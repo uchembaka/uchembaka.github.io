@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>(function(){try{var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark"){t=(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+<title>Confidence Interval Simulator — Uche Mbaka</title>
+<meta name="description" content="A companion tool for STAT 20070: draw repeated samples, build a confidence interval from each one, and count how often the intervals contain the fixed population mean.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#080A0F;
+    --ink-rgb:8,10,15;
+    --ink-2:#0D1017;
+    --haze:#E9E6DF;
+    --haze-dim:#B9B6AE;
+    --mute:#6A7180;
+    --mute-2:#454B58;
+    --line:rgba(233,230,223,.09);
+    --line-2:rgba(233,230,223,.16);
+    --amber:#CFA15F;
+    --amber-soft:rgba(207,161,95,.18);
+    --steel:#5C7585;
+    --steel-text:#8FA6B5;
+    --steel-soft:rgba(92,117,133,.26);
+    --ok:#7E9E82;
+    --terra:#C98A6B;
+    --on-accent:#080A0F;
+  }
+  [data-theme="light"]{
+    --ink:#F3F0E9;
+    --ink-rgb:243,240,233;
+    --ink-2:#FBFAF5;
+    --haze:#1B1C20;
+    --haze-dim:#4A4C54;
+    --mute:#6E727D;
+    --mute-2:#9A9DA6;
+    --line:rgba(20,21,26,.10);
+    --line-2:rgba(20,21,26,.18);
+    --amber:#9E6B22;
+    --amber-soft:rgba(158,107,34,.13);
+    --steel:#4A6377;
+    --steel-text:#4A6377;
+    --steel-soft:rgba(74,99,119,.14);
+    --ok:#3F6B4F;
+    --terra:#A0502F;
+    --on-accent:#FBFAF5;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    min-height:100vh;
+    background:var(--ink);
+    color:var(--haze);
+    font-family:"Newsreader",Georgia,serif;
+    font-weight:300;
+    font-size:18px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    display:flex;
+    justify-content:center;
+    padding:44px 22px 72px;
+    transition:background .35s ease, color .35s ease;
+  }
+  ::selection{background:rgba(207,161,95,.22);color:var(--haze)}
+  a{color:inherit;text-decoration:none}
+
+  .stage{width:100%;max-width:800px}
+
+  .mono{
+    font-family:"JetBrains Mono",ui-monospace,monospace;
+    font-weight:400;font-size:11px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--mute);
+  }
+
+  /* ---------- top row ---------- */
+  .toprow{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:34px}
+  .back{transition:color .25s}
+  .back:hover{color:var(--amber)}
+
+  .theme-toggle{display:inline-flex;align-items:center;gap:10px;background:none;border:0;padding:0;cursor:pointer;font:inherit;line-height:1}
+  .theme-toggle .tmode{color:var(--mute);transition:color .25s}
+  .theme-toggle:hover .tmode{color:var(--amber)}
+  .theme-toggle .track{width:40px;height:21px;border-radius:999px;border:1px solid var(--line-2);position:relative;transition:border-color .25s;flex:0 0 auto}
+  .theme-toggle:hover .track{border-color:var(--amber)}
+  .theme-toggle .knob{position:absolute;top:50%;left:3px;transform:translateY(-50%);width:13px;height:13px;border-radius:50%;background:var(--mute);transition:left .28s cubic-bezier(.4,0,.2,1),background .25s}
+  [data-theme="light"] .theme-toggle .knob{left:22px;background:var(--amber)}
+  .theme-toggle:focus-visible{outline:none}
+  .theme-toggle:focus-visible .track{outline:2px solid var(--amber);outline-offset:3px}
+
+  /* ---------- header ---------- */
+  header{margin-bottom:28px}
+  .eyebrow{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--mute-2);margin:0 0 16px;
+  }
+  h1{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;
+    font-size:clamp(30px,5.4vw,44px);line-height:1.02;letter-spacing:-.025em;
+    color:var(--haze);margin:0 0 16px;
+  }
+  .sub{font-size:17px;line-height:1.6;color:var(--haze-dim);font-weight:300;margin:0;max-width:60ch}
+  .sub b{color:var(--amber);font-weight:400}
+  .sub i{color:var(--steel-text);font-style:normal;font-weight:400}
+  /* the serif body font has no reliable ȳ, so symbols in running text use the mono face */
+  .ph{font-family:"JetBrains Mono",monospace;font-style:normal;font-size:.88em;letter-spacing:0;white-space:nowrap}
+
+  /* ---------- cards ---------- */
+  .card{
+    background:linear-gradient(160deg, var(--ink-2), rgba(var(--ink-rgb),0));
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:26px 28px 24px;
+    margin-bottom:18px;
+  }
+  @media (max-width:480px){.card{padding:22px 18px 20px}}
+
+  .card-title{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;
+    font-size:21px;letter-spacing:-.02em;color:var(--haze);margin:0 0 18px;
+  }
+  .kicker{
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--mute);margin:0 0 12px;
+  }
+  /* no uppercase: these labels name n, μ, σ, s, z and t */
+  .label{font-family:"JetBrains Mono",monospace;font-size:12.5px;letter-spacing:.02em;color:var(--mute);margin:0 0 12px}
+  .note{font-size:16px;line-height:1.58;color:var(--haze-dim);margin:14px 0 0}
+  .note strong{color:var(--haze);font-weight:400}
+  .block + .block{margin-top:22px}
+  .block.rule{padding-top:22px;border-top:1px solid var(--line)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:22px 32px}
+  @media (max-width:600px){.grid2{grid-template-columns:1fr}}
+
+  /* ---------- pills ---------- */
+  .presets{display:flex;gap:8px;flex-wrap:wrap}
+  .pill{
+    background:none;cursor:pointer;
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--haze);
+    border:1px solid var(--line-2);border-radius:999px;padding:10px 16px;
+    transition:.25s;
+  }
+  .pill:hover{border-color:var(--amber);color:var(--amber)}
+  .pill:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+  .pill.active,.pill.primary{background:var(--amber);border-color:var(--amber);color:var(--on-accent)}
+  .pill.primary:hover{color:var(--on-accent);filter:brightness(1.08)}
+  /* these contain n, σ, s, ȳ, z and t, so they keep their case */
+  .pill.case{text-transform:none;letter-spacing:.02em;font-size:13.5px}
+  .seg{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .seg.three{grid-template-columns:repeat(3,1fr)}
+  .seg .pill{text-transform:none;letter-spacing:.02em;font-size:14px;padding:10px 6px}
+  .methods{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  @media (max-width:640px){.methods{grid-template-columns:1fr}}
+  .methods .pill{text-align:left;padding:11px 15px;border-radius:14px;line-height:1.45}
+  .methods .pill span{display:block;font-size:12px;opacity:.8}
+
+  /* ---------- charts ---------- */
+  svg.chart{width:100%;height:auto;display:block;overflow:visible}
+  .legend{
+    display:flex;gap:10px 22px;flex-wrap:wrap;margin-top:16px;
+    font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.02em;color:var(--mute);
+  }
+  .legend span{display:inline-flex;align-items:center;gap:8px}
+  .swatch{width:18px;height:4px;display:inline-block;border-radius:2px;flex:0 0 auto}
+  .swatch.box{width:14px;height:12px;border-radius:3px}
+  .swatch.tall{width:3px;height:14px}
+  .formula{
+    display:inline-block;margin:0 0 16px;padding:8px 14px;
+    font-family:"JetBrains Mono",monospace;font-size:14px;color:var(--amber);
+    border:1px solid var(--amber);border-radius:10px;background:var(--amber-soft);
+  }
+
+  /* ---------- readout ---------- */
+  .readout{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  @media (max-width:600px){.readout{grid-template-columns:1fr}}
+  .ro-box{padding:14px 16px;border:1px solid var(--line-2);border-radius:12px}
+  .ro-label{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.02em;color:var(--mute);margin:0 0 6px}
+  .ro-value{font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;font-size:22px;letter-spacing:-.01em;color:var(--haze);margin:0}
+  .ro-sub{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--mute);margin:6px 0 0}
+  .callout{margin:18px 0 0;padding:10px 0 10px 16px;border-left:2px solid var(--amber);font-size:16.5px;line-height:1.62;color:var(--haze-dim)}
+  .callout strong{color:var(--amber);font-weight:400}
+
+  /* ---------- derivations (same layout as the other worked examples) ---------- */
+  .d-title{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-weight:500;font-size:17px;
+    letter-spacing:-.01em;color:var(--haze);margin:0 0 6px;
+  }
+  .d-given{font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--haze-dim);margin:0 0 12px}
+  .deriv{border-left:2px solid var(--amber);padding:6px 0 6px 20px}
+  .d-grid{
+    display:grid;grid-template-columns:max-content minmax(0,1fr);
+    column-gap:10px;row-gap:6px;align-items:baseline;
+  }
+  .d-l,.d-r{font-family:"JetBrains Mono",monospace;font-size:13.5px;letter-spacing:.01em;color:var(--haze)}
+  .d-l{text-align:right;white-space:nowrap}
+  .d-r{overflow-wrap:anywhere}
+  .d-r.res{color:var(--amber);font-weight:500;font-size:18px}
+  .d-w{grid-column:2;margin:-2px 0 6px;font-size:15px;line-height:1.4;font-style:italic;color:var(--haze-dim)}
+  .d-w:empty{display:none}
+  @media (max-width:520px){
+    .d-grid{grid-template-columns:minmax(0,1fr)}
+    .d-l{text-align:left;white-space:normal}
+    .d-l:empty{display:none}
+    .d-w{grid-column:1}
+  }
+  .empty{font-size:16px;color:var(--haze-dim);font-style:italic;margin:0}
+  .ok{color:var(--ok)} .miss{color:var(--terra)}
+
+  @media (prefers-reduced-motion:reduce){*{transition:none !important}}
+</style>
+</head>
+<body>
+
+<div class="stage">
+
+  <div class="toprow">
+    <a class="back mono" href="../STAT20070.html">← STAT 20070</a>
+    <button class="theme-toggle" id="themeToggle" aria-label="Switch between light and dark theme" aria-pressed="false"><span class="tmode mono" id="tmode">Dark</span><span class="track"><span class="knob"></span></span></button>
+  </div>
+
+  <header>
+    <p class="eyebrow">Section 3 · Lecture 11 · Basics of Inference</p>
+    <h1>Confidence Interval Simulator</h1>
+    <p class="sub">The population mean μ is a <b>fixed</b> parameter. Every sample gives a different <span class="ph">ȳ</span>, and so a <i>different confidence interval</i>. Draw many samples and count how often the interval actually contains μ.</p>
+  </header>
+
+  <div class="card">
+    <div class="grid2 block">
+      <div>
+        <p class="label">Confidence level, 1 − α</p>
+        <div class="seg" id="levelSeg">
+          <button class="pill" data-level="68" type="button">68%</button>
+          <button class="pill" data-level="90" type="button">90%</button>
+          <button class="pill active" data-level="95" type="button">95%</button>
+          <button class="pill" data-level="99" type="button">99%</button>
+        </div>
+      </div>
+      <div>
+        <p class="label">Sample size, n</p>
+        <div class="seg" id="nSeg">
+          <button class="pill" data-n="5" type="button">5</button>
+          <button class="pill active" data-n="10" type="button">10</button>
+          <button class="pill" data-n="30" type="button">30</button>
+          <button class="pill" data-n="100" type="button">100</button>
+        </div>
+      </div>
+    </div>
+    <div class="block">
+      <p class="label">How the interval is built</p>
+      <div class="methods" id="methodSeg">
+        <button class="pill case active" data-method="z" type="button">σ known<span>ȳ ± z · σ/√n</span></button>
+        <button class="pill case" data-method="sz" type="button">σ unknown, using z<span>ȳ ± z · s/√n</span></button>
+        <button class="pill case" data-method="st" type="button">σ unknown, using t<span>ȳ ± t · s/√n</span></button>
+      </div>
+    </div>
+    <div class="block rule">
+      <p class="label">Take samples from the population N(μ = 50, σ = 10)</p>
+      <div class="presets">
+        <button class="pill primary" id="draw1" type="button">Draw 1 sample</button>
+        <button class="pill" id="draw20" type="button">Draw 20 samples</button>
+        <button class="pill" id="draw100" type="button">Draw 100 samples</button>
+        <button class="pill" id="resetBtn" type="button">Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="card-title">Where the sample means land</p>
+    <svg id="topChart" class="chart" role="img" aria-label="Sampling distribution of the sample mean"></svg>
+    <p class="note" id="topNote"></p>
+  </div>
+
+  <div class="card">
+    <p class="card-title">The confidence intervals</p>
+    <p class="formula" id="formula"></p>
+    <svg id="ciChart" class="chart" role="img" aria-label="The most recent confidence intervals"></svg>
+    <div class="legend">
+      <span><span class="swatch" style="background:var(--ok)"></span>contains μ</span>
+      <span><span class="swatch" style="background:var(--terra)"></span>misses μ</span>
+      <span><span class="swatch tall" style="background:var(--amber)"></span>true μ = 50, which never moves</span>
+    </div>
+    <p class="note">The most recent 50 intervals are shown, newest at the top. An arrow means the interval runs past the edge of the chart.</p>
+  </div>
+
+  <div class="card">
+    <div class="readout">
+      <div class="ro-box"><p class="ro-label">Intervals drawn</p><p class="ro-value" id="sTotal">0</p></div>
+      <div class="ro-box"><p class="ro-label">Intervals containing μ</p><p class="ro-value" id="sCover">—</p><p class="ro-sub" id="sCoverSub"></p></div>
+      <div class="ro-box"><p class="ro-label">Average interval width</p><p class="ro-value" id="sWidth">—</p><p class="ro-sub" id="sWidthSub"></p></div>
+    </div>
+    <p class="callout" id="callout"></p>
+  </div>
+
+  <div class="card">
+    <p class="card-title">Working it out: the latest interval</p>
+    <div id="latest"></div>
+  </div>
+
+  <div class="card">
+    <p class="card-title">Examples from the lecture</p>
+    <div class="presets" id="exSeg"></div>
+    <div id="example" style="margin-top:20px"></div>
+  </div>
+</div>
+
+<script>
+/* ---------- theme toggle (shares the site's stored preference) ---------- */
+(function(){
+  var root = document.documentElement;
+  var btn  = document.getElementById('themeToggle');
+  function current(){ return root.getAttribute('data-theme') === 'light' ? 'light' : 'dark'; }
+  function sync(){
+    var t = current();
+    btn.setAttribute('aria-pressed', t === 'light' ? 'true' : 'false');
+    document.getElementById('tmode').textContent = t === 'light' ? 'Light' : 'Dark';
+  }
+  sync();
+  btn.addEventListener('click', function(){
+    var t = current() === 'light' ? 'dark' : 'light';
+    root.setAttribute('data-theme', t);
+    try{ localStorage.setItem('theme', t); }catch(e){}
+    sync();
+  });
+})();
+
+const NS = 'http://www.w3.org/2000/svg';
+const MONO = "'JetBrains Mono', monospace";
+function el(tag, attrs, text) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) if (attrs[k] !== undefined && attrs[k] !== null) e.setAttribute(k, attrs[k]);
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+function gauss() { let u = 0, v = 0; while (u === 0) u = Math.random(); while (v === 0) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+function npdf(x, m, s) { return Math.exp(-((x - m) ** 2) / (2 * s * s)) / (s * Math.sqrt(2 * Math.PI)); }
+// round half away from zero; the epsilon stops a value such as 0.625 being stored just below the half
+function rnd(v, dp) { const f = 10 ** dp; return Math.sign(v) * Math.round(Math.abs(v) * f + 1e-7) / f; }
+function fx(v, dp) { const s = rnd(v, dp).toFixed(dp); return s.startsWith('-') && parseFloat(s) !== 0 ? '−' + s.slice(1) : s.replace(/^-/, ''); }
+function ph(t) { return t.replace(/([ȳȲ])/g, '<span class="ph">$1</span>'); }
+
+/* ---- the t distribution, for the t multiplier (Table 10 of NCST) ---- */
+function lgamma(x) {
+  const c = [76.18009172947146, -86.50532032941677, 24.01409824083091, -1.231739572450155, 0.1208650973866179e-2, -0.5395239384953e-5];
+  let y = x, tmp = x + 5.5; tmp -= (x + 0.5) * Math.log(tmp);
+  let ser = 1.000000000190015;
+  for (let j = 0; j < 6; j++) ser += c[j] / ++y;
+  return -tmp + Math.log(2.5066282746310005 * ser / x);
+}
+function betacf(a, b, x) {
+  const MAXIT = 200, EPS = 3e-14, FPMIN = 1e-300;
+  let qab = a + b, qap = a + 1, qam = a - 1, c = 1, d = 1 - qab * x / qap;
+  if (Math.abs(d) < FPMIN) d = FPMIN; d = 1 / d; let h = d;
+  for (let m = 1; m <= MAXIT; m++) {
+    const m2 = 2 * m;
+    let aa = m * (b - m) * x / ((qam + m2) * (a + m2));
+    d = 1 + aa * d; if (Math.abs(d) < FPMIN) d = FPMIN; c = 1 + aa / c; if (Math.abs(c) < FPMIN) c = FPMIN; d = 1 / d; h *= d * c;
+    aa = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2));
+    d = 1 + aa * d; if (Math.abs(d) < FPMIN) d = FPMIN; c = 1 + aa / c; if (Math.abs(c) < FPMIN) c = FPMIN; d = 1 / d;
+    const del = d * c; h *= del; if (Math.abs(del - 1) < EPS) break;
+  }
+  return h;
+}
+function ibeta(x, a, b) {
+  if (x <= 0) return 0; if (x >= 1) return 1;
+  const bt = Math.exp(lgamma(a + b) - lgamma(a) - lgamma(b) + a * Math.log(x) + b * Math.log(1 - x));
+  return x < (a + 1) / (a + b + 2) ? bt * betacf(a, b, x) / a : 1 - bt * betacf(b, a, 1 - x) / b;
+}
+function tcdf(t, v) { const p = 0.5 * ibeta(v / (v + t * t), v / 2, 0.5); return t >= 0 ? 1 - p : p; }
+// the value with Pr(T ≥ t) = α, rounded to 3 dp as printed in Table 10
+function tUpper(alpha, v) { let lo = 0, hi = 700; for (let i = 0; i < 120; i++) { const m = (lo + hi) / 2; if (1 - tcdf(m, v) > alpha) lo = m; else hi = m; } return rnd((lo + hi) / 2, 3); }
+
+const MU = 50, SIG = 10;
+// the values used on the slides; 68% is the empirical rule's ±1 standard deviation (exactly 68.27%)
+const Z = { 68: 1, 90: 1.65, 95: 1.96, 99: 2.58 };
+let level = 95, n = 10, method = 'z';
+let samples = [];                              // { ybar, s }
+
+const alphaHalf = () => (1 - level / 100) / 2;
+function multiplier() { return method === 'st' ? tUpper(alphaHalf(), n - 1) : Z[level]; }
+function intervalOf(sm) {
+  const se = method === 'z' ? SIG / Math.sqrt(n) : sm.s / Math.sqrt(n);
+  const me = multiplier() * se;
+  return { lo: sm.ybar - me, hi: sm.ybar + me, me, se, hit: sm.ybar - me <= MU && MU <= sm.ybar + me };
+}
+
+function drawSamples(m) {
+  for (let k = 0; k < m; k++) {
+    const vals = [];
+    for (let i = 0; i < n; i++) vals.push(MU + SIG * gauss());
+    const ybar = vals.reduce((a, b) => a + b, 0) / n;
+    const s = Math.sqrt(vals.reduce((a, b) => a + (b - ybar) ** 2, 0) / (n - 1));
+    samples.push({ ybar, s });
+  }
+  render();
+}
+
+// on a phone the drawing is narrower, so it is scaled down less and the text stays readable
+function frame() {
+  const small = window.innerWidth < 560;
+  return { small, W: small ? 400 : 680, FS: small ? 15 : 12, ML: small ? 14 : 20, MR: small ? 14 : 20 };
+}
+function range() { const h = 5 * SIG / Math.sqrt(n); return [MU - h, MU + h]; }
+function xs(f, r) { return v => f.ML + ((v - r[0]) / (r[1] - r[0])) * (f.W - f.ML - f.MR); }
+function axis(svg, f, r, base) {
+  const x = xs(f, r);
+  svg.appendChild(el('line', { x1: f.ML, x2: f.W - f.MR, y1: base, y2: base, stroke: 'var(--haze-dim)', 'stroke-width': 1.2 }));
+  const pxPer = (f.W - f.ML - f.MR) / (r[1] - r[0]);
+  const step = [1, 2, 5, 10, 20].find(s => s * pxPer >= f.FS * 2.6) || 20;
+  for (let v = Math.ceil(r[0] / step) * step; v <= r[1] + 1e-9; v += step) {
+    svg.appendChild(el('line', { x1: x(v), x2: x(v), y1: base, y2: base + 5, stroke: 'var(--haze-dim)', 'stroke-width': 1 }));
+    svg.appendChild(el('text', { x: x(v), y: base + f.FS + 7, 'text-anchor': 'middle', 'font-size': f.FS, 'font-family': MONO, fill: 'var(--haze-dim)' }, v));
+  }
+}
+
+function renderTop() {
+  const f = frame();
+  const svg = document.getElementById('topChart');
+  const H = f.small ? 250 : 230, MT = f.FS + 14, MB = f.FS + 18, base = H - MB, plotH = base - MT;
+  svg.setAttribute('viewBox', `0 0 ${f.W} ${H}`);
+  svg.innerHTML = '';
+  const r = range(), x = xs(f, r), se = SIG / Math.sqrt(n), zq = Z[level];
+  const peak = npdf(MU, MU, se);
+  const y = v => base - (v / (peak * 1.12)) * plotH;
+  function region(lo, hi, fill, op) {
+    const pts = [`${x(lo)},${base}`];
+    for (let i = 0; i <= 80; i++) { const v = lo + (i / 80) * (hi - lo); pts.push(`${x(v)},${y(npdf(v, MU, se))}`); }
+    pts.push(`${x(hi)},${base}`);
+    svg.appendChild(el('polygon', { points: pts.join(' '), fill, 'fill-opacity': op }));
+  }
+  region(MU - zq * se, MU + zq * se, 'var(--amber)', 0.2);
+  region(r[0], MU - zq * se, 'var(--steel)', 0.35);
+  region(MU + zq * se, r[1], 'var(--steel)', 0.35);
+  let pts = '';
+  for (let i = 0; i <= 300; i++) { const v = r[0] + (i / 300) * (r[1] - r[0]); pts += `${x(v)},${y(npdf(v, MU, se))} `; }
+  svg.appendChild(el('polyline', { points: pts.trim(), fill: 'none', stroke: 'var(--haze-dim)', 'stroke-width': 2 }));
+  [MU - zq * se, MU + zq * se].forEach(v => svg.appendChild(el('line', { x1: x(v), x2: x(v), y1: base, y2: y(npdf(v, MU, se)), stroke: 'var(--haze-dim)', 'stroke-width': 1.3, 'stroke-dasharray': '4,3' })));
+  svg.appendChild(el('text', { x: x(MU) + 10, y: y(peak) + plotH * 0.42, 'text-anchor': 'start', 'font-size': f.FS + 6, 'font-family': "'Space Grotesk', sans-serif", 'font-weight': 500, fill: 'var(--amber)' }, `${level}%`));
+
+  const recent = samples.slice(-50);
+  recent.forEach((sm, i) => {
+    const v = Math.max(r[0], Math.min(r[1], sm.ybar));
+    const outside = Math.abs(sm.ybar - MU) > zq * se;
+    svg.appendChild(el('circle', { cx: x(v), cy: base - 7 - (i % 5) * 6, r: f.small ? 4 : 3.6, fill: outside ? 'var(--terra)' : 'var(--steel-text)', 'fill-opacity': i === recent.length - 1 ? 1 : 0.6 }));
+  });
+  svg.appendChild(el('line', { x1: x(MU), x2: x(MU), y1: base, y2: MT - 4, stroke: 'var(--amber)', 'stroke-width': 2 }));
+  svg.appendChild(el('text', { x: x(MU), y: MT - 8, 'text-anchor': 'middle', 'font-size': f.FS, 'font-family': MONO, 'font-weight': 500, fill: 'var(--amber)' }, 'μ = 50'));
+  axis(svg, f, r, base);
+  document.getElementById('topNote').innerHTML = ph(`Ȳ ~ N(μ, σ²/n) = N(50, ${(SIG / Math.sqrt(n)).toFixed(2)}²). The shaded middle ${level}% runs from μ − ${zq}σ/√n to μ + ${zq}σ/√n. Each dot is one sample’s ȳ, and the terracotta dots fell in the tails.`);
+}
+
+function renderIntervals() {
+  const f = frame();
+  const svg = document.getElementById('ciChart');
+  const rows = 50, rowH = f.small ? 7 : 7.6, MT = 12, MB = f.FS + 18;
+  const H = MT + rows * rowH + MB, base = H - MB;
+  svg.setAttribute('viewBox', `0 0 ${f.W} ${H}`);
+  svg.innerHTML = '';
+  const r = range(), x = xs(f, r);
+  const recent = samples.slice(-rows).reverse();   // newest at the top
+  recent.forEach((sm, i) => {
+    const iv = intervalOf(sm);
+    const yy = MT + i * rowH + rowH / 2;
+    const col = iv.hit ? 'var(--ok)' : 'var(--terra)';
+    const lo = Math.max(r[0], iv.lo), hi = Math.min(r[1], iv.hi);
+    svg.appendChild(el('line', { x1: x(lo), x2: x(hi), y1: yy, y2: yy, stroke: col, 'stroke-width': i === 0 ? 3.6 : 2.3, 'stroke-linecap': 'round' }));
+    // an arrow where the interval runs past the edge of the chart
+    if (iv.lo < r[0]) svg.appendChild(el('path', { d: `M${x(r[0]) + 5},${yy - 3} L${x(r[0])},${yy} L${x(r[0]) + 5},${yy + 3}`, fill: 'none', stroke: col, 'stroke-width': 1.4 }));
+    if (iv.hi > r[1]) svg.appendChild(el('path', { d: `M${x(r[1]) - 5},${yy - 3} L${x(r[1])},${yy} L${x(r[1]) - 5},${yy + 3}`, fill: 'none', stroke: col, 'stroke-width': 1.4 }));
+    svg.appendChild(el('circle', { cx: x(Math.max(r[0], Math.min(r[1], sm.ybar))), cy: yy, r: 2.3, fill: col }));
+  });
+  svg.appendChild(el('line', { x1: x(MU), x2: x(MU), y1: MT - 6, y2: base, stroke: 'var(--amber)', 'stroke-width': 2 }));
+  axis(svg, f, r, base);
+
+  const m = multiplier();
+  const mult = method === 'st' ? `t(${n - 1} df) = ${m.toFixed(3)}` : `z = ${m}`;
+  const sd = method === 'z' ? 'σ' : 's';
+  document.getElementById('formula').textContent = `${level}% CI: ȳ ± ${mult} × ${sd}/√${n}`;
+}
+
+function renderStats() {
+  const N = samples.length;
+  document.getElementById('sTotal').textContent = N.toLocaleString('en-GB');
+  document.getElementById('sCoverSub').textContent = `target: ${level}%`;
+  const cov = document.getElementById('sCover');
+  let coverage = 0;
+  if (!N) {
+    cov.textContent = '—'; cov.style.color = '';
+    document.getElementById('sWidth').textContent = '—';
+    document.getElementById('sWidthSub').textContent = '';
+  } else {
+    let hits = 0, width = 0;
+    samples.forEach(sm => { const iv = intervalOf(sm); if (iv.hit) hits++; width += iv.hi - iv.lo; });
+    coverage = hits / N * 100;
+    cov.textContent = `${coverage.toFixed(1)}%`;
+    cov.style.color = Math.abs(coverage - level) <= 2.5 || N < 100 ? 'var(--ok)' : 'var(--terra)';
+    document.getElementById('sWidth').textContent = (width / N).toFixed(2);
+    document.getElementById('sWidthSub').textContent = method === 'z' ? `always 2 × ${Z[level]} × 10/√${n}` : 'varies with s';
+  }
+  let msg;
+  if (N < 20) {
+    msg = 'Draw some samples. Each interval either contains μ or it does not, and μ itself never moves. Then draw 100 at a time and watch the percentage.';
+  } else if (method === 'z') {
+    msg = `About <strong>${level}%</strong> of the intervals contain μ (${coverage.toFixed(1)}% so far${level === 68 ? '; the exact figure for ±1 standard error is 68.27%' : ''}). That is what “${level}% confidence” means: it describes the <strong>method</strong>, not any single interval. Try changing the level or n.`;
+  } else if (method === 'sz') {
+    msg = n < 30
+      ? `Using s with the z multiplier, only <strong>${coverage.toFixed(1)}%</strong> of the intervals contain μ, below the ${level}% promised. With n = ${n}, s is itself uncertain, so the intervals are too narrow. Now switch to <strong>t</strong> on the same samples.`
+      : `With n = ${n}, s is a good estimate of σ, so using z is fine: coverage is ${coverage.toFixed(1)}%. This is why the Normal can replace the t distribution when n ≥ 30.`;
+  } else {
+    msg = `The t multiplier (${multiplier().toFixed(3)} with ${n - 1} df, larger than z = ${Z[level]}) widens each interval to allow for s being uncertain, which brings coverage back to about <strong>${level}%</strong> (${coverage.toFixed(1)}% so far).`;
+  }
+  document.getElementById('callout').innerHTML = ph(msg);
+}
+
+// ---- aligned derivations, with the rule named on each line ----
+const grid = rows => '<div class="deriv"><div class="d-grid">' + rows.map(d =>
+  `<span class="d-l">${d.l || ''}</span><span class="d-r${d.res ? ' res' : ''}">${d.r}</span><span class="d-w">${ph(d.w || '')}</span>`).join('') + '</div></div>';
+// percentages and tail areas, trimmed: P = 5 rather than 5.0, and 0.05 rather than 0.050
+const trim = (v, dp) => String(parseFloat(rnd(v, dp).toFixed(dp)));
+const pctP = () => trim(alphaHalf() * 100, 1);
+
+function renderLatest() {
+  const box = document.getElementById('latest');
+  if (!samples.length) { box.innerHTML = '<p class="empty">Draw a sample to see its interval worked out.</p>'; return; }
+  const sm = samples[samples.length - 1], iv = intervalOf(sm), m = multiplier();
+  const known = method === 'z';
+  const sd = known ? 'σ' : 's', sdv = known ? String(SIG) : sm.s.toFixed(3);
+  const multSym = method === 'st' ? `t${sup(n - 1)}${sub(trim(alphaHalf(), 3))}` : `z${sub(trim(alphaHalf(), 3))}`;
+  const multRule = method === 'st'
+    ? `σ unknown: t with n − 1 = ${n - 1} df and P = ${pctP()}${level === 68 ? ', computed here since Table 10 does not list P = 16' : ', from Table 10'}`
+    : `${known ? 'σ known' : 'σ unknown, but z used anyway'}: z for ${level}% confidence${level === 68 ? ', one standard deviation either side' : ', as on the slides'}`;
+  box.innerHTML = `<p class="d-given">n = ${n}, ȳ = ${sm.ybar.toFixed(2)}, ${known ? 'σ = 10' : `s = ${sm.s.toFixed(3)}`}</p>` + grid([
+    { l: `${level}% CI`, r: `= ȳ ± ${multSym} × ${sd}/√n`, w: multRule },
+    { l: '', r: `= ${sm.ybar.toFixed(2)} ± ${m.toFixed(method === 'st' ? 3 : 2)} × ${sdv}/√${n}`, w: '' },
+    { l: '', r: `= ${sm.ybar.toFixed(2)} ± ${iv.me.toFixed(2)}`, w: 'margin of error, ME = multiplier × standard error' },
+    { l: '', r: `= (${iv.lo.toFixed(2)} ; ${iv.hi.toFixed(2)})`, w: iv.hit ? `contains μ = 50` : `misses μ = 50`, res: true }
+  ]) + `<p class="note">This interval <strong class="${iv.hit ? 'ok' : 'miss'}">${iv.hit ? 'contains' : 'misses'}</strong> μ. We would never know that in practice, because μ is unknown; the ${level}% describes how often the method succeeds over many samples.</p>`;
+}
+function sub(t) { return `<sub>${t}</sub>`; }
+function sup(t) { return `<sup>${t}</sup>`; }
+
+/* ---- worked examples from the lecture slides ---- */
+const EXAMPLES = [
+  { label: 'Meningitis, 95%', title: 'Body temperature and meningitis', n: 10, ybar: 39.51, s: 1.279, level: 95, dp: 2,
+    end: r => `We are 95% confident that the mean body temperature of all patients hospitalised with meningitis is between ${r[0]} and ${r[1]} degrees Celsius.` },
+  { label: 'Soil pH, 90%', title: 'Soil pH', n: 26, ybar: 4.318, s: 1.003, level: 90, dp: 3 },
+  { label: 'Soil pH, 95%', title: 'Soil pH', n: 26, ybar: 4.318, s: 1.003, level: 95, dp: 3,
+    end: () => 'The 95% interval is wider than the 90% interval: a higher confidence level needs a larger multiplier, so the margin of error grows.' }
+];
+let exIdx = 0;
+function renderExample() {
+  const ex = EXAMPLES[exIdx];
+  const ah = (1 - ex.level / 100) / 2;
+  const t = tUpper(ah, ex.n - 1);
+  const se = ex.s / Math.sqrt(ex.n), me = t * se;
+  const lo = ex.ybar - me, hi = ex.ybar + me;
+  const P = trim(ah * 100, 1);
+  const res = [lo.toFixed(ex.dp), hi.toFixed(ex.dp)];
+  document.querySelectorAll('#exSeg .pill').forEach((b, i) => { b.classList.toggle('active', i === exIdx); b.setAttribute('aria-pressed', i === exIdx); });
+  document.getElementById('example').innerHTML =
+    `<p class="d-title">${ex.title}</p><p class="d-given">n = ${ex.n}, ȳ = ${ex.ybar}, s = ${ex.s}, so σ is unknown</p>` + grid([
+      { l: `${ex.level}% CI`, r: `= ȳ ± t${sup(ex.n - 1)}${sub(trim(ah, 3))} × s/√n`, w: 'σ unknown, so use t with n − 1 degrees of freedom' },
+      { l: '', r: `= ${ex.ybar} ± ${t.toFixed(3)} × ${ex.s}/√${ex.n}`, w: `Table 10: ν = ${ex.n - 1}, P = ${P}` },
+      { l: '', r: `= ${ex.ybar} ± ${t.toFixed(3)} × ${se.toFixed(4)}`, w: `standard error, s/√n = ${ex.s}/${Math.sqrt(ex.n).toFixed(4)}` },
+      { l: '', r: `= ${ex.ybar} ± ${me.toFixed(ex.dp)}`, w: 'margin of error' },
+      { l: '', r: `= (${res[0]} ; ${res[1]})`, w: '', res: true }
+    ]) + (ex.end ? `<p class="note">${ex.end(res.map(v => parseFloat(v).toFixed(1)))}</p>` : '');
+}
+const exWrap = document.getElementById('exSeg');
+EXAMPLES.forEach((ex, i) => {
+  const b = document.createElement('button');
+  b.className = 'pill case'; b.type = 'button'; b.textContent = ex.label;
+  b.addEventListener('click', () => { exIdx = i; renderExample(); });
+  exWrap.appendChild(b);
+});
+
+function render() {
+  renderTop(); renderIntervals(); renderStats(); renderLatest();
+  document.querySelectorAll('#levelSeg .pill').forEach(b => { const on = parseInt(b.dataset.level, 10) === level; b.classList.toggle('active', on); b.setAttribute('aria-pressed', on); });
+  document.querySelectorAll('#nSeg .pill').forEach(b => { const on = parseInt(b.dataset.n, 10) === n; b.classList.toggle('active', on); b.setAttribute('aria-pressed', on); });
+  document.querySelectorAll('#methodSeg .pill').forEach(b => { const on = b.dataset.method === method; b.classList.toggle('active', on); b.setAttribute('aria-pressed', on); });
+}
+
+// a new level or method re-uses the same samples, so the rules can be compared; a new n starts again
+document.querySelectorAll('#levelSeg .pill').forEach(b => b.addEventListener('click', () => { level = parseInt(b.dataset.level, 10); render(); }));
+document.querySelectorAll('#methodSeg .pill').forEach(b => b.addEventListener('click', () => { method = b.dataset.method; render(); }));
+document.querySelectorAll('#nSeg .pill').forEach(b => b.addEventListener('click', () => { n = parseInt(b.dataset.n, 10); samples = []; render(); }));
+document.getElementById('draw1').addEventListener('click', () => drawSamples(1));
+document.getElementById('draw20').addEventListener('click', () => drawSamples(20));
+document.getElementById('draw100').addEventListener('click', () => drawSamples(100));
+document.getElementById('resetBtn').addEventListener('click', () => { samples = []; render(); });
+
+let resizeTimer;
+window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(render, 150); });
+
+render();
+renderExample();
+</script>
+
+</body>
+</html>

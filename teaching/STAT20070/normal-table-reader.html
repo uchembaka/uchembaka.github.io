@@ -260,7 +260,7 @@
   </div>
 
   <header>
-    <p class="eyebrow">Section 2 · Lecture 09 · Sampling Distribution</p>
+    <p class="eyebrow">Section 2 · Lecture 08 · Normal Distribution</p>
     <h1>Normal Table Reader</h1>
     <p class="sub">Normal tables are printed only for the <b>standard</b> Normal, Z ~ N(0, 1), and only for positive values. So every question is solved the same way: standardise, rewrite it into the form the table gives, and look it up. To work backwards from a percentage, follow the same steps in reverse.</p>
   </header>
@@ -577,8 +577,9 @@ function renderProb() {
     const dp = Math.min(tabDp(tb.x), tabDp(ta.x));
     const pv = t => phiTab(t.x).toFixed(tabDp(t.x));
     const add = (r, w, res) => rows.push({ l: rows.length ? '' : question, r, w, res });
-    add(`= Pr(${fx(za.z, 2)} ≤ Z ≤ ${fx(zb.z, 2)})`, `standardise both ends: ${ZForm}${za.exact && zb.exact ? '' : '; ' + ROUND_NOTE}`);
-    add(`= Φ(${fx(zb.z, 2)}) − Φ(${fx(za.z, 2)})`, 'difference of two cumulative probabilities');
+    add(`= Pr(${Vv} ≤ ${fmt(b, 2)}) − Pr(${Vv} ≤ ${fmt(a, 2)})`, 'difference of two cumulative probabilities');
+    add(`= Pr(Z ≤ ${fx(zb.z, 2)}) − Pr(Z ≤ ${fx(za.z, 2)})`, `standardise both ends: ${ZForm}${za.exact && zb.exact ? '' : '; ' + ROUND_NOTE}`);
+    add(`= Φ(${fx(zb.z, 2)}) − Φ(${fx(za.z, 2)})`, 'Φ(x) = Pr(Z ≤ x)');
     if (ta.sym || tb.sym) add(`= ${tb.sym ? `[${tb.expr}]` : tb.expr} − ${ta.sym ? `[${ta.expr}]` : ta.expr}`, 'symmetry: Φ(−x) = 1 − Φ(x)');
     const term = t => t.sym ? `[1 − ${pv(t)}]` : pv(t);
     add(`= ${term(tb)} − ${term(ta)}`, 'Table 4');
@@ -606,12 +607,21 @@ function renderProb() {
     steps.push({ t: 'Look up Table 4', b: `<span class="eq">Φ(${fx(tt.x, 2)}) = ${phiTab(tt.x).toFixed(dp)}</span>` });
 
     const add = (r, w, res) => rows.push({ l: rows.length ? '' : question, r, w, res });
-    add(`= Pr(Z ${sign} ${fx(zz.z, 2)})`, `standardise: ${ZForm}${zz.exact ? '' : '; ' + ROUND_NOTE}`);
-    if (tt.sym) add(`= Pr(Z ${kind === 'le' ? '≥' : '≤'} ${fx(tt.x, 2)})`, 'symmetry about 0');
-    if (tt.comp) add(`= 1 − Φ(${fx(tt.x, 2)})`, 'complement rule');
-    else add(`= Φ(${fx(tt.x, 2)})`, 'Φ(x) = Pr(Z ≤ x)');
-    if (tt.comp) add(`= 1 − ${phiTab(tt.x).toFixed(dp)}`, 'Table 4');
-    add(`= ${tt.val.toFixed(dp)}`, tt.comp ? '' : 'Table 4', true);
+    // every answer is first written with Pr(… ≤ …), the only form the table gives, then standardised
+    const zs = fx(zz.z, 2), xs = fx(tt.x, 2), tv = phiTab(tt.x).toFixed(dp);
+    const std = `standardise: ${ZForm}${zz.exact ? '' : '; ' + ROUND_NOTE}`;
+    if (kind === 'le') {
+      add(`= Pr(Z ≤ ${zs})`, std);
+      add(`= Φ(${zs})`, 'Φ(x) = Pr(Z ≤ x)');
+      if (tt.sym) { add(`= 1 − Φ(${xs})`, 'symmetry: Φ(−x) = 1 − Φ(x)'); add(`= 1 − ${tv}`, 'Table 4'); }
+    } else {
+      add(`= 1 − Pr(${Vv} ≤ ${fmt(S.y, 2)})`, 'complement rule');
+      add(`= 1 − Pr(Z ≤ ${zs})`, std);
+      add(`= 1 − Φ(${zs})`, 'Φ(x) = Pr(Z ≤ x)');
+      if (tt.sym) { add(`= 1 − [1 − Φ(${xs})]`, 'symmetry: Φ(−x) = 1 − Φ(x)'); add(`= Φ(${xs})`, ''); }
+      else add(`= 1 − ${tv}`, 'Table 4');
+    }
+    add(`= ${tt.val.toFixed(dp)}`, (kind === 'le' && !tt.sym) || (kind === 'ge' && tt.sym) ? 'Table 4' : '', true);
 
     const inf = 1e6;
     shadeY = kind === 'le' ? [[-inf, S.y]] : [[S.y, inf]];
