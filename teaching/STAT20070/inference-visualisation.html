@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>(function(){try{var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark"){t=(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+<title>Inference Visualisation — Uche Mbaka</title>
+<meta name="description" content="A companion lab for STAT 20070 that follows the in-class R script on inference, starting from the Central Limit Theorem: average waiting times at a bus stop, standardise the means, compare z with t, and check how often confidence intervals cover the true mean.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#080A0F; --surface:#0D1017; --sunk:#11151D; --ink:#E9E6DF; --muted:#B9B6AE; --faint:#6A7180; --line:rgba(233,230,223,.12);
+  --accent:#CFA15F; --accent-ink:#080A0F; --accent-soft:rgba(207,161,95,.16);
+  --bar:#4F6575; --barhi:#CFA15F; --curve:#E9E6DF; --alt:#CFA15F; --cross:#C98A6B; --mean:#A9C0CF;
+  --good:#7E9E82; --miss:#C98A6B; --popc:#7E9E82;
+  --f-display:"Space Grotesk", system-ui, sans-serif;
+  --f-body:"Newsreader", Georgia, serif;
+  --f-mono:"JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+  --r:14px; color-scheme:dark;
+}
+[data-theme="light"]{
+  --bg:#F3F0E9; --surface:#FBFAF5; --sunk:#EFEBE2; --ink:#1B1C20; --muted:#4A4C54; --faint:#6E727D; --line:rgba(20,21,26,.12);
+  --accent:#9E6B22; --accent-ink:#FBFAF5; --accent-soft:rgba(158,107,34,.12);
+  --bar:#A9BAC6; --barhi:#9E6B22; --curve:#1B1C20; --alt:#9E6B22; --cross:#A0502F; --mean:#4A6377;
+  --good:#3F6B4F; --miss:#A0502F; --popc:#3F6B4F; color-scheme:light;
+}
+/* the chapters use the hidden attribute; keep it stronger than section.ch{display:grid} */
+[hidden]{display:none!important}
+html,body{margin:0;padding:0}
+/* Layout: a lab notebook that follows the R script. Sticky chapter rail (script sections, in order); each chapter = lede + bench (controls | live plots and readouts). */
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3,h4{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+p{margin:0}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+
+.mast{background:var(--surface);border-bottom:1px solid var(--line)}
+.mast .wrap{padding-block:28px 22px;display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:28px;align-items:end}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.mast h1{font-size:clamp(30px,4.6vw,48px);line-height:1.02;font-weight:700;margin-top:8px}
+.mast h1 em{font-style:normal;color:var(--accent)}
+.mast .lede{margin-top:12px;max-width:62ch;color:var(--muted)}
+.facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.facts>div{padding:12px 14px;border-right:1px solid var(--line);display:grid;gap:2px;min-width:0}
+.facts>div:last-child{border-right:0}
+.facts b{font-family:var(--f-mono);font-size:19px;font-weight:500}
+.facts span,.facts label{font-size:12px;color:var(--muted)}
+.facts select{font:inherit;font-family:var(--f-mono);font-size:14px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:3px 4px;width:100%}
+
+.rail{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+.rail .wrap{display:flex;gap:4px;overflow-x:auto;scrollbar-width:thin;padding-block:8px}
+.rail button{flex:0 0 auto;border:1px solid transparent;background:none;color:var(--muted);font:inherit;font-size:13.5px;padding:7px 12px 7px 10px;border-radius:8px;cursor:pointer;display:flex;gap:8px;align-items:baseline;white-space:nowrap}
+.rail button .n{font-family:var(--f-mono);font-size:11px;opacity:.8}
+.rail button .lec{font-family:var(--f-mono);font-size:10.5px;opacity:.7}
+.rail button:hover{background:var(--sunk);color:var(--ink)}
+.rail button[aria-selected="true"]{background:var(--accent-soft);color:var(--ink);border-color:var(--accent)}
+
+main .wrap{padding-block:26px 40px}
+section.ch{display:grid;gap:22px}
+.ch-head{display:grid;gap:8px;max-width:80ch}
+.ch-head h2{font-size:clamp(24px,3vw,32px);font-weight:700}
+.ch-head p{color:var(--muted)}
+.tag{font-family:var(--f-mono);font-size:11.5px;color:var(--accent);letter-spacing:.04em}
+
+.bench{display:grid;grid-template-columns:minmax(240px,290px) minmax(0,1fr);gap:18px;align-items:start}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:grid;gap:12px;min-width:0}
+.panel h3{font-size:17px;font-weight:700}
+.panel h4{font-size:14px;font-weight:700}
+.controls{position:sticky;top:64px;gap:14px}
+.out{display:grid;gap:16px;min-width:0}
+.field{display:grid;gap:5px}
+.field label,.field .lab{font-size:12.5px;font-weight:600;color:var(--muted)}
+.field output{font-family:var(--f-mono);font-size:13px;color:var(--ink);font-weight:500}
+select,input[type=number],textarea{font:inherit;font-size:14px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px 9px;width:100%}
+textarea{font-family:var(--f-mono);font-size:13px;resize:vertical}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{flex:1;border:0;background:var(--bg);color:var(--muted);font:inherit;font-size:13px;padding:7px 4px;cursor:pointer;border-right:1px solid var(--line);font-variant-numeric:tabular-nums}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:600}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+.btn{font:inherit;font-size:13.5px;font-weight:600;border-radius:8px;padding:8px 12px;cursor:pointer;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink)}
+.btn.ghost{background:transparent;color:var(--accent)}
+.btn:hover{filter:brightness(1.07)}
+.btn:disabled{opacity:.6;cursor:progress}
+.check{display:flex;gap:8px;align-items:center;font-size:14px;cursor:pointer}
+.check input{accent-color:var(--accent);width:16px;height:16px}
+.code{font-family:var(--f-mono);font-size:12px;color:var(--muted);background:var(--sunk);border-radius:6px;padding:8px 10px;white-space:pre-wrap;line-height:1.6}
+.code b{color:var(--ink);font-weight:500}
+
+.chartbox{min-width:0;width:100%}
+.chartbox canvas{display:block;width:100%}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12.5px;color:var(--muted)}
+.legend i{display:inline-block;width:14px;height:3px;vertical-align:middle;margin-right:6px;border-radius:2px}
+.legend i.dash{background:repeating-linear-gradient(90deg,var(--muted) 0 4px,transparent 4px 7px)!important}
+.readout{font-family:var(--f-mono);font-size:13px;color:var(--ink);min-height:1.6em}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));border-top:1px solid var(--line);border-left:1px solid var(--line);border-radius:8px;overflow:hidden}
+.stats div{background:var(--surface);padding:9px 11px;display:grid;gap:1px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.stats span{font-size:11.5px;color:var(--muted)}
+.stats b{font-family:var(--f-mono);font-weight:500;font-size:16px;font-variant-numeric:tabular-nums}
+.work{background:var(--sunk);border:1px solid var(--line);border-radius:8px;padding:12px 14px;font-family:var(--f-mono);font-size:13px;line-height:1.75;overflow-x:auto;white-space:pre-wrap}
+.work .k{color:var(--accent);font-weight:500}
+.say{border-left:3px solid var(--accent);padding:4px 0 4px 12px;max-width:76ch}
+.note{font-size:13px;color:var(--muted);max-width:78ch}
+
+.tscroll{overflow-x:auto}
+table.t{border-collapse:collapse;width:100%;font-size:13px}
+table.t th,table.t td{padding:6px 9px;border-bottom:1px solid var(--line);text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+table.t th{font-family:var(--f-body);font-size:12.5px;color:var(--muted);font-weight:600}
+table.t th:first-child,table.t td:first-child{text-align:left}
+table.t td.flag{color:var(--miss);font-weight:600}
+table.t td.ok{color:var(--good)}
+table.t td.no{color:var(--miss);font-weight:600}
+table.t .sep{border-left:1px solid var(--line)}
+
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.quad{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 18px}
+.quad>div{display:grid;gap:4px;min-width:0}
+
+.cov{display:grid;gap:12px}
+.covrow{display:grid;grid-template-columns:minmax(120px,190px) minmax(0,1fr) 64px;gap:12px;align-items:center}
+.covrow .lab{font-size:13.5px}
+.covrow .lab small{display:block;color:var(--muted);font-size:12px}
+.track{position:relative;height:22px;background:var(--sunk);border-radius:6px;overflow:hidden}
+.fill{position:absolute;inset:0 auto 0 0;background:var(--bar);border-radius:6px 0 0 6px}
+.fill.low{background:var(--miss);opacity:.75}
+.target{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink)}
+.covrow b{font-family:var(--f-mono);font-weight:500;text-align:right}
+
+footer{border-top:1px solid var(--line);color:var(--muted);font-size:12.5px}
+footer .wrap{padding-block:18px 28px;display:grid;gap:6px}
+
+@media (max-width:860px){
+  .mast .wrap{grid-template-columns:1fr}
+  .bench{grid-template-columns:minmax(0,1fr)}
+  .controls{position:static}
+  .grid2,.quad{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:480px){ .facts b{font-size:16px} .covrow{grid-template-columns:minmax(0,1fr) 56px} .covrow .track{grid-column:1 / -1;grid-row:2} }
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+body{font-weight:300;font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased;transition:background .35s ease,color .35s ease}
+::selection{background:rgba(207,161,95,.22);color:var(--ink)}
+b,strong{font-weight:500}
+h1,h2,h3,h4{font-weight:500;letter-spacing:-.02em}
+.toprow{display:flex;align-items:center;justify-content:space-between;gap:18px;padding-block:26px 0}
+.mono-l{font-family:var(--f-mono);font-weight:400;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--faint)}
+.back{text-decoration:none;transition:color .25s}
+.back:hover{color:var(--accent)}
+.theme-toggle{display:inline-flex;align-items:center;gap:10px;background:none;border:0;padding:0;cursor:pointer;font:inherit;line-height:1}
+.theme-toggle .tmode{transition:color .25s}
+.theme-toggle:hover .tmode{color:var(--accent)}
+.theme-toggle .track{width:40px;height:21px;border-radius:999px;border:1px solid var(--line);position:relative;transition:border-color .25s;flex:0 0 auto}
+.theme-toggle:hover .track{border-color:var(--accent)}
+.theme-toggle .knob{position:absolute;top:50%;left:3px;transform:translateY(-50%);width:13px;height:13px;border-radius:50%;background:var(--faint);transition:left .28s cubic-bezier(.4,0,.2,1),background .25s}
+[data-theme="light"] .theme-toggle .knob{left:22px;background:var(--accent)}
+.theme-toggle:focus-visible{outline:none}
+.theme-toggle:focus-visible .track{outline:2px solid var(--accent);outline-offset:3px}
+.mast{background:none;border-bottom:0}
+.mast .wrap{padding-block:30px 26px}
+.eyebrow{font-size:11px;letter-spacing:.2em;color:var(--faint);margin:0 0 16px}
+.mast h1{font-size:clamp(30px,5.4vw,44px);letter-spacing:-.025em;margin:0 0 16px}
+.mast .lede{margin-top:0;max-width:60ch;font-size:17px}
+.facts b{font-family:var(--f-display);font-size:22px;font-weight:500;line-height:1.15}
+.facts span,.facts label{font-family:var(--f-mono);font-size:11.5px;line-height:1.4;color:var(--faint)}
+.facts select{font-family:var(--f-display);font-weight:500;font-size:14px;padding:4px 2px}
+/* the formulas under μ and σ: each = sits under the one above */
+.facts .fx{display:grid;grid-template-columns:max-content max-content;column-gap:.5em;row-gap:2px}
+.facts .fx span{display:inline;margin:0;white-space:nowrap}
+.facts{grid-template-columns:repeat(2,minmax(0,1fr))}
+.facts>div:nth-child(2){border-right:0}
+.facts>div:last-child{grid-column:1 / -1;border-top:1px solid var(--line);grid-template-columns:auto 1fr;align-items:center;column-gap:14px}
+.facts select{max-width:180px}
+.facts b{white-space:nowrap}
+@media (max-width:480px){.facts>div{padding:10px 12px}.facts b{font-size:19px}}
+.readout .c-wait{color:var(--cross);font-weight:500}
+.readout .c-mean{color:var(--mean);font-weight:500}
+.legend .xmark{font-family:var(--f-display);font-weight:700;font-size:15px;line-height:1;color:var(--cross);margin-right:6px}
+.define{border-left:2px solid var(--accent);padding:4px 0 4px 14px;display:grid;gap:8px}
+.define p{font-size:15.5px;line-height:1.55;color:var(--muted)}
+.define .define-t{font-family:var(--f-display);font-weight:500;font-size:16px;color:var(--ink)}
+.rail{top:0;background:var(--bg);border-block:1px solid var(--line)}
+.rail button{font-family:var(--f-display);font-size:14.5px;font-weight:500}
+.rail button[aria-selected="true"]{color:var(--accent)}
+.ch-head p{font-size:17px}
+.tag{font-size:12px}
+.panel{background:linear-gradient(160deg,var(--surface),var(--bg))}
+.panel h3{font-size:18.5px}
+.panel h4{font-size:15px;font-weight:500}
+.field label,.field .lab{font-family:var(--f-mono);font-size:12.5px;font-weight:400;color:var(--faint);letter-spacing:.02em}
+select,input[type=number],textarea{font-family:var(--f-display);font-weight:500;font-size:15px}
+textarea{font-family:var(--f-mono);font-weight:400;font-size:13.5px}
+.seg button{font-family:var(--f-mono);font-size:13px}
+.btn{font-family:var(--f-mono);font-size:13px;font-weight:500;border-radius:999px;padding:9px 15px}
+.check{font-size:16px}
+.code{font-size:12.5px}
+.legend{font-family:var(--f-mono);font-size:12px;color:var(--faint);gap:8px 18px}
+.readout{font-size:13.5px}
+.stats span{font-family:var(--f-mono);font-size:11.5px;color:var(--faint)}
+.stats b{font-family:var(--f-display);font-size:18px}
+.say{border-left-width:2px;padding:6px 0 6px 16px;color:var(--muted);font-size:16.5px}
+.note{font-size:15.5px}
+table.t{font-size:13.5px}
+table.t th{font-family:var(--f-mono);font-size:12px;font-weight:400;color:var(--faint)}
+.covrow .lab{font-family:var(--f-display);font-size:15px;font-weight:500}
+.covrow .lab small{font-weight:400}
+footer{font-size:15px}
+/* the serif body font has no reliable ȳ or p̂, so those symbols in running text use the mono face */
+.ph{font-family:var(--f-mono);font-style:normal;font-size:.88em;letter-spacing:0;white-space:nowrap}
+
+</style>
+</head>
+<body>
+
+<div class="wrap toprow">
+  <a class="back mono-l" href="../STAT20070.html">← STAT 20070</a>
+  <button class="theme-toggle" id="themeToggle" aria-label="Switch between light and dark theme" aria-pressed="false"><span class="tmode mono-l" id="tmode">Dark</span><span class="track"><span class="knob"></span></span></button>
+</div>
+
+<header class="mast">
+  <div class="wrap">
+    <div>
+      <p class="eyebrow">Section 3 · Lecture 14 · Inference Visualisation</p>
+      <h1>Inference <em>Visualisation</em></h1>
+      <p class="lede">A bus comes every 10 minutes and you arrive at a random moment, so your wait is anywhere from 0 to 10 minutes, all equally likely. Average a few waits and the averages pile up into a bell curve. From there the lab builds up to inference: standardising, z versus t, a first look at testing and confidence intervals. It follows the in-class R script, inference_visualization, section by section, with nothing to install.</p>
+    </div>
+    <div class="facts">
+      <div><b>μ = 5 min</b><span class="fx"><span>μ</span><span>= (a + b)/2</span><span></span><span>= (0 + 10)/2</span></span></div>
+      <div><b>σ = 2.887 min</b><span class="fx"><span>σ</span><span>= √((b − a)²/12)</span><span></span><span>= 10/√12</span></span></div>
+      <div><label for="gN">Samples per simulation</label><select id="gN"><option value="10000">10,000</option><option value="100000" selected>100,000</option><option value="500000">500,000</option></select></div>
+    </div>
+  </div>
+</header>
+
+<nav class="rail" aria-label="Chapters"><div class="wrap" role="tablist" id="rail"></div></nav>
+
+<main><div class="wrap">
+
+<!-- 1 -->
+<section class="ch" id="one" role="tabpanel">
+  <div class="ch-head">
+    <span class="tag">R script §1 · Single waiting time</span>
+    <h2>One waiting time</h2>
+    <p>Your wait Y is equally likely to be anything between 0 and 10 minutes: Y ~ Uniform(0, 10). Each <b>draw</b> is one simulated trip to the bus stop: the computer picks a random arrival time within the 10 minutes between buses and records how long you wait, which is what <span class="mono">runif(1, 0, 10)</span> does in R. Draw waits one at a time, then thousands, and watch the histogram flatten out. This flat shape is the population we will average from.</p>
+  </div>
+  <div class="bench">
+    <div class="panel controls">
+      <div class="btns"><button class="btn" id="w1">Draw 1 wait</button><button class="btn" id="w10">Draw 10</button><button class="btn" id="w1k">Draw 1,000</button></div>
+      <div class="btns"><button class="btn" id="wM">Draw 1,000,000</button><button class="btn ghost" id="wR">Reset</button></div>
+      <div class="code">x_new &lt;- <b>runif</b>(1, 0, 10)
+draws_n1 &lt;- c(draws_n1, x_new)</div>
+      <div class="define"><p class="define-t">What is a draw?</p><p>A <b>draw</b> is one random waiting time. Imagine arriving at the stop at a random moment: the time until the next bus is your wait. The computer imitates this by picking a number between 0 and 10 at random, with every value equally likely. In R this is <span class="mono">runif(1, 0, 10)</span>.</p><p>“Draw 1 wait” does this once and adds one line to the strip. “Draw 10” does it ten times, giving ten separate waits.</p></div>
+    </div>
+    <div class="out">
+      <div class="panel"><h3>Each line is one waiting time</h3><div class="chartbox" id="c1s"></div><p class="readout" id="v1"></p></div>
+      <div class="panel"><h3>Histogram of all the waits</h3><div class="chartbox" id="c1h"></div>
+        <div class="legend"><span><i style="background:var(--bar)"></i>your draws (density)</span><span><i style="background:var(--curve)"></i>Uniform(0, 10) density = 1/10</span></div>
+        <div id="s1"></div><p class="say" id="say1"></p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 2 -->
+<section class="ch" id="mean" role="tabpanel" hidden>
+  <div class="ch-head">
+    <span class="tag">R script §2 to 4 · Mean of n waiting times</span>
+    <h2>Average n waits</h2>
+    <p>Now wait for the bus n times and take the mean. Each sample gives one mean ȳ (tall bar); its n waits are the crosses. Repeat many times and look at the histogram of the means: it is centred on 5, gets narrower as n grows, and turns into a bell curve.</p>
+  </div>
+  <div class="bench">
+    <div class="panel controls">
+      <div class="field"><span class="lab">Waits per sample n <output id="n2o">5</output></span>
+        <div class="seg" id="n2q"><button data-v="1" aria-pressed="false">1</button><button data-v="2" aria-pressed="false">2</button><button data-v="5" aria-pressed="true">5</button><button data-v="20" aria-pressed="false">20</button><button data-v="100" aria-pressed="false">100</button></div>
+        <input type="range" id="n2" min="1" max="200" value="5" aria-label="Waits per sample n"></div>
+      <div class="btns"><button class="btn" id="s2one">Draw one sample</button><button class="btn" id="s2hund">Draw 100</button></div>
+      <div class="btns"><button class="btn" id="s2sim">Re-run simulation</button></div>
+      <label class="check"><input type="checkbox" id="n2norm" checked> Overlay a Normal curve</label>
+      <label class="check"><input type="checkbox" id="n2fix" checked> Keep the x-axis at 0 to 10</label>
+      <div class="code">x &lt;- <b>runif</b>(n, 0, 10); m &lt;- <b>mean</b>(x)
+means &lt;- <b>replicate</b>(N, mean(runif(n, 0, 10)))
+<b>lines</b>(x, dnorm(x, mean(means), sd(means)))</div>
+      <div class="define"><p class="define-t">What is a sample here?</p><p>One <b>sample</b> is n draws, that is n separate waiting times. Its mean ȳ is a single number, shown as the tall line. “Draw one sample” takes one new sample of n waits and adds its mean to the strip.</p></div>
+    </div>
+    <div class="out">
+      <div class="panel"><h3 id="t2a"></h3><div class="chartbox" id="c2s"></div>
+        <div class="legend"><span><b class="xmark" aria-hidden="true">×</b>the n waits in this sample</span><span><i style="background:var(--mean)"></i>their mean ȳ</span><span><i style="background:var(--mean);opacity:.3"></i>earlier means</span></div>
+        <p class="readout" id="v2"></p></div>
+      <div class="panel"><h3 id="t2b"></h3><div class="chartbox" id="c2h"></div>
+        <div class="legend"><span><i style="background:var(--bar)"></i>sample means (density)</span><span id="l2n"><i style="background:var(--curve)"></i>Normal curve, mean and SD of the simulated means</span></div>
+        <div id="s2"></div><p class="say" id="say2"></p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 3 -->
+<section class="ch" id="compare" role="tabpanel" hidden>
+  <div class="ch-head">
+    <span class="tag">R script §5a and 5b · Plots, mean and standard error</span>
+    <h2>Side by side: n = 2, 5, 20, 100</h2>
+    <p>Same population, same x-axis, four sample sizes. The centre never moves from μ = 5. The spread, the standard error, shrinks like σ/√n, and the table checks the simulation against that formula.</p>
+  </div>
+  <div class="bench">
+    <div class="panel controls">
+      <div class="btns"><button class="btn" id="r3">Re-run all</button></div>
+      <label class="check"><input type="checkbox" id="n3norm"> Overlay Normal curves</label>
+      <div class="code">pop_mean &lt;- (a + b)/2          # 5
+pop_std  &lt;- <b>sqrt</b>((b - a)^2 / 12)  # 2.887
+pop_std / <b>sqrt</b>(n)             # theory
+<b>sd</b>(means)                    # actual</div>
+    </div>
+    <div class="out">
+      <div class="panel"><div class="quad" id="q3"></div>
+        <div class="legend"><span><i style="background:var(--bar)"></i>sample means (density; each panel has its own y-axis)</span><span><i style="background:var(--curve)"></i>Normal curve</span></div></div>
+      <div class="panel"><h3>Mean and standard error of the sample means</h3><div class="tscroll"><table class="t" id="t3"></table></div><p class="say" id="say3"></p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 4 -->
+<section class="ch" id="std" role="tabpanel" hidden>
+  <div class="ch-head">
+    <span class="tag">R script §6 · Standardisation</span>
+    <h2>Standardise the means</h2>
+    <p>Subtract μ and divide by the standard error σ/√n. The histogram keeps its shape and only the x-axis changes: every sampling distribution becomes N(0, 1). That is why ±1.96 marks the middle 95% for any n.</p>
+  </div>
+  <div class="bench">
+    <div class="panel controls">
+      <div class="field"><span class="lab">Waits per sample n <output id="n4o">100</output></span>
+        <div class="seg" id="n4q"><button data-v="5" aria-pressed="false">5</button><button data-v="20" aria-pressed="false">20</button><button data-v="100" aria-pressed="true">100</button></div>
+        <input type="range" id="n4" min="2" max="200" value="100" aria-label="Waits per sample n"></div>
+      <div class="btns"><button class="btn" id="r4">Re-run simulation</button></div>
+      <div class="code">std_err &lt;- pop_std / <b>sqrt</b>(n)
+z &lt;- (means - mu) / std_err
+q1 &lt;- 5 - 1.96*std_err; q2 &lt;- 5 + 1.96*std_err
+100*<b>mean</b>(means &gt; q1 &amp; means &lt; q2)</div>
+    </div>
+    <div class="out">
+      <div class="grid2">
+        <div class="panel"><h3>Original sample means</h3><div class="chartbox" id="c4a"></div></div>
+        <div class="panel"><h3>Standardised: Z = (Ȳ − μ)/(σ/√n)</h3><div class="chartbox" id="c4b"></div></div>
+      </div>
+      <div class="legend"><span><i style="background:var(--barhi)"></i>means inside μ ± 1.96 SE</span><span><i style="background:var(--bar)"></i>outside</span><span><i style="background:var(--curve)"></i>Normal curve and the ±1.96 boundaries</span></div>
+      <div class="panel"><div class="work" id="w4"></div><div id="s4"></div><p class="say" id="say4"></p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 5 -->
+<section class="ch" id="any" role="tabpanel" hidden>
+  <div class="ch-head">
+    <span class="tag">R script §7 · Non-uniform example</span>
+    <h2>Start from a strange population</h2>
+    <p>What if the population is lumpy or lopsided? Pick a shape, sample n values with replacement, and average. With n large enough the means still come out Normal: that is the "regardless of the original distribution" part of the CLT.</p>
+  </div>
+  <div class="bench">
+    <div class="panel controls">
+      <div class="field"><label for="p5">Population</label><select id="p5">
+        <option value="mix" selected>Three peaks (from the R script)</option>
+        <option value="unif">Uniform 0 to 10 (the bus)</option>
+        <option value="skew">Right skewed (exponential, cut at 10)</option>
+        <option value="ushape">U-shaped (most values near 0 or 10)</option></select></div>
+      <div class="field"><label for="n5">Sample size n <output id="n5o">30</output></label><input type="range" id="n5" min="1" max="200" value="30"></div>
+      <label class="check"><input type="checkbox" id="f5"> Show the means on the 0–10 axis</label>
+      <div class="btns"><button class="btn" id="r5">Re-run simulation</button></div>
+      <div class="code">y &lt;- c(rnorm(300000, 2.5, 1), rnorm(400000, 6.5, 0.75),
+       rnorm(200000, 10, 0.5))
+pop &lt;- y[y &gt; 0 &amp; y &lt; 10]
+<b>replicate</b>(N, mean(<b>sample</b>(pop, n, replace = TRUE)))</div>
+    </div>
+    <div class="out">
+      <div class="panel"><h3 id="t5a"></h3><div class="chartbox" id="c5a"></div></div>
+      <div class="panel"><h3 id="t5b"></h3><div class="chartbox" id="c5b"></div>
+        <div class="legend"><span><i style="background:var(--bar)"></i>sample means</span><span><i style="background:var(--curve)"></i>Normal curve</span></div>
+        <div id="s5"></div><p class="say" id="say5"></p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 6 -->
+<section class="ch" id="sig" role="tabpanel" hidden>
+  <div class="ch-head">
+    <span class="tag">R script §8 · Known vs unknown population SD</span>
+    <h2>σ known or estimated: z versus t</h2>
+    <p>Population N(μ = 10, σ = 2). For each sample we standardise ȳ twice: with the true σ (z) and with the sample s (t). Because s is itself random, and often too small when n is small, t has heavier tails than N(0, 1). Student's t with n − 1 degrees of freedom describes it exactly.</p>
+  </div>
+  <div class="bench">
+    <div class="panel controls">
+      <div class="field"><label for="n6">Sample size n <output id="n6o">5</output></label><input type="range" id="n6" min="2" max="30" value="5"></div>
+      <div class="btns"><button class="btn" id="r6">Re-run simulation</button></div>
+      <div class="code">M &lt;- <b>matrix</b>(rnorm(N*n, 10, 2), N, n)
+m &lt;- <b>rowMeans</b>(M); s &lt;- <b>apply</b>(M, 1, sd)
+z &lt;- (m - mu)/(sigma/sqrt(n))
+t &lt;- (m - mu)/(s/sqrt(n))
+<b>dt</b>(x, df = n - 1)</div>
+    </div>
+    <div class="out">
+      <div class="panel"><h3 id="t6"></h3><div class="tscroll"><table class="t" id="tb6"></table></div><p class="note">Red: |z| or |t| above 3. Values like that are rare for z but common for t when n is small, usually because s came out small.</p></div>
+      <div class="grid2">
+        <div class="panel"><h3>z: standardised with σ</h3><div class="chartbox" id="c6a"></div>
+          <div class="legend"><span><i style="background:var(--curve)"></i>N(0, 1)</span></div></div>
+        <div class="panel"><h3>t: standardised with s</h3><div class="chartbox" id="c6b"></div>
+          <div class="legend"><span><i class="dash"></i>N(0, 1)</span><span><i style="background:var(--alt)"></i>t with n − 1 df</span></div></div>
+      </div>
+      <div class="panel"><div id="s6"></div><p class="say" id="say6"></p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 7 -->
+<section class="ch" id="sugar" role="tabpanel" hidden>
+  <div class="ch-head">
+    <span class="tag">R script §9 · Sugar concentration example</span>
+    <h2>Is this sample unusual if μ = 11?</h2>
+    <p>Twelve sugar concentrations have mean 11.43. Suppose the true mean were 11. Simulate many samples of 12 from N(11, s²) and ask how often chance alone gives a sample mean at least as large as the one observed. This is the idea behind the hypothesis tests that come next.</p>
+  </div>
+  <div class="bench">
+    <div class="panel controls">
+      <div class="field"><label for="y7">Observed values</label><textarea id="y7" rows="4">11.7, 11.2, 11.6, 10.8, 12.1, 11.7, 11.4, 11.3, 11.9, 10.9, 11.0, 11.6</textarea></div>
+      <div class="field"><label for="mu7">Supposed mean μ₀</label><input type="number" id="mu7" value="11" step="0.1"></div>
+      <div class="btns"><button class="btn" id="r7">Simulate</button></div>
+      <div class="code">sim &lt;- <b>matrix</b>(rnorm(N*n, 11, sd(y)), N, n)
+m &lt;- <b>rowMeans</b>(sim)
+t_stat &lt;- (mean(y) - 11)/(sd(y)/sqrt(n))
+<b>mean</b>(m &gt; mean(y))</div>
+    </div>
+    <div class="out">
+      <div class="panel"><h3 id="t7"></h3><div class="chartbox" id="c7"></div>
+        <div class="legend"><span><i style="background:var(--bar)"></i>simulated means if μ = μ₀</span><span><i style="background:var(--alt)"></i>means ≥ observed ȳ</span><span><i style="background:var(--cross)"></i>observed ȳ</span></div></div>
+      <div class="panel"><div class="work" id="w7"></div><p class="say" id="say7"></p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 8 -->
+<section class="ch" id="ci" role="tabpanel" hidden>
+  <div class="ch-head">
+    <span class="tag">R script §9 · Confidence intervals</span>
+    <h2>Do the intervals really cover μ?</h2>
+    <p>Same N(10, 2²) population. Each simulated sample gives an interval, and since μ = 10 is known we can count how often it is inside. With σ known the z-interval works; with σ estimated, only the t-interval keeps its promised coverage for small n.</p>
+  </div>
+  <div class="bench">
+    <div class="panel controls">
+      <div class="field"><label for="n8">Sample size n <output id="n8o">5</output></label><input type="range" id="n8" min="2" max="30" value="5"></div>
+      <div class="field"><span class="lab">Confidence level</span><div class="seg" id="lev8"><button data-v="0.90" aria-pressed="false">90%</button><button data-v="0.95" aria-pressed="true">95%</button><button data-v="0.99" aria-pressed="false">99%</button></div></div>
+      <div class="field"><span class="lab">Show intervals for</span><div class="seg" id="m8"><button data-v="z" aria-pressed="false">z, σ</button><button data-v="t" aria-pressed="true">t, s</button><button data-v="zs" aria-pressed="false">z, s</button></div></div>
+      <div class="btns"><button class="btn" id="r8">Re-run simulation</button></div>
+      <div class="code">LWR &lt;- m - 1.96*sigma/sqrt(n)        # z, σ known
+q &lt;- <b>qt</b>(0.975, df = n - 1)
+LWR &lt;- m - q*s/sqrt(n)               # t, σ unknown
+<b>mean</b>(LWR &lt;= mu &amp; UPR &gt;= mu)        # coverage</div>
+    </div>
+    <div class="out">
+      <div class="panel"><h3 id="t8a"></h3><div class="cov" id="cov8"></div><p class="say" id="say8"></p></div>
+      <div class="panel"><h3 id="t8b"></h3><div class="chartbox" id="c8"></div>
+        <div class="legend"><span><i style="background:var(--good)"></i>contains μ</span><span><i style="background:var(--miss)"></i>misses μ</span><span><i style="background:var(--alt)"></i>μ = 10</span></div></div>
+      <div class="panel"><h3>First 10 samples</h3><div class="tscroll"><table class="t" id="tb8"></table></div></div>
+    </div>
+  </div>
+</section>
+
+</div></main>
+
+<footer><div class="wrap">
+  <p>Built from the in-class R script on the Central Limit Theorem (sections 1 to 9). All simulations run in your browser; like R without <span class="mono">set.seed()</span>, the numbers change slightly every run. Confidence intervals with z use the lecture values 1.65, 1.96 and 2.58.</p>
+</div></footer>
+<script>
+(function(){
+"use strict";
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const A=0,B=10,MU=5,SIG=10/Math.sqrt(12);
+
+/* ---------- maths ---------- */
+let spare=null;
+function rnorm(){ if(spare!==null){const v=spare;spare=null;return v;} let u=0; while(u===0)u=Math.random(); const v=Math.random(), r=Math.sqrt(-2*Math.log(u)); spare=r*Math.sin(2*Math.PI*v); return r*Math.cos(2*Math.PI*v); }
+const runif=()=>A+(B-A)*Math.random();
+function meanA(a){let s=0;for(let i=0;i<a.length;i++)s+=a[i];return s/a.length;}
+function sdA(a,m){if(m===undefined)m=meanA(a);let s=0;for(let i=0;i<a.length;i++){const d=a[i]-m;s+=d*d;}return Math.sqrt(s/(a.length-1));}
+function erf(x){const s=Math.sign(x);x=Math.abs(x);
+  if(x<0.5){let t=x,sum=x,k=0;do{k++;t*=-x*x/k;sum+=t/(2*k+1);}while(Math.abs(t)>1e-16&&k<60);return s*2/Math.sqrt(Math.PI)*sum;}
+  const z=x,tiny=1e-300;let f=z,C=f,D=0,del;
+  for(let i=1;i<300;i++){const a=i/2;D=z+a*D;if(D===0)D=tiny;C=z+a/C;if(C===0)C=tiny;D=1/D;del=C*D;f*=del;if(Math.abs(del-1)<1e-15)break;}
+  return s*(1-Math.exp(-z*z)/Math.sqrt(Math.PI)/f);}
+const Phi=z=>0.5*(1+erf(z/Math.SQRT2));
+const dnorm=(x,m,s)=>Math.exp(-0.5*((x-m)/s)**2)/(s*Math.sqrt(2*Math.PI));
+function qnorm(p){const a=[-3.969683028665376e+01,2.209460984245205e+02,-2.759285104469687e+02,1.383577518672690e+02,-3.066479806614716e+01,2.506628277459239e+00],b=[-5.447609879822406e+01,1.615858368580409e+02,-1.556989798598866e+02,6.680131188771972e+01,-1.328068155288572e+01],c=[-7.784894002430293e-03,-3.223964580411365e-01,-2.400758277161838e+00,-2.549732539343734e+00,4.374664141464968e+00,2.938163982698783e+00],d=[7.784695709041462e-03,3.224671290700398e-01,2.445134137142996e+00,3.754408661907416e+00];
+  const pl=0.02425;let q,r,x;
+  if(p<pl){q=Math.sqrt(-2*Math.log(p));x=(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);}
+  else if(p<=1-pl){q=p-0.5;r=q*q;x=(((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q/(((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);}
+  else{q=Math.sqrt(-2*Math.log(1-p));x=-(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);}
+  const e=Phi(x)-p,u=e*Math.sqrt(2*Math.PI)*Math.exp(x*x/2);return x-u/(1+x*u/2);}
+function lgamma(x){const g=7,c=[0.99999999999980993,676.5203681218851,-1259.1392167224028,771.32342877765313,-176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];
+  if(x<0.5)return Math.log(Math.PI/Math.sin(Math.PI*x))-lgamma(1-x);x-=1;let s=c[0];const t=x+g+0.5;for(let i=1;i<9;i++)s+=c[i]/(x+i);return 0.5*Math.log(2*Math.PI)+(x+0.5)*Math.log(t)-t+Math.log(s);}
+function betacf(a,b,x){const tiny=1e-300;let qab=a+b,qap=a+1,qam=a-1,c=1,d=1-qab*x/qap;if(Math.abs(d)<tiny)d=tiny;d=1/d;let h=d;
+  for(let m=1;m<=300;m++){const m2=2*m;let aa=m*(b-m)*x/((qam+m2)*(a+m2));d=1+aa*d;if(Math.abs(d)<tiny)d=tiny;c=1+aa/c;if(Math.abs(c)<tiny)c=tiny;d=1/d;h*=d*c;
+    aa=-(a+m)*(qab+m)*x/((a+m2)*(qap+m2));d=1+aa*d;if(Math.abs(d)<tiny)d=tiny;c=1+aa/c;if(Math.abs(c)<tiny)c=tiny;d=1/d;const del=d*c;h*=del;if(Math.abs(del-1)<1e-14)break;}return h;}
+function ibeta(x,a,b){if(x<=0)return 0;if(x>=1)return 1;const bt=Math.exp(lgamma(a+b)-lgamma(a)-lgamma(b)+a*Math.log(x)+b*Math.log(1-x));return x<(a+1)/(a+b+2)?bt*betacf(a,b,x)/a:1-bt*betacf(b,a,1-x)/b;}
+function pt(t,df){const x=df/(df+t*t),tail=0.5*ibeta(x,df/2,0.5);return t>0?1-tail:tail;}
+function qt(p,df){let lo=-300,hi=300;for(let i=0;i<120;i++){const m=(lo+hi)/2;if(pt(m,df)<p)lo=m;else hi=m;}return (lo+hi)/2;}
+function dt(x,df){return Math.exp(lgamma((df+1)/2)-lgamma(df/2))/Math.sqrt(df*Math.PI)*Math.pow(1+x*x/df,-(df+1)/2);}
+
+/* ---------- formatting ---------- */
+const fmt=(x,d=3)=>(x===null||!isFinite(x))?"–":x.toLocaleString("en-IE",{minimumFractionDigits:d,maximumFractionDigits:d}).replace(/^-/,"−");
+const pct=(x,d=1)=>fmt(100*x,d)+"%";
+const int=x=>Math.round(x).toLocaleString("en-IE");
+function niceTicks(a,b,n){const span=b-a;if(!(span>0))return[a];let step=Math.pow(10,Math.floor(Math.log10(span/n)));const e=span/n/step;if(e>=7.5)step*=10;else if(e>=3.5)step*=5;else if(e>=1.5)step*=2;const t=[];for(let v=Math.ceil(a/step-1e-9)*step;v<=b+1e-9*step;v+=step)t.push(+v.toFixed(10));return t;}
+function tickLabel(v){return tickLabel0(v).replace(/^-/,"−");}
+function tickLabel0(v){const a=Math.abs(v);if(a===0)return"0";if(a>=100)return String(Math.round(v));if(a>=10)return String(+v.toFixed(1));if(a>=1)return String(+v.toFixed(2));return String(+v.toFixed(3));}
+function statGrid(items){return `<div class="stats">${items.map(([k,v])=>`<div><span>${k}</span><b>${v}</b></div>`).join("")}</div>`;}
+const N=()=>+$("#gN").value;
+
+/* ---------- canvas charts ---------- */
+const cssv=()=>{const cs=getComputedStyle(document.documentElement);return k=>cs.getPropertyValue("--"+k).trim();};
+const MONO='12px "JetBrains Mono", ui-monospace, Menlo, monospace', BODY='12px "JetBrains Mono", ui-monospace, Menlo, monospace';
+function chart(host,o){
+  let cv=host.querySelector("canvas"); if(!cv){cv=document.createElement("canvas");cv.setAttribute("role","img");host.appendChild(cv);}
+  cv.setAttribute("aria-label",o.aria||"");
+  const dpr=Math.max(1,Math.min(3,window.devicePixelRatio||1)), w=Math.max(260,host.clientWidth||600), h=o.h||260;
+  cv.style.height=h+"px"; cv.width=Math.round(w*dpr); cv.height=Math.round(h*dpr);
+  const ctx=cv.getContext("2d"); ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,w,h);
+  const col=cssv(), m=Object.assign({l:o.noY?14:52,r:16,t:18,b:o.xlab?44:28},o.m||{}), iw=w-m.l-m.r, ih=h-m.t-m.b;
+  const sx=v=>m.l+(v-o.x[0])/(o.x[1]-o.x[0])*iw, sy=v=>m.t+ih-(v-o.y[0])/(o.y[1]-o.y[0])*ih;
+  ctx.font=MONO; ctx.lineWidth=1;
+  if(!o.noY){ (o.yticks||niceTicks(o.y[0],o.y[1],4)).forEach(t=>{const y=Math.round(sy(t))+.5;ctx.strokeStyle=col("line");ctx.beginPath();ctx.moveTo(m.l,y);ctx.lineTo(m.l+iw,y);ctx.stroke();ctx.fillStyle=col("muted");ctx.textAlign="right";ctx.textBaseline="middle";ctx.fillText(tickLabel(t),m.l-7,y);}); }
+  ctx.strokeStyle=col("muted");
+  if(o.minor){for(let v=Math.ceil(o.x[0]/o.minor)*o.minor;v<=o.x[1]+1e-9;v+=o.minor){const x=Math.round(sx(v))+.5;ctx.beginPath();ctx.moveTo(x,m.t+ih);ctx.lineTo(x,m.t+ih+3);ctx.stroke();}}
+  (o.xticks||niceTicks(o.x[0],o.x[1],o.nx||Math.max(4,Math.min(10,Math.floor(iw/70))))).forEach(t=>{if(t<o.x[0]-1e-9||t>o.x[1]+1e-9)return;const x=Math.round(sx(t))+.5;ctx.beginPath();ctx.moveTo(x,m.t+ih);ctx.lineTo(x,m.t+ih+6);ctx.stroke();ctx.fillStyle=col("muted");ctx.textAlign="center";ctx.textBaseline="top";ctx.fillText(tickLabel(t),x,m.t+ih+9);});
+  ctx.beginPath();ctx.moveTo(m.l,m.t+ih+.5);ctx.lineTo(m.l+iw,m.t+ih+.5);ctx.stroke();
+  ctx.font=BODY;ctx.fillStyle=col("muted");
+  if(o.xlab){ctx.textAlign="center";ctx.textBaseline="bottom";ctx.fillText(o.xlab,m.l+iw/2,h-4);}
+  if(o.ylab){ctx.save();ctx.translate(13,m.t+ih/2);ctx.rotate(-Math.PI/2);ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(o.ylab,0,0);ctx.restore();}
+  const P={ctx,sx,sy,col,m,iw,ih,w,h};
+  ctx.save();ctx.beginPath();ctx.rect(m.l,m.t-2,iw,ih+2);ctx.clip(); if(o.draw)o.draw(P); ctx.restore();
+  if(o.over)o.over(P);
+  return P;
+}
+function histDens(v,lo,hi,k){const c=new Float64Array(k),w=(hi-lo)/k,n=v.length;let out=0;for(let i=0;i<n;i++){const x=v[i];if(x<lo||x>hi){out++;continue;}let j=Math.floor((x-lo)/w);if(j>=k)j=k-1;c[j]++;}for(let j=0;j<k;j++)c[j]/=(n*w);return{d:c,lo,hi,w,k,out};}
+function maxOf(a){let m=-Infinity;for(let i=0;i<a.length;i++)if(a[i]>m)m=a[i];return m;}
+function drawHist(P,H,colFn){const{ctx,sx,sy}=P;for(let j=0;j<H.k;j++){const v=H.d[j];if(!v)continue;const x0=sx(H.lo+j*H.w),x1=sx(H.lo+(j+1)*H.w),gap=(x1-x0)>4?1:0;ctx.fillStyle=colFn(j,H.lo+j*H.w,H.lo+(j+1)*H.w);ctx.fillRect(x0,sy(v),Math.max(0.8,x1-x0-gap),sy(0)-sy(v));}}
+function curve(P,f,a,b,color,lw=2.2,dash){const{ctx,sx,sy}=P;ctx.save();ctx.strokeStyle=color;ctx.lineWidth=lw;if(dash)ctx.setLineDash(dash);ctx.beginPath();const steps=300;for(let i=0;i<=steps;i++){const x=a+(b-a)*i/steps,X=sx(x),Y=sy(f(x));i?ctx.lineTo(X,Y):ctx.moveTo(X,Y);}ctx.stroke();ctx.restore();}
+function vline(P,x,y0,y1,color,lw=2,dash){const{ctx,sx,sy}=P;ctx.save();ctx.strokeStyle=color;ctx.lineWidth=lw;if(dash)ctx.setLineDash(dash);ctx.beginPath();ctx.moveTo(sx(x),sy(y0));ctx.lineTo(sx(x),sy(y1));ctx.stroke();ctx.restore();}
+function label(P,x,y,text,color,align="left",font=MONO){const{ctx}=P;ctx.save();ctx.font=font;ctx.fillStyle=color;ctx.textAlign=align;ctx.textBaseline="bottom";ctx.fillText(text,x,y);ctx.restore();}
+function note(host,msg){host.innerHTML=`<p class="note" style="padding:24px 0">${msg}</p>`;}
+
+/* ---------- UI helpers ---------- */
+function segment(id,cb){const box=$("#"+id);box.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;setSeg(id,b.dataset.v);cb(b.dataset.v);});}
+function setSeg(id,v){$$("#"+id+" button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v===String(v)?"true":"false"));}
+function busy(btn,fn){ if(!btn){fn();return;} const t=btn.textContent;btn.disabled=true;btn.textContent="Simulating…";setTimeout(()=>{try{fn();}finally{btn.disabled=false;btn.textContent=t;}},30); }
+
+/* ---------- chapters ---------- */
+const CH=[["one","One wait","§1"],["mean","Mean of n","§2–4"],["compare","Compare n","§5"],["std","Standardise","§6"],["any","Any population","§7"],["sig","σ vs s","§8"],["sugar","Sugar example","§9"],["ci","CI coverage","§9"]];
+const init={}, paint={}, ready={}; let current="one";
+
+/* §1 */
+let d1=[];
+init.one=()=>{
+  for(let i=0;i<12;i++)d1.push(runif());
+  const add=k=>{for(let i=0;i<k;i++)d1.push(runif());paint.one();};
+  $("#w1").onclick=()=>add(1); $("#w10").onclick=()=>add(10); $("#w1k").onclick=()=>add(1000);
+  $("#wM").onclick=e=>busy(e.currentTarget,()=>add(1000000));
+  $("#wR").onclick=()=>{d1=[];paint.one();};
+};
+paint.one=()=>{
+  const L=d1.length, last=L?d1[L-1]:null;
+  chart($("#c1s"),{h:140,x:[0,10],y:[0,1],noY:true,xlab:"Waiting time (minutes)",xticks:[0,1,2,3,4,5,6,7,8,9,10],minor:0.5,aria:"Strip of waiting times",
+    draw:P=>{const{ctx,sx,sy,col}=P; vline(P,5,0,1,col("muted"),0.8,[2,3]);
+      const s=Math.max(0,L-3000), shown=L-s, a=shown<=40?1:Math.max(0.35,80/shown);
+      ctx.strokeStyle=col("mean");ctx.lineWidth=2;ctx.globalAlpha=a;ctx.beginPath();
+      for(let i=s;i<L-1;i++){const x=sx(d1[i]);ctx.moveTo(x,sy(0));ctx.lineTo(x,sy(0.45));}ctx.stroke();ctx.globalAlpha=1;
+      if(last!==null)vline(P,last,0,0.7,col("alt"),3);},
+    over:P=>{if(last!==null){const x=P.sx(last);label(P,Math.min(Math.max(x+6,P.m.l),P.m.l+P.iw-110),P.sy(0.74),`latest ${fmt(last,2)} min`,P.col("alt"),"left");}}});
+  $("#v1").textContent = L? `Draw #${int(L)}: waiting time ${fmt(last,3)} minutes` + (L>3000?"  (showing the last 3,000 lines)":"") : "No waits drawn yet.";
+  const host=$("#c1h");
+  if(L<2){note(host,"Draw a few waits to start the histogram.");}
+  else{const H=histDens(d1,0,10,L<200?10:20),ym=Math.max(maxOf(H.d),0.1)*1.3;
+    chart(host,{h:240,x:[0,10],y:[0,ym],xlab:"Waiting time (minutes)",ylab:"Density",xticks:[0,1,2,3,4,5,6,7,8,9,10],aria:"Histogram of waiting times",
+      draw:P=>{drawHist(P,H,()=>P.col("bar"));vline(P,0,0,0.1,P.col("curve"),2.2);vline(P,10,0,0.1,P.col("curve"),2.2);curve(P,()=>0.1,0,10,P.col("curve"),2.2);}});}
+  const m=L?meanA(d1):NaN, s=L>1?sdA(d1,m):NaN;
+  $("#s1").innerHTML=statGrid([["Waits drawn",int(L)],["Mean of draws",fmt(m,3)],["Population μ","5.000"],["SD of draws",fmt(s,3)],["Population σ",fmt(SIG,3)]]);
+  $("#say1").textContent = L<50? `With only ${L} draw${L===1?"":"s"} the histogram is bumpy. Draw more and it settles down.`
+    : `With ${int(L)} waits the histogram is close to flat: every waiting time between 0 and 10 minutes is equally likely. This is Uniform(0, 10), with mean 5 and SD 10/√12 ≈ 2.887 minutes. It looks nothing like a bell curve.`;
+};
+
+/* §2–4 */
+let n2=5,cur2=null,strip2=[],sim2=null;
+function simUnifMeans(n,Nn){const out=new Float64Array(Nn);for(let i=0;i<Nn;i++){let s=0;for(let j=0;j<n;j++)s+=Math.random();out[i]=10*s/n;}return out;}
+init.mean=()=>{
+  const setN=(n,run=true)=>{n2=n;$("#n2").value=n;$("#n2o").textContent=n;setSeg("n2q",n);cur2=null;strip2=[];drawOne();if(run)busy($("#s2sim"),()=>{sim2=simUnifMeans(n2,N());paint.mean();});else paint.mean();};
+  const drawOne=()=>{cur2=Array.from({length:n2},runif);strip2.push(meanA(cur2));};
+  segment("n2q",v=>setN(+v));
+  $("#n2").addEventListener("input",e=>{$("#n2o").textContent=e.target.value;});
+  $("#n2").addEventListener("change",e=>setN(+e.target.value));
+  $("#s2one").onclick=()=>{drawOne();paint.mean();};
+  $("#s2hund").onclick=()=>{for(let i=0;i<100;i++)drawOne();paint.mean();};
+  $("#s2sim").onclick=e=>busy(e.currentTarget,()=>{sim2=simUnifMeans(n2,N());paint.mean();});
+  ["n2norm","n2fix"].forEach(id=>$("#"+id).addEventListener("change",paint.mean));
+  drawOne(); sim2=simUnifMeans(n2,N());
+};
+paint.mean=()=>{
+  const n=n2, Ls=strip2.length, mlast=strip2[Ls-1];
+  $("#t2a").textContent = n===1? "One wait at a time (n = 1)" : `Mean of ${n} waiting times`;
+  chart($("#c2s"),{h:150,x:[0,10],y:[0,1],noY:true,xlab:"Waiting time (minutes)",xticks:[0,1,2,3,4,5,6,7,8,9,10],minor:0.5,aria:"Sample values and means",
+    draw:P=>{const{ctx,sx,sy,col}=P;vline(P,5,0,1,col("muted"),0.8,[2,3]);
+      const prev=Ls-1,a=prev<=20?0.85:Math.max(0.3,30/prev);ctx.strokeStyle=col("mean");ctx.lineWidth=2;ctx.globalAlpha=a;ctx.beginPath();
+      for(let i=Math.max(0,Ls-3001);i<Ls-1;i++){const x=sx(strip2[i]);ctx.moveTo(x,sy(0));ctx.lineTo(x,sy(0.3));}ctx.stroke();ctx.globalAlpha=1;
+      if(cur2){ctx.strokeStyle=col("cross");ctx.lineWidth=2;const r=4.5,y=sy(0.07);ctx.beginPath();cur2.forEach(v=>{const x=sx(v);ctx.moveTo(x-r,y-r);ctx.lineTo(x+r,y+r);ctx.moveTo(x-r,y+r);ctx.lineTo(x+r,y-r);});ctx.stroke();}
+      if(Ls)vline(P,mlast,0,0.5,col("mean"),3);},
+    over:P=>{if(Ls){const x=P.sx(mlast);label(P,Math.min(Math.max(x+6,P.m.l),P.m.l+P.iw-100),P.sy(0.53),`ȳ = ${fmt(mlast,2)}`,P.col("mean"));}}});
+  const ord=["1st","2nd","3rd","4th","5th","6th"];
+  const W=v=>`<span class="c-wait">${v}</span>`, Mn=v=>`<span class="c-mean">${v}</span>`;
+  $("#v2").innerHTML = !cur2? "" : n<=6 ? cur2.map((v,i)=>`${ord[i]} ${W(fmt(v,3))}`).join(" · ")+`  →  mean ${Mn(fmt(mlast,3))}` : `Mean of these ${n} waits: ${Mn(fmt(mlast,3))} (shortest ${W(fmt(Math.min(...cur2),2))}, longest ${W(fmt(Math.max(...cur2),2))})` + (Ls>1?` · ${int(Ls)} means drawn`:"");
+  const m=meanA(sim2), s=sdA(sim2,m), fix=$("#n2fix").checked, se=SIG/Math.sqrt(n);
+  $("#t2b").textContent=`Histogram of ${int(sim2.length)} sample means, n = ${n}`;
+  const lo=fix?0:Math.max(0,m-4.5*s), hi=fix?10:Math.min(10,m+4.5*s), k=n===1?20:100;
+  const H=histDens(sim2,lo,hi,k), norm=$("#n2norm").checked && n>1;
+  const ym=Math.max(maxOf(H.d),norm?dnorm(m,m,s):0)*1.12;
+  chart($("#c2h"),{h:270,x:[lo,hi],y:[0,ym],xlab:"Sample mean ȳ (minutes)",ylab:"Density",minor:fix?0.5:null,aria:"Histogram of sample means",
+    draw:P=>{drawHist(P,H,()=>P.col("bar"));if(norm)curve(P,x=>dnorm(x,m,s),lo,hi,P.col("curve"),2.5);vline(P,5,0,ym,P.col("muted"),0.8,[2,3]);}});
+  $("#l2n").hidden=!norm;
+  $("#s2").innerHTML=statGrid([["n (waits per sample)",n],["Samples simulated",int(sim2.length)],["Mean of the means",fmt(m,4)],["Population μ","5.0000"],["SD of the means",fmt(s,4)],["Theory σ/√n",fmt(se,4)]]);
+  let say;
+  if(n===1) say="With n = 1 the “mean” is just one waiting time, so the histogram is flat: the population itself.";
+  else if(n===2) say="With only two waits the histogram is already a triangle. A mean near 5 is common, but a mean near 0 or 10 needs two very short or two very long waits, which is rare.";
+  else if(n<10) say=`With n = ${n} the histogram is already close to a bell curve, even though each wait is uniform. It is centred on μ = 5 and its spread is σ/√n = ${fmt(se,3)} minutes.`;
+  else say=`With n = ${n} the Normal curve fits almost perfectly. About 95% of the sample means fall within 5 ± 1.96 × ${fmt(se,3)}, that is between ${fmt(5-1.96*se,2)} and ${fmt(5+1.96*se,2)} minutes.`;
+  $("#say2").textContent=say+(fix&&n>=20?" Untick “Keep the x-axis at 0 to 10” to zoom in.":"");
+};
+
+/* §5 */
+const ns3=[2,5,20,100]; let sims3={};
+init.compare=()=>{
+  $("#q3").innerHTML=ns3.map((n,i)=>`<div><h4>Sample means, n = ${n}</h4><div class="chartbox" id="c3${i}"></div></div>`).join("");
+  const run=()=>{sims3={};[1,...ns3].forEach(n=>sims3[n]=simUnifMeans(n,N()));};
+  $("#r3").onclick=e=>busy(e.currentTarget,()=>{run();paint.compare();});
+  $("#n3norm").addEventListener("change",paint.compare);
+  run();
+};
+paint.compare=()=>{
+  const norm=$("#n3norm").checked;
+  ns3.forEach((n,i)=>{const v=sims3[n],m=meanA(v),s=sdA(v,m),H=histDens(v,0,10,100),ym=Math.max(maxOf(H.d),norm?dnorm(m,m,s):0)*1.12;
+    chart($("#c3"+i),{h:190,x:[0,10],y:[0,ym],xlab:"ȳ (minutes)",xticks:[0,2,4,6,8,10],aria:`Sample means n = ${n}`,m:{l:44,t:12},
+      draw:P=>{drawHist(P,H,()=>P.col("bar"));if(norm)curve(P,x=>dnorm(x,m,s),0,10,P.col("curve"),2);}});});
+  $("#t3").innerHTML=`<thead><tr><th>n</th><th>Mean of ȳ</th><th>SE theory σ/√n</th><th>SE simulated</th><th>Within 5 ± 1.96 SE</th></tr></thead><tbody>${[1,...ns3].map(n=>{const v=sims3[n],m=meanA(v),s=sdA(v,m),se=SIG/Math.sqrt(n);let c=0;for(let i=0;i<v.length;i++)if(Math.abs(v[i]-5)<=1.96*se)c++;return `<tr><td>${n}</td><td>${fmt(m,4)}</td><td>${fmt(se,4)}</td><td>${fmt(s,4)}</td><td>${pct(c/v.length)}</td></tr>`;}).join("")}</tbody>`;
+  $("#say3").textContent="Every histogram is centred on 5 minutes, and the simulated SE matches σ/√n. Four times as many waits (n = 5 → 20, or 20 → 80) halves the SE. The last column is about 95% once the distribution is close to Normal. For n = 1 the band 5 ± 1.96 × 2.887 runs from −0.66 to 10.66, wider than every possible wait, so it holds 100%; for n = 2 it holds about 96%.";
+};
+
+/* §6 */
+let n4=100,sim4=null;
+init.std=()=>{
+  const setN=n=>{n4=n;$("#n4").value=n;$("#n4o").textContent=n;setSeg("n4q",n);busy($("#r4"),()=>{sim4=simUnifMeans(n4,N());paint.std();});};
+  segment("n4q",v=>setN(+v));
+  $("#n4").addEventListener("input",e=>{$("#n4o").textContent=e.target.value;});
+  $("#n4").addEventListener("change",e=>setN(+e.target.value));
+  $("#r4").onclick=e=>busy(e.currentTarget,()=>{sim4=simUnifMeans(n4,N());paint.std();});
+  sim4=simUnifMeans(n4,N());
+};
+paint.std=()=>{
+  const n=n4,se=SIG/Math.sqrt(n),q1=MU-1.96*se,q2=MU+1.96*se,fac=5.5,lo=MU-fac*se,hi=MU+fac*se;
+  const H=histDens(sim4,lo,hi,100), z=new Float64Array(sim4.length); for(let i=0;i<z.length;i++)z[i]=(sim4[i]-MU)/se;
+  const Hz=histDens(z,-fac,fac,100);
+  const ymA=Math.max(maxOf(H.d),dnorm(MU,MU,se))*1.12, ymB=Math.max(maxOf(Hz.d),dnorm(0,0,1))*1.12;
+  const inside=(a,b,l,u)=>(a>=l&&b<=u);
+  chart($("#c4a"),{h:250,x:[lo,hi],y:[0,ymA],xlab:"Sample mean ȳ (minutes)",ylab:"Density",aria:"Original sample means",
+    draw:P=>{drawHist(P,H,(j,a,b)=>inside(a,b,q1,q2)?P.col("barhi"):P.col("bar"));curve(P,x=>dnorm(x,MU,se),lo,hi,P.col("curve"),2);
+      [q1,q2].forEach(q=>vline(P,q,0,dnorm(q,MU,se),P.col("curve"),3));},
+    over:P=>{label(P,P.sx(q1)-4,P.sy(dnorm(q1,MU,se))-4,fmt(q1,3),P.col("curve"),"right");label(P,P.sx(q2)+4,P.sy(dnorm(q2,MU,se))-4,fmt(q2,3),P.col("curve"),"left");}});
+  chart($("#c4b"),{h:250,x:[-fac,fac],y:[0,ymB],xlab:"z",ylab:"Density",xticks:[-5,-4,-3,-2,-1,0,1,2,3,4,5],aria:"Standardised sample means",
+    draw:P=>{drawHist(P,Hz,(j,a,b)=>inside(a,b,-1.96,1.96)?P.col("barhi"):P.col("bar"));curve(P,x=>dnorm(x,0,1),-fac,fac,P.col("curve"),2);
+      [-1.96,1.96].forEach(q=>vline(P,q,0,dnorm(q,0,1),P.col("curve"),3));},
+    over:P=>{label(P,P.sx(-1.96)-4,P.sy(dnorm(1.96,0,1))-4,"−1.96",P.col("curve"),"right");label(P,P.sx(1.96)+4,P.sy(dnorm(1.96,0,1))-4,"1.96",P.col("curve"),"left");}});
+  let c=0,below=0,above=0;for(let i=0;i<sim4.length;i++){const v=sim4[i];if(v<=q1)below++;else if(v>=q2)above++;else c++;}
+  const L=sim4.length;
+  $("#w4").innerHTML=`<span class="k">SE</span>  σ/√n = ${fmt(SIG,3)}/√${n} = ${fmt(se,4)}\n<span class="k">q1</span>  5 − 1.96 × ${fmt(se,4)} = ${fmt(q1,3)}      <span class="k">q2</span>  5 + 1.96 × ${fmt(se,4)} = ${fmt(q2,3)}\n<span class="k">Z</span>   (ȳ − 5) / ${fmt(se,4)}   so  ȳ = q1 ↔ z = −1.96  and  ȳ = q2 ↔ z = 1.96`;
+  $("#s4").innerHTML=statGrid([["Inside q1 to q2",pct(c/L,2)],["Below q1",pct(below/L,2)],["Above q2",pct(above/L,2)],["Target","95% / 2.5% / 2.5%"]]);
+  $("#say4").textContent=`Both panels are the same ${int(L)} sample means; only the x-axis label changed. ${pct(c/L,1)} of them lie between ${fmt(q1,3)} and ${fmt(q2,3)} minutes, which is z between −1.96 and 1.96.`+(n<10?` Even with n = ${n} from a flat population, the 95% rule is already close.`:"")+" This is the step that makes confidence intervals possible.";
+};
+
+/* §7 */
+const pops={}; let sim5=null;
+const POPS={mix:"Three-peaked population",unif:"Uniform 0 to 10 population",skew:"Right skewed population",ushape:"U-shaped population"};
+function getPop(k){ if(pops[k])return pops[k]; const a=[];
+  if(k==="mix"){const parts=[[100000,2.5,1],[133333,6.5,0.75],[66667,10,0.5]];for(const[c,m,s]of parts)for(let i=0;i<c;i++){const v=m+s*rnorm();if(v>0&&v<10)a.push(v);}}
+  else if(k==="unif"){for(let i=0;i<300000;i++)a.push(runif());}
+  else if(k==="skew"){while(a.length<300000){const v=-2*Math.log(1-Math.random());if(v<10)a.push(v);}}
+  else{for(let i=0;i<300000;i++){const s=Math.sin(Math.PI*Math.random()/2);a.push(10*s*s);}}
+  const v=Float64Array.from(a),m=meanA(v); pops[k]={v,m,s:sdA(v,m)}; return pops[k]; }
+function simPopMeans(P,n,Nn){const v=P.v,L=v.length,out=new Float64Array(Nn);for(let i=0;i<Nn;i++){let s=0;for(let j=0;j<n;j++)s+=v[(Math.random()*L)|0];out[i]=s/n;}return out;}
+init.any=()=>{
+  const run=()=>{sim5=simPopMeans(getPop($("#p5").value),+$("#n5").value,N());};
+  $("#p5").addEventListener("change",()=>busy($("#r5"),()=>{run();paint.any();}));
+  $("#n5").addEventListener("input",e=>{$("#n5o").textContent=e.target.value;});
+  $("#n5").addEventListener("change",()=>busy($("#r5"),()=>{run();paint.any();}));
+  $("#f5").addEventListener("change",paint.any);
+  $("#r5").onclick=e=>busy(e.currentTarget,()=>{run();paint.any();});
+  run();
+};
+paint.any=()=>{
+  const k=$("#p5").value,P0=getPop(k),n=+$("#n5").value,se=P0.s/Math.sqrt(n),m=meanA(sim5),s=sdA(sim5,m);
+  $("#t5a").textContent=`${POPS[k]}: μ = ${fmt(P0.m,3)}, σ = ${fmt(P0.s,3)}`;
+  const Hp=histDens(P0.v,0,10,100);
+  chart($("#c5a"),{h:210,x:[0,10],y:[0,maxOf(Hp.d)*1.12],xlab:"Value",ylab:"Density",aria:"Population histogram",
+    draw:P=>{drawHist(P,Hp,()=>P.col("popc"));vline(P,P0.m,0,maxOf(Hp.d)*1.12,P.col("alt"),2,[5,4]);},
+    over:P=>label(P,P.sx(P0.m)+6,P.m.t+12,"μ",P.col("alt"))});
+  $("#t5b").textContent=`Distribution of ${int(sim5.length)} sample means, n = ${n}`;
+  const fix=$("#f5").checked, lo=fix?0:m-4.5*s, hi=fix?10:m+4.5*s, H=histDens(sim5,lo,hi,100), ym=Math.max(maxOf(H.d),dnorm(m,m,s))*1.12;
+  chart($("#c5b"),{h:250,x:[lo,hi],y:[0,ym],xlab:"Sample mean",ylab:"Density",aria:"Histogram of sample means",
+    draw:P=>{drawHist(P,H,()=>P.col("bar"));if(n>1)curve(P,x=>dnorm(x,m,s),lo,hi,P.col("curve"),2.5);}});
+  let c=0;for(let i=0;i<sim5.length;i++)if(Math.abs(sim5[i]-P0.m)<=1.96*se)c++;
+  $("#s5").innerHTML=statGrid([["Population μ",fmt(P0.m,3)],["Mean of the means",fmt(m,3)],["Theory σ/√n",fmt(se,4)],["SD of the means",fmt(s,4)],["Within μ ± 1.96 SE",pct(c/sim5.length)]]);
+  $("#say5").textContent = n===1? "With n = 1 the sample means are just single values, so their histogram is the population itself."
+    : n<10 ? `With n = ${n} the means still carry some of the population's shape. Increase n and watch it disappear.`
+    : `With n = ${n} the means are close to Normal although the population is ${k==="mix"?"three-peaked":k==="skew"?"strongly skewed":k==="ushape"?"U-shaped":"flat"}. The centre is still μ and the spread is still σ/√n. ${pct(c/sim5.length,1)} of the means lie within μ ± 1.96 SE (95% if Normal).`;
+};
+
+/* §8 */
+let r6=null;
+function simZT(n,Nn,keep=12){const mu=10,sig=2,z=new Float64Array(Nn),t=new Float64Array(Nn),rows=[];const y=new Float64Array(n);
+  for(let i=0;i<Nn;i++){let s=0;for(let j=0;j<n;j++){y[j]=mu+sig*rnorm();s+=y[j];}const m=s/n;let ss=0;for(let j=0;j<n;j++){const d=y[j]-m;ss+=d*d;}const sd=Math.sqrt(ss/(n-1));
+    z[i]=(m-mu)/(sig/Math.sqrt(n));t[i]=(m-mu)/(sd/Math.sqrt(n));if(i<keep)rows.push({y:Array.from(y),m,s:sd,z:z[i],t:t[i]});}
+  return{n,z,t,rows};}
+function yCols(n){return n<=6?[...Array(n).keys()]:[0,1,2,-1,n-1];}
+init.sig=()=>{
+  const run=()=>{r6=simZT(+$("#n6").value,N());};
+  $("#n6").addEventListener("input",e=>{$("#n6o").textContent=e.target.value;});
+  $("#n6").addEventListener("change",()=>busy($("#r6"),()=>{run();paint.sig();}));
+  $("#r6").onclick=e=>busy(e.currentTarget,()=>{run();paint.sig();});
+  run();
+};
+paint.sig=()=>{
+  const{n,z,t,rows}=r6,L=z.length,df=n-1,tq=qt(0.975,df),cols=yCols(n);
+  $("#t6").textContent=`First 12 of ${int(L)} samples of n = ${n} from N(10, 2²)`;
+  $("#tb6").innerHTML=`<thead><tr><th>#</th>${cols.map(c=>c<0?"<th>…</th>":`<th>y${c+1}</th>`).join("")}<th class="sep">ȳ</th><th>σ</th><th>z</th><th class="sep">s</th><th>t</th></tr></thead><tbody>${rows.map((r,i)=>`<tr><td>${i+1}</td>${cols.map(c=>c<0?"<td>…</td>":`<td>${fmt(r.y[c],3)}</td>`).join("")}<td class="sep">${fmt(r.m,3)}</td><td>2</td><td class="${Math.abs(r.z)>3?"flag":""}">${fmt(r.z,3)}</td><td class="sep">${fmt(r.s,3)}</td><td class="${Math.abs(r.t)>3?"flag":""}">${fmt(r.t,3)}</td></tr>`).join("")}</tbody>`;
+  const Hz=histDens(z,-5,5,100);
+  chart($("#c6a"),{h:240,x:[-5,5],y:[0,Math.max(maxOf(Hz.d),0.4)*1.12],xlab:"z",ylab:"Density",xticks:[-5,-4,-3,-2,-1,0,1,2,3,4,5],aria:"Histogram of z",
+    draw:P=>{drawHist(P,Hz,()=>P.col("bar"));curve(P,x=>dnorm(x,0,1),-5,5,P.col("curve"),2.4);}});
+  const Ht=histDens(t,-7,7,140);
+  chart($("#c6b"),{h:240,x:[-7,7],y:[0,Math.max(maxOf(Ht.d),0.4)*1.12],xlab:"t",ylab:"Density",xticks:[-6,-4,-2,0,2,4,6],aria:"Histogram of t",
+    draw:P=>{drawHist(P,Ht,()=>P.col("bar"));curve(P,x=>dnorm(x,0,1),-7,7,P.col("muted"),1.8,[5,4]);curve(P,x=>dt(x,df),-7,7,P.col("alt"),2.6);},
+    over:P=>{if(Ht.out)label(P,P.m.l+P.iw,P.m.t+12,`${pct(Ht.out/L,2)} of t values lie beyond ±7`,P.col("muted"),"right");}});
+  let z196=0,t196=0,ttq=0,mz=0,mt=0;for(let i=0;i<L;i++){const a=Math.abs(z[i]),b=Math.abs(t[i]);if(a>1.96)z196++;if(b>1.96)t196++;if(b>tq)ttq++;if(a>mz)mz=a;if(b>mt)mt=b;}
+  $("#s6").innerHTML=statGrid([["|z| > 1.96",pct(z196/L,2)],["|t| > 1.96",pct(t196/L,2)],[`t quantile, ${df} df`,fmt(tq,3)],[`|t| > ${fmt(tq,3)}`,pct(ttq/L,2)],["Largest |z|",fmt(mz,2)],["Largest |t|",fmt(mt,1)]]);
+  $("#say6").textContent=`With σ, ${pct(z196/L,1)} of |z| exceed 1.96, as the Normal promises. With s, ${pct(t196/L,1)} of |t| exceed 1.96, too many, because s is sometimes far too small. The t-distribution with n − 1 = ${df} degrees of freedom accounts for this: only ${pct(ttq/L,1)} of |t| exceed t₀.₀₂₅ = ${fmt(tq,3)}.`+(n>=25?" With n this large, t and z are almost the same.":"");
+};
+
+/* §9 sugar */
+let r7=null;
+function parseY(){return ($("#y7").value.match(/-?\d+(\.\d+)?/g)||[]).map(Number).filter(isFinite);}
+init.sugar=()=>{
+  const run=()=>{const y=parseY(),mu0=+$("#mu7").value;if(y.length<2){r7={err:"Enter at least two numbers."};return;}
+    const n=y.length,m=meanA(y),s=sdA(y,m),Nn=N(),sims=new Float64Array(Nn);
+    for(let i=0;i<Nn;i++){let a=0;for(let j=0;j<n;j++)a+=mu0+s*rnorm();sims[i]=a/n;}
+    r7={y,n,m,s,mu0,sims};};
+  $("#r7").onclick=e=>busy(e.currentTarget,()=>{run();paint.sugar();});
+  $("#mu7").addEventListener("change",()=>busy($("#r7"),()=>{run();paint.sugar();}));
+  run();
+};
+paint.sugar=()=>{
+  if(r7.err){note($("#c7"),r7.err);$("#w7").textContent="";$("#say7").textContent="";return;}
+  const{n,m,s,mu0,sims}=r7,se=s/Math.sqrt(n),tstat=(m-mu0)/se,L=sims.length;
+  const lo=Math.min(mu0-4.5*se,m-1.5*se),hi=Math.max(mu0+4.5*se,m+1.5*se),H=histDens(sims,lo,hi,100),ym=Math.max(maxOf(H.d),dnorm(mu0,mu0,se))*1.15;
+  $("#t7").textContent=`${int(L)} simulated means of n = ${n} if the true mean were ${mu0}`;
+  chart($("#c7"),{h:270,x:[lo,hi],y:[0,ym],xlab:"Sample mean",ylab:"Density",aria:"Simulated sample means",
+    draw:P=>{drawHist(P,H,(j,a)=>a>=m?P.col("alt"):P.col("bar"));curve(P,x=>dnorm(x,mu0,se),lo,hi,P.col("muted"),1.6,[5,4]);vline(P,m,0,ym,P.col("cross"),2.6);vline(P,mu0,0,ym,P.col("muted"),1,[2,3]);},
+    over:P=>{label(P,P.sx(m)+(P.sx(m)>P.m.l+P.iw-110?-6:6),P.m.t+12,`ȳ = ${fmt(m,3)}`,P.col("cross"),P.sx(m)>P.m.l+P.iw-110?"right":"left");label(P,P.sx(mu0)-6,P.m.t+12,`μ₀ = ${mu0}`,P.col("muted"),"right");}});
+  let c=0;for(let i=0;i<L;i++)if(sims[i]>=m)c++;
+  const pN=1-Phi(tstat),pT=1-pt(tstat,n-1);
+  const share=c/L, shareTxt=c===0?`0 of ${int(L)} (less than ${pct(1/L,3)})`:`${int(c)} of ${int(L)} = ${pct(share,3)}`;
+  $("#w7").innerHTML=`<span class="k">Data</span>        n = ${n},  ȳ = ${fmt(m,4)},  s = ${fmt(s,4)}\n<span class="k">SE</span>          s/√n = ${fmt(s,4)}/√${n} = ${fmt(se,4)}\n<span class="k">t</span>           (ȳ − μ₀)/SE = (${fmt(m,4)} − ${mu0}) / ${fmt(se,4)} = <b>${fmt(tstat,3)}</b>\n<span class="k">Simulation</span>  means ≥ ȳ: ${shareTxt}\n<span class="k">Normal</span>      Pr(Z ≥ ${fmt(tstat,2)}) = ${pN<1e-4?pN.toExponential(2):fmt(pN,4)}   (σ taken as s, like the simulation)\n<span class="k">t, ${n-1} df</span>    Pr(T ≥ ${fmt(tstat,2)}) = ${pT<1e-4?pT.toExponential(2):fmt(pT,4)}   (allows for estimating σ)`;
+  const rare=Math.max(pT,share)<0.01, odd=Math.max(pT,share)<0.05;
+  $("#say7").textContent= tstat<=0? `The observed mean is not above ${mu0}, so there is nothing surprising in this direction.`
+    : `If the true mean were ${mu0}, a sample mean of ${fmt(m,2)} or more would turn up in about ${pct(pT,2)} of samples (t-distribution). ${rare?"That is very rare, so the data are hard to reconcile with μ = "+mu0+".":odd?"That is unusual, but not extremely so.":"That happens often enough that the data are consistent with μ = "+mu0+"."} This tail probability is the one-sided p-value of a one-sample t-test.`;
+};
+
+/* §9 CIs */
+let r8=null,lev8=0.95,m8="t";
+// z multipliers as printed on the slides; any other level falls back to the exact quantile
+const zLev=L=>({0.9:1.65,0.95:1.96,0.99:2.58})[L]||qnorm(1-(1-L)/2);
+// draw the samples once and keep each mean and s
+function simCI(n,Nn){const mu=10,sig=2,y=new Float64Array(n),M=new Float64Array(Nn),S=new Float64Array(Nn),rows=[];
+  for(let i=0;i<Nn;i++){let s=0;for(let j=0;j<n;j++){y[j]=mu+sig*rnorm();s+=y[j];}const m=s/n;let ss=0;for(let j=0;j<n;j++){const d=y[j]-m;ss+=d*d;}const sd=Math.sqrt(ss/(n-1));
+    M[i]=m;S[i]=sd;if(i<50)rows.push({y:Array.from(y),m,s:sd});}
+  return{n,N:Nn,M,S,rows};}
+// score the same samples at a confidence level: multipliers and the three coverages
+function setLevel(r,lev){const a=1-lev,zq=zLev(lev),tq=qt(1-a/2,r.n-1),rn=Math.sqrt(r.n);let cz=0,ct=0,czs=0;
+  for(let i=0;i<r.N;i++){const e=Math.abs(r.M[i]-10);if(e<=zq*2/rn)cz++;if(e<=tq*r.S[i]/rn)ct++;if(e<=zq*r.S[i]/rn)czs++;}
+  Object.assign(r,{lev,zq,tq,cz:cz/r.N,ct:ct/r.N,czs:czs/r.N});}
+function ci(r,row,meth){const rn=Math.sqrt(r.n),h=meth==="z"?r.zq*2/rn:meth==="t"?r.tq*row.s/rn:r.zq*row.s/rn;return[row.m-h,row.m+h];}
+init.ci=()=>{
+  const run=()=>{r8=simCI(+$("#n8").value,N());setLevel(r8,lev8);};
+  $("#n8").addEventListener("input",e=>{$("#n8o").textContent=e.target.value;});
+  $("#n8").addEventListener("change",()=>busy($("#r8"),()=>{run();paint.ci();}));
+  segment("lev8",v=>{lev8=+v;setLevel(r8,lev8);paint.ci();});
+  segment("m8",v=>{m8=v;paint.ci();});
+  $("#r8").onclick=e=>busy(e.currentTarget,()=>{run();paint.ci();});
+  run();
+};
+paint.ci=()=>{
+  const r=r8,L=Math.round(r.lev*100),df=r.n-1;
+  $("#t8a").textContent=`Coverage of ${L}% intervals over ${int(r.N)} samples, n = ${r.n}`;
+  const rows=[["z, σ known",`ȳ ± ${fmt(r.zq,2)}·σ/√n`,r.cz],["t, σ estimated",`ȳ ± ${fmt(r.tq,3)}·s/√n  (${df} df)`,r.ct],["z with s (shortcut)",`ȳ ± ${fmt(r.zq,2)}·s/√n`,r.czs]];
+  const lo=Math.min(0.75,r.lev-0.1),sc=v=>Math.max(0,Math.min(100,(v-lo)/(1-lo)*100));
+  $("#cov8").innerHTML=rows.map(([a,b,c])=>`<div class="covrow"><div class="lab">${a}<small class="mono">${b}</small></div><div class="track" role="img" aria-label="${a}: ${pct(c)} coverage, target ${L}%"><div class="fill${c<r.lev-0.01?" low":""}" style="width:${sc(c)}%"></div><div class="target" style="left:${sc(r.lev)}%"></div></div><b>${pct(c)}</b></div>`).join("")+`<p class="note">Bars start at ${Math.round(lo*100)}%; the black mark is the promised ${L}%.</p>`;
+  const short=r.lev-r.czs;
+  $("#say8").textContent=`The z-interval with the true σ and the t-interval both cover μ = 10 about ${L}% of the time. Plugging s into the z formula covers only ${pct(r.czs,1)}`+(short>0.01?`, ${fmt(100*short,1)} points short, because ${fmt(r.zq,2)} is too small a multiplier when σ is estimated from ${r.n} values.`:`; with n = ${r.n} the difference has almost vanished.`);
+  const meth=m8,mname=meth==="z"?"z-intervals with σ":meth==="t"?"t-intervals with s":"z-intervals with s";
+  $("#t8b").textContent=`The first 50 ${mname}`;
+  const iv=r.rows.map(row=>ci(r,row,meth)),lo2=Math.min(...iv.map(v=>v[0]),10-0.5),hi2=Math.max(...iv.map(v=>v[1]),10.5);
+  chart($("#c8"),{h:Math.max(260,50*7+50),x:[lo2,hi2],y:[0,51],noY:true,xlab:"Interval for μ",aria:"First 50 confidence intervals",
+    draw:P=>{const{ctx,sx,sy,col}=P;iv.forEach(([a,b],i)=>{const hit=a<=10&&10<=b,y=Math.round(sy(50-i))+.5;ctx.strokeStyle=hit?col("good"):col("miss");ctx.lineWidth=hit?2:2.6;ctx.beginPath();ctx.moveTo(sx(a),y);ctx.lineTo(sx(b),y);ctx.stroke();ctx.fillStyle=hit?col("ink"):col("miss");ctx.beginPath();ctx.arc(sx(r.rows[i].m),y,2,0,7);ctx.fill();});
+      vline(P,10,0,51,col("alt"),2,[5,4]);}});
+  const cols=yCols(Math.min(r.n,r.n));
+  $("#tb8").innerHTML=`<thead><tr><th>#</th>${cols.map(c=>c<0?"<th>…</th>":`<th>y${c+1}</th>`).join("")}<th class="sep">ȳ</th><th>s</th><th class="sep">Lower</th><th>Upper</th><th>Contains μ?</th></tr></thead><tbody>${r.rows.slice(0,10).map((row,i)=>{const[a,b]=iv[i],ok=a<=10&&10<=b;return `<tr><td>${i+1}</td>${cols.map(c=>c<0?"<td>…</td>":`<td>${fmt(row.y[c],3)}</td>`).join("")}<td class="sep">${fmt(row.m,3)}</td><td>${fmt(row.s,3)}</td><td class="sep">${fmt(a,3)}</td><td>${fmt(b,3)}</td><td class="${ok?"ok":"no"}">${ok?"yes":"no"}</td></tr>`;}).join("")}</tbody>`;
+};
+
+/* ---------- navigation ---------- */
+const rail=$("#rail");
+CH.forEach(([id,name,sec],i)=>{const b=document.createElement("button");b.setAttribute("role","tab");b.id="tab-"+id;b.dataset.id=id;b.setAttribute("aria-controls",id);b.innerHTML=`<span class="n">${i+1}</span>${name}<span class="lec">${sec}</span>`;rail.appendChild(b);});
+function show(id){ if(!CH.some(c=>c[0]===id))id="one"; current=id;
+  CH.forEach(([c])=>{$("#"+c).hidden=c!==id;const b=$("#tab-"+c);b.setAttribute("aria-selected",c===id?"true":"false");b.tabIndex=c===id?0:-1;});
+  if(!ready[id]){init[id]();ready[id]=true;} paint[id]();
+  try{localStorage.setItem("cltlab-tab",id);}catch(e){} }
+rail.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;history.replaceState(null,"","#"+b.dataset.id);show(b.dataset.id);window.scrollTo({top:0});b.scrollIntoView({block:"nearest",inline:"nearest"});});
+rail.addEventListener("keydown",e=>{if(e.key!=="ArrowRight"&&e.key!=="ArrowLeft")return;const ids=CH.map(c=>c[0]),i=ids.indexOf(document.activeElement.dataset.id);if(i<0)return;const nx=ids[(i+(e.key==="ArrowRight"?1:-1)+ids.length)%ids.length];show(nx);$("#tab-"+nx).focus();});
+let raf=0; const repaint=()=>{cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>{if(ready[current])paint[current]();});};
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",repaint);
+new MutationObserver(repaint).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+let lastW=0; new ResizeObserver(en=>{const w=Math.round(en[0].contentRect.width);if(w!==lastW){lastW=w;repaint();}}).observe($("main .wrap"));
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(repaint);
+let start=(location.hash||"").slice(1); if(!start){try{start=localStorage.getItem("cltlab-tab")||"";}catch(e){}}
+show(start||"one");
+window.addEventListener("hashchange",()=>show(location.hash.slice(1)));
+})();
+</script>
+<script>
+/* ---------- theme toggle (shares the site's stored preference) ---------- */
+(function(){
+  var root = document.documentElement;
+  var btn  = document.getElementById('themeToggle');
+  function current(){ return root.getAttribute('data-theme') === 'light' ? 'light' : 'dark'; }
+  function sync(){
+    var t = current();
+    btn.setAttribute('aria-pressed', t === 'light' ? 'true' : 'false');
+    document.getElementById('tmode').textContent = t === 'light' ? 'Light' : 'Dark';
+  }
+  sync();
+  btn.addEventListener('click', function(){
+    var t = current() === 'light' ? 'dark' : 'light';
+    root.setAttribute('data-theme', t);
+    try{ localStorage.setItem('theme', t); }catch(e){}
+    sync();
+  });
+})();
+
+/* ---------- ȳ, Ȳ and p̂ in running text use the mono face (the serif sets them poorly) ---------- */
+(function(){
+  var SPLIT = /([\u0233\u0232]|p\u0302)/;
+  var SKIP = 'svg,canvas,.work,.code,.mono,.readout,select,option,textarea,input,script,style,.ph,.stats b,table.t td';
+  function wrapIn(root){
+    if (!root || root.nodeType !== 1 && root.nodeType !== 11) return;
+    var tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: function(n){
+      if (!SPLIT.test(n.nodeValue)) return NodeFilter.FILTER_REJECT;
+      var p = n.parentElement;
+      return p && !p.closest(SKIP) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+    }});
+    var list = []; while (tw.nextNode()) list.push(tw.currentNode);
+    list.forEach(function(n){
+      var frag = document.createDocumentFragment();
+      n.nodeValue.split(SPLIT).forEach(function(part, i){
+        if (!part) return;
+        if (i % 2) { var s = document.createElement('span'); s.className = 'ph'; s.textContent = part; frag.appendChild(s); }
+        else frag.appendChild(document.createTextNode(part));
+      });
+      n.parentNode.replaceChild(frag, n);
+    });
+  }
+  wrapIn(document.body);
+  new MutationObserver(function(ms){
+    ms.forEach(function(m){
+      if (m.type === 'characterData') { wrapIn(m.target.parentElement); return; }
+      m.addedNodes.forEach(function(n){ wrapIn(n.nodeType === 3 ? n.parentElement : n); });
+    });
+  }).observe(document.body, { childList: true, subtree: true, characterData: true });
+})();
+</script>
+
+</body>
+</html>
