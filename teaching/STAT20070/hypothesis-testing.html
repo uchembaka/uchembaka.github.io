@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>(function(){try{var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark"){t=(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+<title>Hypothesis Testing — Uche Mbaka</title>
+<meta name="description" content="A companion tool for STAT 20070 on hypothesis testing for one mean: the idea and the five steps, a worked example with a live t curve, a simulation of the p-value and a short quiz.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#080A0F; --surface:#0D1017; --sunk:#11151D; --ink:#E9E6DF; --muted:#B9B6AE; --faint:#6A7180; --line:rgba(233,230,223,.12);
+  --accent:#CFA15F; --accent-ink:#080A0F; --accent-soft:rgba(207,161,95,.14);
+  --curve:#E9E6DF; --under:rgba(233,230,223,.07); --rej:#C98A6B; --pv:#7E9E82; --obs:#CFA15F; --bar:#4F6575;
+  --good:#7E9E82; --bad:#C98A6B;
+  --f-display:"Space Grotesk", system-ui, sans-serif;
+  --f-body:"Newsreader", Georgia, serif;
+  --f-mono:"JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+  --r:14px; color-scheme:dark;
+}
+[data-theme="light"]{
+  --bg:#F3F0E9; --surface:#FBFAF5; --sunk:#EFEBE2; --ink:#1B1C20; --muted:#4A4C54; --faint:#6E727D; --line:rgba(20,21,26,.12);
+  --accent:#9E6B22; --accent-ink:#FBFAF5; --accent-soft:rgba(158,107,34,.10);
+  --curve:#1B1C20; --under:rgba(20,21,26,.06); --rej:#A0502F; --pv:#3F6B4F; --obs:#9E6B22; --bar:#A9BAC6;
+  --good:#3F6B4F; --bad:#A0502F; color-scheme:light;
+}
+[hidden]{display:none!important}
+html,body{margin:0;padding:0}
+/* Layout: one scrolling page in three numbered parts (the question → the five steps with a live t-curve → why t is unusual), then a short quiz. */
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55}
+.wrap{max-width:1080px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+p{margin:0}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+
+.mast{background:var(--surface);border-bottom:1px solid var(--line)}
+.mast .wrap{padding-block:30px 26px;display:grid;gap:10px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.mast h1{font-size:clamp(30px,4.6vw,46px);line-height:1.04;font-weight:700}
+.mast .lede{max-width:66ch;color:var(--muted)}
+
+main .wrap{padding-block:28px 44px;display:grid;gap:36px}
+.part{display:grid;gap:16px}
+.part-head{display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px;align-items:baseline}
+.part-head .no{font-family:var(--f-display);font-weight:700;font-size:30px;color:var(--accent);line-height:1}
+.part-head h2{font-size:clamp(22px,2.8vw,28px)}
+.part-head p{grid-column:2;color:var(--muted);max-width:74ch}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:grid;gap:14px;min-width:0}
+.panel h3{font-size:17px}
+
+.claim{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+.claim .box{border:1px solid var(--line);border-radius:8px;padding:14px;background:var(--bg);display:grid;gap:6px}
+.claim .lab{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.claim .big{font-family:var(--f-mono);font-size:22px;font-weight:500}
+.cans{display:flex;flex-wrap:wrap;gap:6px}
+.cans span{font-family:var(--f-mono);font-size:13px;padding:3px 8px;border-radius:99px;background:var(--surface);border:1px solid var(--line)}
+
+.bench{display:grid;grid-template-columns:minmax(230px,280px) minmax(0,1fr);gap:18px;align-items:start}
+.controls{display:grid;gap:16px;position:sticky;top:16px}
+.field{display:grid;gap:6px}
+.field .lab,.field label{font-size:12.5px;font-weight:600;color:var(--muted)}
+.field output{font-family:var(--f-mono);color:var(--ink);font-weight:500}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{flex:1;border:0;background:var(--bg);color:var(--muted);font:inherit;font-size:13.5px;padding:8px 4px;cursor:pointer;border-right:1px solid var(--line);font-family:var(--f-mono)}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:600}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.btn{font:inherit;font-size:13.5px;font-weight:600;border-radius:8px;padding:8px 12px;cursor:pointer;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink)}
+.btn.ghost{background:transparent;color:var(--accent)}
+.btn:hover{filter:brightness(1.07)}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+.hint{font-size:13px;color:var(--muted)}
+
+.chartbox{width:100%;min-width:0}
+.chartbox canvas{display:block;width:100%}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12.5px;color:var(--muted)}
+.legend i{display:inline-block;width:14px;height:10px;vertical-align:middle;margin-right:6px;border-radius:2px}
+
+.steps{list-style:none;margin:0;padding:0;display:grid;gap:0;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.steps li{display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px;padding:11px 14px;border-bottom:1px solid var(--line);background:var(--surface)}
+.steps li:last-child{border-bottom:0}
+.steps .n{font-family:var(--f-display);font-weight:700;font-size:18px;color:var(--accent)}
+.steps .t{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.03em;text-transform:uppercase}
+.steps .v{font-family:var(--f-mono);font-size:14px;line-height:1.7;overflow-x:auto}
+.steps .v .r{color:var(--rej)} .steps .v .g{color:var(--pv)}
+.verdict{display:inline-block;font-family:var(--f-body);font-weight:700;padding:2px 10px;border-radius:99px;border:1.5px solid currentColor;margin-right:6px}
+.verdict.rej{color:var(--rej)} .verdict.keep{color:var(--accent)}
+.say{border-left:3px solid var(--accent);padding:4px 0 4px 12px;max-width:76ch}
+
+.statrow{display:flex;flex-wrap:wrap;gap:10px 22px;font-size:14px}
+.statrow b{font-family:var(--f-mono);font-weight:500}
+
+.quiz{display:grid;gap:14px}
+.q{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:grid;gap:10px}
+.q h3{font-family:var(--f-body);font-size:15.5px;font-weight:600;line-height:1.45}
+.q h3 .qn{font-family:var(--f-mono);color:var(--accent);margin-right:8px}
+.opts{display:grid;gap:8px}
+.opt{display:flex;gap:10px;align-items:flex-start;text-align:left;font:inherit;font-size:14.5px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 12px;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt .k{font-family:var(--f-mono);font-size:13px;color:var(--muted);min-width:16px}
+.opt:disabled{cursor:default}
+.opt.right{border-color:var(--good);background:color-mix(in srgb,var(--good) 12%,var(--bg))}
+.opt.wrong{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 10%,var(--bg))}
+.fb{font-size:14px;line-height:1.5}
+.fb b.ok{color:var(--good)} .fb b.no{color:var(--bad)}
+.score{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;background:var(--accent-soft);border:1px solid var(--accent);border-radius:var(--r);padding:12px 16px}
+.score b{font-family:var(--f-mono);font-size:18px}
+
+.flow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.flow>div{border:1px solid var(--line);border-radius:8px;padding:14px;background:var(--bg);display:grid;gap:6px;align-content:start}
+.flow .st{font-family:var(--f-display);font-weight:700;font-size:16px}
+.flow .st span{color:var(--accent);margin-right:6px}
+.flow p{font-size:14px;color:var(--muted)}
+.flow .eq{font-family:var(--f-mono);font-size:14px;color:var(--ink)}
+.duo{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+.tails{display:grid;gap:8px;font-size:14px}
+.tails div{display:grid;grid-template-columns:110px minmax(0,1fr);gap:10px;align-items:baseline}
+.tails .eq{font-family:var(--f-mono)}
+table.err{border-collapse:collapse;width:100%;font-size:14px}
+table.err th,table.err td{border:1px solid var(--line);padding:9px 10px;text-align:left;vertical-align:top}
+table.err th{font-size:12px;color:var(--muted);font-weight:600;background:var(--bg)}
+table.err td.ok{color:var(--good)}
+table.err td.e1{color:var(--rej);font-weight:600}
+table.err td.e2{color:var(--accent);font-weight:600}
+.rule{display:flex;flex-wrap:wrap;gap:10px 24px;font-family:var(--f-mono);font-size:14px}
+.rule .r{color:var(--rej)} .rule .k{color:var(--accent)}
+.rule .eg{flex-basis:100%;font-family:var(--f-body);font-size:14px;color:var(--muted);border-left:3px solid var(--line);padding-left:10px;max-width:80ch}
+@media (max-width:820px){ .flow,.duo{grid-template-columns:minmax(0,1fr)} }
+footer{border-top:1px solid var(--line);color:var(--muted);font-size:12.5px}
+footer .wrap{padding-block:18px 28px}
+
+@media (max-width:820px){ .bench,.claim{grid-template-columns:minmax(0,1fr)} .controls{position:static} }
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+body{font-weight:300;font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased;transition:background .35s ease,color .35s ease}
+::selection{background:rgba(207,161,95,.22);color:var(--ink)}
+b,strong{font-weight:500}
+h1,h2,h3{font-weight:500;letter-spacing:-.02em}
+.toprow{display:flex;align-items:center;justify-content:space-between;gap:18px;padding-block:26px 0}
+.mono-l{font-family:var(--f-mono);font-weight:400;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--faint)}
+.back{text-decoration:none;transition:color .25s}
+.back:hover{color:var(--accent)}
+.theme-toggle{display:inline-flex;align-items:center;gap:10px;background:none;border:0;padding:0;cursor:pointer;font:inherit;line-height:1}
+.theme-toggle .tmode{transition:color .25s}
+.theme-toggle:hover .tmode{color:var(--accent)}
+.theme-toggle .track{width:40px;height:21px;border-radius:999px;border:1px solid var(--line);position:relative;transition:border-color .25s;flex:0 0 auto}
+.theme-toggle:hover .track{border-color:var(--accent)}
+.theme-toggle .knob{position:absolute;top:50%;left:3px;transform:translateY(-50%);width:13px;height:13px;border-radius:50%;background:var(--faint);transition:left .28s cubic-bezier(.4,0,.2,1),background .25s}
+[data-theme="light"] .theme-toggle .knob{left:22px;background:var(--accent)}
+.theme-toggle:focus-visible{outline:none}
+.theme-toggle:focus-visible .track{outline:2px solid var(--accent);outline-offset:3px}
+.mast{background:none;border-bottom:1px solid var(--line)}
+.mast .wrap{padding-block:30px 28px;gap:0}
+.eyebrow{font-size:11px;letter-spacing:.2em;color:var(--faint);margin:0 0 16px}
+.mast h1{font-size:clamp(30px,5.4vw,44px);letter-spacing:-.025em;margin:0 0 16px}
+.mast h1 em{font-style:normal;color:var(--accent)}
+.mast .lede{max-width:66ch;font-size:17px}
+.part-head .no{font-weight:500}
+.part-head p{font-size:17px}
+.panel{background:linear-gradient(160deg,var(--surface),var(--bg))}
+.panel h3{font-size:18.5px}
+/* no uppercase: these labels name n and other values */
+.claim .lab{font-family:var(--f-mono);font-size:12px;font-weight:400;letter-spacing:.02em;text-transform:none;color:var(--faint)}
+.claim .big{font-family:var(--f-display);font-size:24px}
+.cans span{font-family:var(--f-mono)}
+.field .lab,.field label{font-family:var(--f-mono);font-size:12.5px;font-weight:400;color:var(--faint);letter-spacing:.02em}
+.seg button{font-size:13.5px}
+.btn{font-family:var(--f-mono);font-size:13px;font-weight:500;border-radius:999px;padding:9px 15px}
+.hint{font-size:15px}
+.legend{font-family:var(--f-mono);font-size:12px;color:var(--faint);gap:8px 18px}
+.steps li{background:var(--surface)}
+.steps .n{font-weight:500}
+.steps .t{font-family:var(--f-mono);font-size:11px;font-weight:400;letter-spacing:.16em;color:var(--faint)}
+.steps .v{font-size:14px;white-space:pre-wrap}
+.verdict{font-family:var(--f-display);font-weight:500}
+.say{border-left-width:2px;padding:6px 0 6px 16px;color:var(--muted);font-size:16.5px}
+.statrow{font-size:16px}
+.statrow b{font-family:var(--f-display);font-size:18px}
+.q h3{font-family:var(--f-display);font-size:17px;font-weight:500}
+.opt{font-size:16px}
+.fb{font-size:16px}
+.score b{font-family:var(--f-display)}
+.flow .st{font-weight:500}
+.flow p{font-size:16px}
+.tails{font-size:16px}
+table.err{font-size:15.5px}
+table.err th{font-family:var(--f-mono);font-size:12px;font-weight:400;color:var(--faint)}
+.rule .eg{font-size:16px}
+footer{font-size:15px}
+/* the serif body font has no reliable ȳ, so those symbols in running text use the mono face */
+.ph{font-family:var(--f-mono);font-style:normal;font-size:.88em;letter-spacing:0;white-space:nowrap}
+
+</style>
+</head>
+<body>
+
+<div class="wrap toprow">
+  <a class="back mono-l" href="../STAT20070.html">← STAT 20070</a>
+  <button class="theme-toggle" id="themeToggle" aria-label="Switch between light and dark theme" aria-pressed="false"><span class="tmode mono-l" id="tmode">Dark</span><span class="track"><span class="knob"></span></span></button>
+</div>
+
+<header class="mast"><div class="wrap">
+  <p class="eyebrow">Section 3 · Lecture 15 · Hypothesis Testing</p>
+  <h1>Hypothesis <em>Testing</em></h1>
+  <p class="lede">A hypothesis test checks a claim about a population using a sample: we assume the claim is true and ask whether data like ours would be surprising. This page sets out the idea and the five steps, works through one example, lets you change the alternative hypothesis, the significance level and the sample mean to see how the decision changes, shows where the p-value comes from by simulation, and ends with a short quiz.</p>
+</div></header>
+
+<main><div class="wrap">
+
+<section class="part">
+  <div class="part-head"><span class="no">1</span><h2>What is a hypothesis test?</h2><p>A way to check a claim about a population (a mean, a proportion) using a sample. We assume the claim is true and ask: would data like ours be surprising?</p></div>
+  <div class="panel">
+    <div class="flow">
+      <div><div class="st"><span>1</span>State two hypotheses</div>
+        <p><b>H₀, the null hypothesis:</b> the claim we start from. It always has an equals sign.</p>
+        <p><b>H<sub>A</sub>, the alternative:</b> what we look for evidence of.</p>
+        <p class="eq">H₀: μ = μ₀</p></div>
+      <div><div class="st"><span>2</span>Compute a test statistic</div>
+        <p>How far is the sample mean from μ₀, in standard errors? If H₀ is true it follows a t-distribution with n − 1 degrees of freedom.</p>
+        <p class="eq">t = (ȳ − μ₀) / (s/√n)</p></div>
+      <div><div class="st"><span>3</span>Ask how unusual it is</div>
+        <p>The <b>p-value</b> is the probability, if H₀ were true, of a test statistic at least as extreme as the one observed. Small p means strong evidence against H₀.</p>
+        <p class="eq">p ≤ α ⇒ reject H₀</p></div>
+    </div>
+    <div class="duo">
+      <div class="panel" style="background:var(--bg)">
+        <h3>Which alternative? It depends on the question</h3>
+        <div class="tails">
+          <div><span class="eq">μ &gt; μ₀</span><span>Upper-tailed: is it higher than claimed? (pollution above the limit)</span></div>
+          <div><span class="eq">μ &lt; μ₀</span><span>Lower-tailed: is it lower than claimed? (vitamin C below the label)</span></div>
+          <div><span class="eq">μ ≠ μ₀</span><span>Two-tailed: is it different in either direction? (a drug changes blood pressure)</span></div>
+        </div>
+      </div>
+      <div class="panel" style="background:var(--bg)">
+        <h3>Two ways to be wrong</h3>
+        <table class="err">
+          <tr><th></th><th>H₀ is true</th><th>H₀ is false</th></tr>
+          <tr><th>Reject H₀</th><td class="e1">Type I error (probability α)</td><td class="ok">Correct</td></tr>
+          <tr><th>Do not reject H₀</th><td class="ok">Correct</td><td class="e2">Type II error</td></tr>
+        </table>
+        <p class="hint">Drug trial: a Type I error approves a drug that does not work; a Type II error misses one that does.</p>
+      </div>
+    </div>
+    <div class="rule"><span>The significance level α (usually 0.10, 0.05 or 0.01) is the Type I error risk we accept.</span><span class="eg">E.g. α = 0.05 in the drug trial: if the drug really does not work, there is a 5% chance the trial still concludes it does. Test 100 useless drugs and about 5 would be approved by chance. It is not the chance that an approved drug is useless.</span><span class="r">t in rejection region ⇔ p ≤ α ⇒ reject H₀</span><span class="k">otherwise ⇒ do not reject H₀ (not the same as “H₀ is true”)</span></div>
+  </div>
+</section>
+
+<section class="part">
+  <div class="part-head"><span class="no">2</span><h2>A worked example: the sugar claim</h2><p>Tutorial 5, Q5. A soft-drink producer says its cans average 11 g of sugar per 100 mL, and you measured 12 cans. Do they give enough evidence to say the producer’s claim is false?</p></div>
+  <div class="panel">
+    <div class="claim">
+      <div class="box"><span class="lab">The producer’s claim</span><span class="big">μ = 11 g / 100 mL</span><span class="hint">This is the reference value μ₀. It becomes the null hypothesis.</span></div>
+      <div class="box"><span class="lab">Your sample of n = 12 cans</span><span class="big">ȳ = 11.433, s = 0.4053</span><div class="cans" id="cans"></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="part">
+  <div class="part-head"><span class="no">3</span><h2>The five steps, live</h2><p>Change the alternative hypothesis, the significance level or the sample mean. The red area is the rejection region (probability α); the green area is the p-value. Reject H₀ when t lands in the red, which is exactly when the green area is no bigger than α.</p></div>
+  <div class="bench">
+    <div class="panel controls">
+      <div class="field"><span class="lab">Alternative hypothesis H<sub>A</sub></span>
+        <div class="seg" id="ha"><button data-v="up" aria-pressed="true">μ &gt; 11</button><button data-v="lo" aria-pressed="false">μ &lt; 11</button><button data-v="two" aria-pressed="false">μ ≠ 11</button></div></div>
+      <div class="field"><span class="lab">Significance level α</span>
+        <div class="seg" id="al"><button data-v="0.10" aria-pressed="false">0.10</button><button data-v="0.05" aria-pressed="true">0.05</button><button data-v="0.01" aria-pressed="false">0.01</button></div></div>
+      <div class="field"><label for="yb">What if the sample mean had been… ȳ = <output id="ybo">11.433</output></label>
+        <input type="range" id="yb" min="10.6" max="11.8" step="0.001" value="11.433"></div>
+      <div class="btns"><button class="btn ghost" id="reset">Back to the real data</button></div>
+      <p class="hint">n = 12 and s = 0.4053 stay fixed, so the test uses a t-distribution with 11 degrees of freedom.</p>
+    </div>
+    <div class="panel">
+      <h3>Distribution of T = (Ȳ − 11)/(s/√12) if the producer is right: t with 11 df</h3>
+      <div class="chartbox" id="cT"></div>
+      <div class="legend"><span><i style="background:var(--rej);opacity:.45"></i>rejection region (area α)</span><span><i style="background:var(--pv);opacity:.6"></i>p-value (area beyond your t)</span><span><i style="background:var(--obs);height:3px"></i>your t</span></div>
+      <ol class="steps" id="steps"></ol>
+      <p class="say" id="say"></p>
+    </div>
+  </div>
+</section>
+
+<section class="part">
+  <div class="part-head"><span class="no">4</span><h2>Why is your t so unusual?</h2><p>The p-value is not magic. Imagine the producer is right (μ = 11), buy 12 cans again and again, and compute t each time. Count how often t is at least as extreme as yours.</p></div>
+  <div class="panel">
+    <div class="btns"><button class="btn" id="sim">Simulate 1,000 more samples</button><button class="btn ghost" id="simR">Reset</button></div>
+    <div class="chartbox" id="cS"></div>
+    <div class="legend"><span><i style="background:var(--bar)"></i>t from simulated samples if μ = 11</span><span><i style="background:var(--pv);opacity:.8"></i>as extreme as yours</span><span><i style="background:var(--curve);height:3px"></i>t density, 11 df</span></div>
+    <div class="statrow" id="simStats"></div>
+    <p class="say" id="simSay"></p>
+  </div>
+</section>
+
+<section class="part">
+  <div class="part-head"><span class="no">5</span><h2>Quick quiz</h2><p>Six questions. Pick an answer to see whether it is right and why.</p></div>
+  <div class="quiz" id="quiz"></div>
+  <div class="score"><span>Score: <b id="score">0 / 6</b></span><button class="btn ghost" id="qReset">Try again</button></div>
+</section>
+
+</div></main>
+<footer><div class="wrap">Example from Tutorial 5, Q5. Probabilities come from the t distribution with 11 degrees of freedom; the tables (NCST Tables 9 and 10) give the same values to the precision shown.</div></footer>
+<script>
+(function(){
+"use strict";
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const Y=[11.7,11.2,11.6,10.8,12.1,11.7,11.4,11.3,11.9,10.9,11.0,11.6], n=12, S=0.4053, MU0=11, DF=11, YBAR=11.433;
+const SE=S/Math.sqrt(n);
+
+/* t distribution */
+function lgamma(x){const g=7,c=[0.99999999999980993,676.5203681218851,-1259.1392167224028,771.32342877765313,-176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];if(x<0.5)return Math.log(Math.PI/Math.sin(Math.PI*x))-lgamma(1-x);x-=1;let s=c[0];const t=x+g+0.5;for(let i=1;i<9;i++)s+=c[i]/(x+i);return 0.5*Math.log(2*Math.PI)+(x+0.5)*Math.log(t)-t+Math.log(s);}
+function betacf(a,b,x){const tiny=1e-300;let qab=a+b,qap=a+1,qam=a-1,c=1,d=1-qab*x/qap;if(Math.abs(d)<tiny)d=tiny;d=1/d;let h=d;for(let m=1;m<=300;m++){const m2=2*m;let aa=m*(b-m)*x/((qam+m2)*(a+m2));d=1+aa*d;if(Math.abs(d)<tiny)d=tiny;c=1+aa/c;if(Math.abs(c)<tiny)c=tiny;d=1/d;h*=d*c;aa=-(a+m)*(qab+m)*x/((a+m2)*(qap+m2));d=1+aa*d;if(Math.abs(d)<tiny)d=tiny;c=1+aa/c;if(Math.abs(c)<tiny)c=tiny;d=1/d;const del=d*c;h*=del;if(Math.abs(del-1)<1e-14)break;}return h;}
+function ibeta(x,a,b){if(x<=0)return 0;if(x>=1)return 1;const bt=Math.exp(lgamma(a+b)-lgamma(a)-lgamma(b)+a*Math.log(x)+b*Math.log(1-x));return x<(a+1)/(a+b+2)?bt*betacf(a,b,x)/a:1-bt*betacf(b,a,1-x)/b;}
+const pt=(t,df)=>{const x=df/(df+t*t),tail=0.5*ibeta(x,df/2,0.5);return t>0?1-tail:tail;};
+function qt(p,df){let lo=-60,hi=60;for(let i=0;i<100;i++){const m=(lo+hi)/2;if(pt(m,df)<p)lo=m;else hi=m;}return (lo+hi)/2;}
+const dt=(x,df)=>Math.exp(lgamma((df+1)/2)-lgamma(df/2))/Math.sqrt(df*Math.PI)*Math.pow(1+x*x/df,-(df+1)/2);
+let spare=null;function rnorm(){if(spare!==null){const v=spare;spare=null;return v;}let u=0;while(u===0)u=Math.random();const v=Math.random(),r=Math.sqrt(-2*Math.log(u));spare=r*Math.sin(2*Math.PI*v);return r*Math.cos(2*Math.PI*v);}
+
+const f=(x,d=3)=>x.toLocaleString("en-IE",{minimumFractionDigits:d,maximumFractionDigits:d});
+function fp(p){ if(p<0.0001)return "< 0.0001"; return f(p,4); }
+
+/* canvas */
+const cssv=()=>{const cs=getComputedStyle(document.documentElement);return k=>cs.getPropertyValue("--"+k).trim();};
+const MONO='12px "JetBrains Mono", ui-monospace, Menlo, monospace', BODY='12px "JetBrains Mono", ui-monospace, Menlo, monospace';
+function ticks(a,b){const out=[];for(let v=Math.ceil(a);v<=Math.floor(b);v++)out.push(v);return out;}
+function chart(host,o){
+  let cv=host.querySelector("canvas");if(!cv){cv=document.createElement("canvas");cv.setAttribute("role","img");host.appendChild(cv);}
+  cv.setAttribute("aria-label",o.aria||"");
+  const dpr=Math.max(1,Math.min(3,window.devicePixelRatio||1)),w=Math.max(260,host.clientWidth||600),h=o.h||270;
+  cv.style.height=h+"px";cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);
+  const ctx=cv.getContext("2d");ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);
+  const col=cssv(),m={l:16,r:16,t:30,b:44},iw=w-m.l-m.r,ih=h-m.t-m.b;
+  const sx=v=>m.l+(v-o.x[0])/(o.x[1]-o.x[0])*iw, sy=v=>m.t+ih-v/o.ymax*ih;
+  ctx.strokeStyle=col("muted");ctx.lineWidth=1;ctx.font=MONO;ctx.fillStyle=col("muted");ctx.textAlign="center";ctx.textBaseline="top";
+  ctx.beginPath();ctx.moveTo(m.l,m.t+ih+.5);ctx.lineTo(m.l+iw,m.t+ih+.5);ctx.stroke();
+  const step=(o.x[1]-o.x[0])>12?2:1;
+  ticks(o.x[0],o.x[1]).filter(v=>v%step===0).forEach(v=>{const x=Math.round(sx(v))+.5;ctx.beginPath();ctx.moveTo(x,m.t+ih);ctx.lineTo(x,m.t+ih+5);ctx.stroke();ctx.fillText(String(v).replace("-","−"),x,m.t+ih+8);});
+  ctx.font=BODY;ctx.textBaseline="bottom";ctx.fillText(o.xlab||"",m.l+iw/2,h-4);
+  const P={ctx,sx,sy,col,m,iw,ih,w,h};
+  ctx.save();ctx.beginPath();ctx.rect(m.l,m.t-20,iw,ih+20);ctx.clip();o.draw(P);ctx.restore();
+  if(o.over)o.over(P);
+}
+function area(P,a,b,color,alpha){const{ctx,sx,sy}=P;ctx.save();ctx.globalAlpha=alpha;ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(sx(a),sy(0));const N=160;for(let i=0;i<=N;i++){const x=a+(b-a)*i/N;ctx.lineTo(sx(x),sy(dt(x,DF)));}ctx.lineTo(sx(b),sy(0));ctx.closePath();ctx.fill();ctx.restore();}
+function curve(P,a,b,color,lw){const{ctx,sx,sy}=P;ctx.save();ctx.strokeStyle=color;ctx.lineWidth=lw;ctx.beginPath();const N=300;for(let i=0;i<=N;i++){const x=a+(b-a)*i/N;i?ctx.lineTo(sx(x),sy(dt(x,DF))):ctx.moveTo(sx(x),sy(dt(x,DF)));}ctx.stroke();ctx.restore();}
+function vl(P,x,y1,color,lw,dash){const{ctx,sx,sy}=P;ctx.save();ctx.strokeStyle=color;ctx.lineWidth=lw;if(dash)ctx.setLineDash(dash);ctx.beginPath();ctx.moveTo(sx(x),sy(0));ctx.lineTo(sx(x),sy(y1));ctx.stroke();ctx.restore();}
+function lab(P,x,y,t,color,align){const{ctx}=P;ctx.save();ctx.font=MONO;ctx.textAlign=align||"center";ctx.textBaseline="bottom";ctx.lineJoin="round";ctx.lineWidth=5;ctx.strokeStyle=P.col("bg");ctx.strokeText(t,x,y);ctx.fillStyle=color;ctx.fillText(t,x,y);ctx.restore();}
+
+/* state */
+let ha="up", alpha=0.05, ybar=YBAR, sims=[];
+$("#cans").innerHTML=Y.map(v=>`<span>${f(v,1)}</span>`).join("");
+
+function test(){
+  const t=(ybar-MU0)/SE;
+  const tc= ha==="two"? qt(1-alpha/2,DF) : qt(1-alpha,DF);
+  let p, rej;
+  if(ha==="up"){p=1-pt(t,DF);rej=t>tc;}
+  else if(ha==="lo"){p=pt(t,DF);rej=t<-tc;}
+  else{p=2*(1-pt(Math.abs(t),DF));rej=Math.abs(t)>tc;}
+  return {t,tc,p,rej};
+}
+function extreme(tv,t){return ha==="up"?tv>=t:ha==="lo"?tv<=t:Math.abs(tv)>=Math.abs(t);}
+
+function paintTest(){
+  const {t,tc,p,rej}=test(), lim=Math.max(5,Math.abs(t)+0.8), X=[-lim,lim], ymax=dt(0,DF)*1.18;
+  chart($("#cT"),{x:X,ymax,xlab:"t",aria:`t distribution with 11 degrees of freedom, observed t ${f(t,2)}`,
+    draw:P=>{const c=P.col;
+      area(P,X[0],X[1],c("under"),1);
+      if(ha==="up")area(P,tc,X[1],c("rej"),.4); else if(ha==="lo")area(P,X[0],-tc,c("rej"),.4); else{area(P,X[0],-tc,c("rej"),.4);area(P,tc,X[1],c("rej"),.4);}
+      if(ha==="up")area(P,t,X[1],c("pv"),.6); else if(ha==="lo")area(P,X[0],t,c("pv"),.6); else{const a=Math.abs(t);area(P,X[0],-a,c("pv"),.6);area(P,a,X[1],c("pv"),.6);}
+      curve(P,X[0],X[1],c("curve"),2.4);
+      const cs= ha==="up"?[tc]:ha==="lo"?[-tc]:[-tc,tc];
+      cs.forEach(v=>vl(P,v,ymax*0.62,c("rej"),2,[5,4]));
+      vl(P,t,ymax*0.85,c("obs"),3);
+      P.ctx.fillStyle=c("obs");P.ctx.beginPath();P.ctx.arc(P.sx(t),P.sy(0),5,0,7);P.ctx.fill();},
+    over:P=>{const c=P.col, cs= ha==="up"?[tc]:ha==="lo"?[-tc]:[-tc,tc];
+      cs.forEach(v=>lab(P,P.sx(v),P.sy(ymax*0.62)-3,`t* = ${f(v,3).replace("-","−")}`,c("rej")));
+      const x=P.sx(t), al= x>P.m.l+P.iw-90?"right":x<P.m.l+90?"left":"center";
+      lab(P,x,P.sy(ymax*0.85)-3,`your t = ${f(t,2).replace("-","−")}`,c("obs"),al);}});
+
+  const sym=ha==="up"?">":ha==="lo"?"<":"≠", aS=alpha.toFixed(2), tcS=f(tc,3);
+  const R= ha==="up"?`R = { t > ${tcS} }`:ha==="lo"?`R = { t < −${tcS} }`:`R = { |t| > ${tcS} }`;
+  const pS= ha==="up"?`p = Pr(T₁₁ > ${f(t,2)})`:ha==="lo"?`p = Pr(T₁₁ < ${f(t,2)})`:`p = 2 · Pr(T₁₁ > ${f(Math.abs(t),2)})`;
+  const qS= ha==="two"?`t*<sub>α/2</sub> = t*<sub>${String(+(alpha/2).toFixed(3))}</sub>`:`t*<sub>α</sub> = t*<sub>${aS}</sub>`;
+  const steps=[
+    ["Hypotheses",`H₀: μ = 11      H<sub>A</sub>: μ ${sym} 11`],
+    ["Significance level",`α = ${aS}  (we accept a ${Math.round(alpha*100)}% risk of a Type I error)`],
+    ["Test statistic",`t = (ȳ − μ₀)/(s/√n) = (${f(ybar,3)} − 11)/(0.4053/√12) = (${f(ybar-11,3)})/${f(SE,4)} = <b>${f(t,2)}</b>`],
+    ["Compare with H₀",`<span class="r">Critical value ${qS} with 11 df = ${tcS}   ⇒   ${R}</span>\n<span class="g">${pS} = <b>${fp(p)}</b></span>`],
+    ["Decision",`${rej?'<span class="verdict rej">Reject H₀</span>':'<span class="verdict keep">Do not reject H₀</span>'} t ${rej?"is":"is not"} in R, and p ${p<=alpha?"≤":">"} α = ${aS}`]
+  ];
+  $("#steps").innerHTML=steps.map(([a,b],i)=>`<li><span class="n">${i+1}</span><div><div class="t">${a}</div><div class="v">${b.replace(/\n/g,"<br>")}</div></div></li>`).join("");
+  const dir= ha==="up"?"above 11":ha==="lo"?"below 11":"different from 11";
+  $("#say").textContent = rej
+    ? `At the ${Math.round(alpha*100)}% level the data give evidence that the mean sugar content is ${dir} g/100 mL, so the producer’s claim looks false. If μ really were 11, a result this extreme would happen with probability ${fp(p)}.`
+    : `At the ${Math.round(alpha*100)}% level there is not enough evidence that the mean is ${dir} g/100 mL. This does not prove the claim is true; the data are simply compatible with μ = 11.` + (ha==="lo"&&t>0?" Here ȳ is above 11, so it cannot be evidence that μ is below 11: p is large.":"");
+}
+
+function simulate(k){for(let i=0;i<k;i++){let s=0,ss=0;const y=[];for(let j=0;j<n;j++){const v=MU0+S*rnorm();y.push(v);s+=v;}const m=s/n;for(const v of y)ss+=(v-m)**2;sims.push((m-MU0)/(Math.sqrt(ss/(n-1))/Math.sqrt(n)));}}
+function paintSim(){
+  const {t,p}=test(), lim=Math.max(5,Math.abs(t)+0.8), X=[-lim,lim], k=Math.round(2*lim/0.25), w=2*lim/k, c=new Array(k).fill(0);
+  let ext=0; sims.forEach(v=>{if(extreme(v,t))ext++; const j=Math.floor((v-X[0])/w); if(j>=0&&j<k)c[j]++;});
+  const L=sims.length, dens=c.map(v=>L?v/(L*w):0), ymax=Math.max(dt(0,DF),...dens)*1.15;
+  chart($("#cS"),{x:X,ymax,h:250,xlab:"t from a simulated sample of 12 cans",aria:"Histogram of simulated t values",
+    draw:P=>{const{ctx,sx,sy,col}=P;
+      dens.forEach((d,j)=>{if(!d)return;const a=X[0]+j*w,b=a+w,mid=(a+b)/2;ctx.fillStyle=extreme(mid,t)?col("pv"):col("bar");const x0=sx(a),x1=sx(b);ctx.fillRect(x0,sy(d),Math.max(1,x1-x0-1),sy(0)-sy(d));});
+      curve(P,X[0],X[1],col("curve"),2);
+      vl(P,t,ymax*0.85,col("obs"),3); if(ha==="two")vl(P,-t,ymax*0.85,col("obs"),1.5,[4,4]);},
+    over:P=>{const x=P.sx(t),al=x>P.m.l+P.iw-90?"right":x<P.m.l+90?"left":"center";lab(P,x,P.sy(ymax*0.85)-3,`your t = ${f(t,2).replace("-","−")}`,P.col("obs"),al);}});
+  const share=L?ext/L:0;
+  $("#simStats").innerHTML=`<span>Samples simulated <b>${L.toLocaleString("en-IE")}</b></span><span>As extreme as yours <b>${ext.toLocaleString("en-IE")}</b></span><span>Simulated share <b>${L?(100*share).toFixed(2)+"%":"–"}</b></span><span>p-value from t₁₁ <b>${(100*p).toFixed(2)}%</b></span>`;
+  $("#simSay").textContent = !L? "Press the button to simulate." :
+    ext===0? `Not one of ${L.toLocaleString("en-IE")} samples from a producer who tells the truth gave a t as extreme as ${f(t,2)}. The p-value says this happens only ${(100*p).toFixed(2)}% of the time: keep adding samples and the occasional one appears.` :
+    `${ext} of ${L.toLocaleString("en-IE")} simulated samples (${(100*share).toFixed(2)}%) were at least as extreme as yours. That share is the p-value, estimated by simulation; the t-distribution gives it exactly (${(100*p).toFixed(2)}%).`;
+}
+function paint(){paintTest();paintSim();}
+
+function seg(id,cb){$("#"+id).addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;$$("#"+id+" button").forEach(x=>x.setAttribute("aria-pressed",x===b?"true":"false"));cb(b.dataset.v);});}
+seg("ha",v=>{ha=v;paint();}); seg("al",v=>{alpha=+v;paint();});
+$("#yb").addEventListener("input",e=>{ybar=+e.target.value;$("#ybo").textContent=f(ybar,3);paint();});
+$("#reset").onclick=()=>{ybar=YBAR;$("#yb").value=YBAR;$("#ybo").textContent=f(YBAR,3);paint();};
+$("#sim").onclick=()=>{simulate(1000);paintSim();};
+$("#simR").onclick=()=>{sims=[];paintSim();};
+simulate(1000);
+
+/* quiz */
+const Q=[
+ {q:"In the sugar example, what is the null hypothesis?",o:["H₀: μ = 11","H₀: μ > 11","H₀: ȳ = 11.433","H₀: μ ≠ 11"],a:0,
+  e:"H₀ is the producer’s claim, the reference value we start from. It is about the population mean μ, never about the sample mean ȳ, and it always contains the equals sign."},
+ {q:"The p-value for H<sub>A</sub>: μ > 11 is 0.0017. What does that mean?",o:["There is a 0.17% chance that the producer is right","If μ really were 11, a result at least as extreme as ours (t ≥ 3.70) would happen in about 0.17% of samples","0.17% of cans contain more than 11 g of sugar","There is a 99.83% chance that μ > 11"],a:1,
+  e:"A p-value is calculated assuming H₀ is true. It tells you how surprising the data would be under H₀, not the probability that H₀ (or H<sub>A</sub>) is true."},
+ {q:"With α = 0.05 and p = 0.0017, what do you conclude?",o:["Reject H₀: evidence that the mean sugar content is above 11","Do not reject H₀","Accept H₀","H₀ is proven false"],a:0,
+  e:"p ≤ α, so we reject H₀ at the 5% level. It is strong evidence, not proof: a statistical decision always carries some risk of error."},
+ {q:"What would a Type I error be in this example?",o:["Concluding the mean is above 11 when it really is 11","Concluding the mean is 11 when it really is above 11","Measuring a can wrongly","Choosing α = 0.01 instead of 0.05"],a:0,
+  e:"A Type I error is rejecting a true H₀: accusing an honest producer. Its probability is α, which is why we keep α small."},
+ {q:"Water radiation: n = 11, two-tailed test, α = 0.05, t = 2.10. The critical value is t*₀.₀₂₅ with 10 df = 2.228. What do you decide?",o:["Reject H₀, because t > 1.96","Do not reject H₀, because |t| = 2.10 < 2.228","Reject H₀, because t is positive","Do not reject H₀, because t < 3.1"],a:1,
+  e:"For a two-tailed test R = {|t| > t*α/2}. Here 2.10 < 2.228, so t is not in the rejection region. With only 10 df we must use the t value, not 1.96."},
+ {q:"You “do not reject H₀”. Which statement is correct?",o:["H₀ has been proved true","The data do not give enough evidence against H₀","H<sub>A</sub> has been proved false","The sample must have been biased"],a:1,
+  e:"Failing to reject is like a “not guilty” verdict: the evidence was not strong enough. It does not show that H₀ is true; a larger sample might still detect a difference."}
+];
+const answered=new Array(Q.length).fill(null);
+function renderQuiz(){
+  $("#quiz").innerHTML=Q.map((q,i)=>`<div class="q"><h3><span class="qn">Q${i+1}</span>${q.q}</h3><div class="opts">${q.o.map((o,j)=>`<button class="opt" data-q="${i}" data-o="${j}"><span class="k">${"ABCD"[j]}</span><span>${o}</span></button>`).join("")}</div><p class="fb" id="fb${i}" aria-live="polite"></p></div>`).join("");
+  updScore();
+}
+function updScore(){$("#score").textContent=`${answered.filter((v,i)=>v===Q[i].a).length} / ${Q.length}`;}
+$("#quiz").addEventListener("click",e=>{const b=e.target.closest(".opt");if(!b)return;const i=+b.dataset.q,j=+b.dataset.o;if(answered[i]!==null)return;answered[i]=j;
+  $$(`.opt[data-q="${i}"]`).forEach(x=>{x.disabled=true;const k=+x.dataset.o;if(k===Q[i].a)x.classList.add("right");else if(k===j)x.classList.add("wrong");});
+  $("#fb"+i).innerHTML=(j===Q[i].a?'<b class="ok">Correct.</b> ':'<b class="no">Not quite.</b> ')+Q[i].e; updScore();});
+$("#qReset").onclick=()=>{answered.fill(null);renderQuiz();};
+renderQuiz();
+
+/* repaint on theme / resize */
+let raf=0;const rp=()=>{cancelAnimationFrame(raf);raf=requestAnimationFrame(paint);};
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",rp);
+new MutationObserver(rp).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+let lw=0;new ResizeObserver(en=>{const w=Math.round(en[0].contentRect.width);if(w!==lw){lw=w;rp();}}).observe($("main .wrap"));
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(rp);
+paint();
+})();
+</script>
+<script>
+/* ---------- theme toggle (shares the site's stored preference) ---------- */
+(function(){
+  var root = document.documentElement;
+  var btn  = document.getElementById('themeToggle');
+  function current(){ return root.getAttribute('data-theme') === 'light' ? 'light' : 'dark'; }
+  function sync(){
+    var t = current();
+    btn.setAttribute('aria-pressed', t === 'light' ? 'true' : 'false');
+    document.getElementById('tmode').textContent = t === 'light' ? 'Light' : 'Dark';
+  }
+  sync();
+  btn.addEventListener('click', function(){
+    var t = current() === 'light' ? 'dark' : 'light';
+    root.setAttribute('data-theme', t);
+    try{ localStorage.setItem('theme', t); }catch(e){}
+    sync();
+  });
+})();
+
+/* ---------- ȳ and Ȳ in running text use the mono face (the serif sets them poorly) ---------- */
+(function(){
+  var SPLIT = /([\u0233\u0232])/;
+  var SKIP = 'svg,canvas,.mono,.big,.eq,.v,.cans,select,option,textarea,input,script,style,.ph,.statrow b,output';
+  function wrapIn(root){
+    if (!root || root.nodeType !== 1 && root.nodeType !== 11) return;
+    var tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: function(n){
+      if (!SPLIT.test(n.nodeValue)) return NodeFilter.FILTER_REJECT;
+      var p = n.parentElement;
+      return p && !p.closest(SKIP) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+    }});
+    var list = []; while (tw.nextNode()) list.push(tw.currentNode);
+    list.forEach(function(n){
+      var frag = document.createDocumentFragment();
+      n.nodeValue.split(SPLIT).forEach(function(part, i){
+        if (!part) return;
+        if (i % 2) { var s = document.createElement('span'); s.className = 'ph'; s.textContent = part; frag.appendChild(s); }
+        else frag.appendChild(document.createTextNode(part));
+      });
+      n.parentNode.replaceChild(frag, n);
+    });
+  }
+  wrapIn(document.body);
+  new MutationObserver(function(ms){
+    ms.forEach(function(m){
+      if (m.type === 'characterData') { wrapIn(m.target.parentElement); return; }
+      m.addedNodes.forEach(function(n){ wrapIn(n.nodeType === 3 ? n.parentElement : n); });
+    });
+  }).observe(document.body, { childList: true, subtree: true, characterData: true });
+})();
+</script>
+
+</body>
+</html>
