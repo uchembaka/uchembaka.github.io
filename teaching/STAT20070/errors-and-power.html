@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>(function(){try{var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark"){t=(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";}document.documentElement.setAttribute("data-theme",t);}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+<title>Errors and Power — Uche Mbaka</title>
+<meta name="description" content="A companion tool for STAT 20070: Type I and Type II errors, how α, β and power trade off, the sample size needed for one or two means, and why a significant result is not always an important one.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#080A0F; --surface:#0D1017; --sunk:#11151D; --ink:#E9E6DF; --muted:#B9B6AE; --faint:#6A7180; --line:rgba(233,230,223,.12);
+  --accent:#CFA15F; --accent-ink:#080A0F; --accent-soft:rgba(207,161,95,.14);
+  --h0:#8A909B; --ha:#E9E6DF; --alpha:#C98A6B; --beta:#5C7585; --power:#7E9E82; --crit:#CFA15F;
+  --good:#7E9E82; --bad:#C98A6B;
+  --f-display:"Space Grotesk", system-ui, sans-serif;
+  --f-body:"Newsreader", Georgia, serif;
+  --f-mono:"JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+  --r:14px; color-scheme:dark;
+}
+[data-theme="light"]{
+  --bg:#F3F0E9; --surface:#FBFAF5; --sunk:#EFEBE2; --ink:#1B1C20; --muted:#4A4C54; --faint:#6E727D; --line:rgba(20,21,26,.12);
+  --accent:#9E6B22; --accent-ink:#FBFAF5; --accent-soft:rgba(158,107,34,.10);
+  --h0:#7A7E88; --ha:#1B1C20; --alpha:#A0502F; --beta:#4A6377; --power:#3F6B4F; --crit:#9E6B22;
+  --good:#3F6B4F; --bad:#A0502F; color-scheme:light;
+}
+[hidden]{display:none!important}
+html,body{margin:0;padding:0}
+/* Layout: one scrolling page in five numbered parts (the two mistakes → α/β/power live → sample size → practical significance → quiz). Same visual family as the sugar-test page. */
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55}
+.wrap{max-width:1080px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+p{margin:0}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+
+.mast{background:var(--surface);border-bottom:1px solid var(--line)}
+.mast .wrap{padding-block:30px 26px;display:grid;gap:10px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.mast h1{font-size:clamp(30px,4.6vw,46px);line-height:1.04;font-weight:700}
+.mast .lede{max-width:68ch;color:var(--muted)}
+
+main .wrap{padding-block:28px 44px;display:grid;gap:36px}
+.part{display:grid;gap:16px}
+.part-head{display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px;align-items:baseline}
+.part-head .no{font-family:var(--f-display);font-weight:700;font-size:30px;color:var(--accent);line-height:1}
+.part-head h2{font-size:clamp(22px,2.8vw,28px)}
+.part-head p{grid-column:2;color:var(--muted);max-width:76ch}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:grid;gap:14px;min-width:0}
+.panel h3{font-size:17px}
+.duo{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+
+table.err{border-collapse:collapse;width:100%;font-size:14px}
+table.err th,table.err td{border:1px solid var(--line);padding:10px 12px;text-align:left;vertical-align:top}
+table.err th{font-size:12.5px;color:var(--muted);font-weight:600;background:var(--bg)}
+table.err td b{display:block}
+table.err td small{color:var(--muted)}
+table.err td.ok b{color:var(--good)} table.err td.e1 b{color:var(--alpha)} table.err td.e2 b{color:var(--beta)}
+.defs{display:grid;gap:10px;font-size:14.5px}
+.defs div{display:grid;grid-template-columns:120px minmax(0,1fr);gap:10px;align-items:baseline}
+.defs .eq{font-family:var(--f-mono);font-weight:500}
+.defs .a{color:var(--alpha)} .defs .b{color:var(--beta)} .defs .p{color:var(--power)}
+
+.bench{display:grid;grid-template-columns:minmax(230px,280px) minmax(0,1fr);gap:18px;align-items:start}
+.controls{display:grid;gap:16px;position:sticky;top:16px}
+.field{display:grid;gap:6px}
+.field .lab,.field label{font-size:12.5px;font-weight:600;color:var(--muted)}
+.field output{font-family:var(--f-mono);color:var(--ink);font-weight:500}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{flex:1;border:0;background:var(--bg);color:var(--muted);font:inherit;font-size:13.5px;padding:8px 4px;cursor:pointer;border-right:1px solid var(--line)}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:600}
+input[type=range]{width:100%;accent-color:var(--accent)}
+input[type=number],select{font:inherit;font-size:14px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px 9px;width:100%}
+.btn{font:inherit;font-size:13.5px;font-weight:600;border-radius:8px;padding:8px 12px;cursor:pointer;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink)}
+.btn.ghost{background:transparent;color:var(--accent)}
+.btn:hover{filter:brightness(1.07)}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+.hint{font-size:13px;color:var(--muted)}
+
+.chartbox{width:100%;min-width:0}
+.chartbox canvas{display:block;width:100%}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12.5px;color:var(--muted)}
+.legend i{display:inline-block;width:14px;height:10px;vertical-align:middle;margin-right:6px;border-radius:2px}
+
+.meters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.meter{border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:grid;gap:6px;background:var(--bg)}
+.meter span{font-size:12px;color:var(--muted)}
+.meter b{font-family:var(--f-mono);font-size:22px;font-weight:500}
+.meter .bar{height:6px;border-radius:3px;background:var(--sunk);overflow:hidden}
+.meter .bar i{display:block;height:100%}
+.meter.a b{color:var(--alpha)} .meter.a .bar i{background:var(--alpha)}
+.meter.b b{color:var(--beta)} .meter.b .bar i{background:var(--beta)}
+.meter.p b{color:var(--power)} .meter.p .bar i{background:var(--power)}
+
+.work{background:var(--sunk);border:1px solid var(--line);border-radius:8px;padding:12px 14px;font-family:var(--f-mono);font-size:13.5px;line-height:1.8;overflow-x:auto;white-space:pre-wrap}
+.work .k{color:var(--accent);font-weight:500}
+.say{border-left:3px solid var(--accent);padding:4px 0 4px 12px;max-width:78ch}
+
+.cases{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+.case{border:1px solid var(--line);border-radius:var(--r);padding:16px;background:var(--surface);display:grid;gap:12px;align-content:start}
+.case h3{font-size:17px}
+.case .tag{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+table.t{border-collapse:collapse;width:100%;font-size:14px}
+table.t th,table.t td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+table.t th{font-family:var(--f-body);font-size:12.5px;color:var(--muted);font-weight:600}
+table.t th:first-child,table.t td:first-child{text-align:left;font-family:var(--f-body)}
+.verdict{display:inline-block;font-weight:700;padding:2px 10px;border-radius:99px;border:1.5px solid currentColor;font-size:13.5px}
+.verdict.rej{color:var(--alpha)} .verdict.keep{color:var(--accent)}
+
+.quiz{display:grid;gap:14px}
+.q{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:grid;gap:10px}
+.q h3{font-family:var(--f-body);font-size:15.5px;font-weight:600;line-height:1.45}
+.q h3 .qn{font-family:var(--f-mono);color:var(--accent);margin-right:8px}
+.opts{display:grid;gap:8px}
+.opt{display:flex;gap:10px;align-items:flex-start;text-align:left;font:inherit;font-size:14.5px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 12px;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt .k{font-family:var(--f-mono);font-size:13px;color:var(--muted);min-width:16px}
+.opt:disabled{cursor:default}
+.opt.right{border-color:var(--good);background:color-mix(in srgb,var(--good) 12%,var(--bg))}
+.opt.wrong{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 10%,var(--bg))}
+.fb{font-size:14px;line-height:1.5}
+.fb b.ok{color:var(--good)} .fb b.no{color:var(--bad)}
+.score{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;background:var(--accent-soft);border:1px solid var(--accent);border-radius:var(--r);padding:12px 16px}
+.score b{font-family:var(--f-mono);font-size:18px}
+
+footer{border-top:1px solid var(--line);color:var(--muted);font-size:12.5px}
+footer .wrap{padding-block:18px 28px}
+
+@media (max-width:820px){ .bench,.duo,.cases{grid-template-columns:minmax(0,1fr)} .controls{position:static} }
+@media (max-width:440px){ .meters{grid-template-columns:minmax(0,1fr)} .defs div{grid-template-columns:minmax(0,1fr)} }
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+body{font-weight:300;font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased;transition:background .35s ease,color .35s ease}
+::selection{background:rgba(207,161,95,.22);color:var(--ink)}
+b,strong{font-weight:500}
+h1,h2,h3{font-weight:500;letter-spacing:-.02em}
+.toprow{display:flex;align-items:center;justify-content:space-between;gap:18px;padding-block:26px 0}
+.mono-l{font-family:var(--f-mono);font-weight:400;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--faint)}
+.back{text-decoration:none;transition:color .25s}
+.back:hover{color:var(--accent)}
+.theme-toggle{display:inline-flex;align-items:center;gap:10px;background:none;border:0;padding:0;cursor:pointer;font:inherit;line-height:1}
+.theme-toggle .tmode{transition:color .25s}
+.theme-toggle:hover .tmode{color:var(--accent)}
+.theme-toggle .track{width:40px;height:21px;border-radius:999px;border:1px solid var(--line);position:relative;transition:border-color .25s;flex:0 0 auto}
+.theme-toggle:hover .track{border-color:var(--accent)}
+.theme-toggle .knob{position:absolute;top:50%;left:3px;transform:translateY(-50%);width:13px;height:13px;border-radius:50%;background:var(--faint);transition:left .28s cubic-bezier(.4,0,.2,1),background .25s}
+[data-theme="light"] .theme-toggle .knob{left:22px;background:var(--accent)}
+.theme-toggle:focus-visible{outline:none}
+.theme-toggle:focus-visible .track{outline:2px solid var(--accent);outline-offset:3px}
+.mast{background:none;border-bottom:1px solid var(--line)}
+.mast .wrap{padding-block:30px 28px;gap:0}
+.eyebrow{font-size:11px;letter-spacing:.2em;color:var(--faint);margin:0 0 16px}
+.mast h1{font-size:clamp(30px,5.4vw,44px);letter-spacing:-.025em;margin:0 0 16px}
+.mast h1 em{font-style:normal;color:var(--accent)}
+.mast .lede{max-width:66ch;font-size:17px}
+.part-head .no{font-weight:500}
+.part-head p{font-size:17px}
+.panel{background:linear-gradient(160deg,var(--surface),var(--bg))}
+.panel h3{font-size:18.5px}
+table.err{font-size:15.5px}
+table.err th{font-family:var(--f-mono);font-size:12px;font-weight:400;color:var(--faint)}
+.defs{font-size:16px}
+/* each symbol sits on its own line above its definition */
+.defs{gap:14px}
+.defs div{grid-template-columns:minmax(0,1fr);gap:2px}
+.defs .eq{white-space:nowrap;font-family:var(--f-display);font-size:18px}
+.field .lab,.field label{font-family:var(--f-mono);font-size:12.5px;font-weight:400;color:var(--faint);letter-spacing:.02em}
+input[type=number],select{font-family:var(--f-display);font-weight:500;font-size:15px}
+.seg button{font-family:var(--f-mono);font-size:13px}
+.btn{font-family:var(--f-mono);font-size:13px;font-weight:500;border-radius:999px;padding:9px 15px}
+.hint{font-size:15px}
+.legend{font-family:var(--f-mono);font-size:12px;color:var(--faint);gap:8px 18px}
+.meter span{font-family:var(--f-mono);font-size:12px;color:var(--faint)}
+.meter b{font-family:var(--f-display)}
+.work{font-size:13.5px}
+.say{border-left-width:2px;padding:6px 0 6px 16px;color:var(--muted);font-size:16.5px}
+.case .tag{letter-spacing:.14em;text-transform:uppercase;font-size:11px;color:var(--faint)}
+.case h3{font-size:18.5px}
+table.t{font-size:14px}
+table.t th{font-family:var(--f-mono);font-size:12px;font-weight:400;color:var(--faint)}
+.verdict{font-family:var(--f-display);font-weight:500}
+.q h3{font-family:var(--f-display);font-size:17px;font-weight:500}
+.opt{font-size:16px}
+.fb{font-size:16px}
+.score b{font-family:var(--f-display)}
+footer{font-size:15px}
+/* the serif body font has no reliable ȳ, so it uses the mono face in running text */
+.ph{font-family:var(--f-mono);font-style:normal;font-size:.88em;letter-spacing:0;white-space:nowrap}
+
+</style>
+</head>
+<body>
+
+<div class="wrap toprow">
+  <a class="back mono-l" href="../STAT20070.html">← STAT 20070</a>
+  <button class="theme-toggle" id="themeToggle" aria-label="Switch between light and dark theme" aria-pressed="false"><span class="tmode mono-l" id="tmode">Dark</span><span class="track"><span class="knob"></span></span></button>
+</div>
+
+<header class="mast"><div class="wrap">
+  <p class="eyebrow">Section 3 · Lecture 17 · Comparing Two Samples</p>
+  <h1>Errors and <em>Power</em></h1>
+  <p class="lede">Every test can get it wrong in two ways. See where the two error probabilities come from, how they trade off, how a bigger sample shrinks both, how many subjects a study needs, and why “significant” does not always mean “important”.</p>
+</div></header>
+
+<main><div class="wrap">
+
+<section class="part">
+  <div class="part-head"><span class="no">1</span><h2>Two ways to get it wrong</h2><p>Think of a pregnancy test. H₀: not pregnant (no effect). H<sub>A</sub>: pregnant (an effect). The test says “positive” (reject H₀) or “negative” (do not reject), and either answer can be wrong.</p></div>
+  <div class="duo">
+    <div class="panel">
+      <table class="err">
+        <tr><th></th><th>Do not reject H₀</th><th>Reject H₀</th></tr>
+        <tr><th>H₀ is true<br><small>not pregnant</small></th><td class="ok"><b>Correct</b><small>true negative</small></td><td class="e1"><b>Type I error</b><small>false positive: “pregnant” when she is not</small></td></tr>
+        <tr><th>H₀ is false<br><small>pregnant</small></th><td class="e2"><b>Type II error</b><small>false negative: misses a real pregnancy</small></td><td class="ok"><b>Correct</b><small>true positive</small></td></tr>
+      </table>
+    </div>
+    <div class="panel">
+      <div class="defs">
+        <div><span class="eq a">α</span><span><b>Pr(Type I error)</b>: reject H₀ when it is true. We choose α in advance (0.10, 0.05, 0.01).</span></div>
+        <div><span class="eq b">β</span><span><b>Pr(Type II error)</b>: do not reject H₀ when it is false. A real effect goes undetected.</span></div>
+        <div><span class="eq p">Power = 1 − β</span><span><b>Pr(detect a real effect)</b>: reject H₀ when it is false. A drug that works is shown to work.</span></div>
+      </div>
+      <p class="hint">α is fixed by us. β and power depend on how big the effect is, how noisy the data are, and how many observations we have.</p>
+    </div>
+  </div>
+</section>
+
+<section class="part">
+  <div class="part-head"><span class="no">2</span><h2>α, β and power, live</h2><p>Upper-tailed test of H₀: μ = μ₀ against H<sub>A</sub>: μ = μ<sub>A</sub> &gt; μ₀. The grey curve is the distribution of ȳ if H₀ is true, the light one if H<sub>A</sub> is true. We reject when ȳ lands right of the amber line. Start with the pain-relief study: standard drugs give 18 hours, the new drug is hoped to give 24.</p></div>
+  <div class="bench">
+    <div class="panel controls">
+      <div class="field"><label for="al">Significance level α = <output id="alo">0.05</output></label>
+        <input type="range" id="al" min="0.001" max="0.2" step="0.001" value="0.05">
+        <div class="seg" id="alq"><button data-v="0.1" aria-pressed="false">0.10</button><button data-v="0.05" aria-pressed="true">0.05</button><button data-v="0.01" aria-pressed="false">0.01</button></div></div>
+      <div class="field"><label for="dl">Effect size Δ = μ<sub>A</sub> − μ₀ = <output id="dlo">6</output> h</label><input type="range" id="dl" min="0" max="15" step="0.5" value="6"></div>
+      <div class="field"><label for="sg">Standard deviation σ = <output id="sgo">10.5</output> h</label><input type="range" id="sg" min="2" max="20" step="0.5" value="10.5"></div>
+      <div class="field"><label for="nn">Sample size n = <output id="nno">27</output></label><input type="range" id="nn" min="2" max="120" step="1" value="27"></div>
+      <div class="btns"><button class="btn ghost" id="preset">Back to the pain-relief study</button></div>
+      <p class="hint">Uses the Normal sampling distribution ȳ ~ N(μ, σ²/n), as in the sample-size formulas.</p>
+    </div>
+    <div class="panel">
+      <h3 id="tA"></h3>
+      <div class="chartbox" id="cA"></div>
+      <div class="legend"><span><i style="background:var(--alpha)"></i>α: H₀ true, but we reject</span><span><i style="background:var(--beta)"></i>β: H<sub>A</sub> true, but we do not reject</span><span><i style="background:var(--power);opacity:.45"></i>power: H<sub>A</sub> true and we reject</span><span><i style="background:var(--crit);height:3px"></i>cut-off for ȳ, where we start to reject</span></div>
+      <div class="meters" id="meters"></div>
+      <div class="work" id="wA"></div>
+      <p class="say" id="sayA"></p>
+      <h3>Power as the sample size grows</h3>
+      <div class="chartbox" id="cP"></div>
+      <div class="legend"><span><i style="background:var(--power);height:3px"></i>power for this α, Δ and σ</span><span><i style="background:var(--faint);height:2px"></i>90% target</span><span><i style="background:var(--ink);height:8px;width:8px;border-radius:50%"></i>your n</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="part">
+  <div class="part-head"><span class="no">3</span><h2>How many subjects do I need?</h2><p>When planning a study, fix α, the power you want, the effect Δ worth detecting and an estimate of σ, then solve for n. Always round up.</p></div>
+  <div class="bench">
+    <div class="panel controls">
+      <div class="field"><span class="lab">Comparing</span><div class="seg" id="sd"><button data-v="1" aria-pressed="true">One mean</button><button data-v="2" aria-pressed="false">Two means</button></div></div>
+      <div class="field"><span class="lab">Alternative</span><div class="seg" id="st"><button data-v="1" aria-pressed="true">One-tailed</button><button data-v="2" aria-pressed="false">Two-tailed</button></div></div>
+      <div class="duo" style="gap:10px">
+        <div class="field"><label for="sa">α</label><select id="sa"><option>0.10</option><option selected>0.05</option><option>0.01</option></select></div>
+        <div class="field"><label for="sp">Power</label><select id="sp"><option value="0.80">80%</option><option value="0.90" selected>90%</option><option value="0.95">95%</option></select></div>
+        <div class="field"><label for="ss">σ (estimate)</label><input type="number" id="ss" value="10.5" step="any" min="0"></div>
+        <div class="field"><label for="sdl">Effect Δ</label><input type="number" id="sdl" value="6" step="any" min="0"></div>
+      </div>
+      <div class="field"><span class="lab">Lecture examples</span>
+        <div class="btns"><button class="btn ghost" data-ex="pain05">Pain relief, α = 0.05</button><button class="btn ghost" data-ex="pain01">Pain relief, α = 0.01</button><button class="btn ghost" data-ex="diet">Diets</button></div></div>
+    </div>
+    <div class="panel">
+      <div class="work" id="wS"></div>
+      <p class="say" id="sayS"></p>
+    </div>
+  </div>
+</section>
+
+<section class="part">
+  <div class="part-head"><span class="no">4</span><h2>Significant is not the same as important</h2><p>A new anti-hypertensive drug against a reference drug, H₀: μ₁ = μ₂ vs H<sub>A</sub>: μ₁ &gt; μ₂ (change in blood pressure). Same question, two very different studies.</p></div>
+  <div class="cases" id="cases"></div>
+  <p class="say">With huge samples (high power) even a tiny difference becomes statistically significant; with small samples (low power) a large, clinically relevant difference can be missed. Always report the size of the effect next to the p-value.</p>
+</section>
+
+<section class="part">
+  <div class="part-head"><span class="no">5</span><h2>Quick quiz</h2><p>Five questions. Pick an answer to see whether it is right and why.</p></div>
+  <div class="quiz" id="quiz"></div>
+  <div class="score"><span>Score: <b id="score">0 / 5</b></span><button class="btn ghost" id="qReset">Try again</button></div>
+</section>
+
+</div></main>
+<footer><div class="wrap">Examples from the lecture slides: postoperative pain relief (μ₀ = 18 h, μ<sub>A</sub> = 24 h, σ = 10.5 h), diets (Δ = 30, σ = 50 mg/100 mL) and the anti-hypertensive drug comparison. Power and sample sizes use the Normal approximation, as in the slide formulas.</div></footer>
+<script>
+(function(){
+"use strict";
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+/* maths */
+function erf(x){const s=Math.sign(x);x=Math.abs(x);if(x<0.5){let t=x,sum=x,k=0;do{k++;t*=-x*x/k;sum+=t/(2*k+1);}while(Math.abs(t)>1e-16&&k<60);return s*2/Math.sqrt(Math.PI)*sum;}const z=x,tiny=1e-300;let f=z,C=f,D=0,del;for(let i=1;i<300;i++){const a=i/2;D=z+a*D;if(D===0)D=tiny;C=z+a/C;if(C===0)C=tiny;D=1/D;del=C*D;f*=del;if(Math.abs(del-1)<1e-15)break;}return s*(1-Math.exp(-z*z)/Math.sqrt(Math.PI)/f);}
+const Phi=z=>0.5*(1+erf(z/Math.SQRT2));
+const dnorm=(x,m,s)=>Math.exp(-0.5*((x-m)/s)**2)/(s*Math.sqrt(2*Math.PI));
+function qnorm(p){const a=[-3.969683028665376e+01,2.209460984245205e+02,-2.759285104469687e+02,1.383577518672690e+02,-3.066479806614716e+01,2.506628277459239e+00],b=[-5.447609879822406e+01,1.615858368580409e+02,-1.556989798598866e+02,6.680131188771972e+01,-1.328068155288572e+01],c=[-7.784894002430293e-03,-3.223964580411365e-01,-2.400758277161838e+00,-2.549732539343734e+00,4.374664141464968e+00,2.938163982698783e+00],d=[7.784695709041462e-03,3.224671290700398e-01,2.445134137142996e+00,3.754408661907416e+00];const pl=0.02425;let q,r,x;if(p<pl){q=Math.sqrt(-2*Math.log(p));x=(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);}else if(p<=1-pl){q=p-0.5;r=q*q;x=(((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q/(((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);}else{q=Math.sqrt(-2*Math.log(1-p));x=-(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);}const e=Phi(x)-p,u=e*Math.sqrt(2*Math.PI)*Math.exp(x*x/2);return x-u/(1+x*u/2);}
+function lgamma(x){const g=7,c=[0.99999999999980993,676.5203681218851,-1259.1392167224028,771.32342877765313,-176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];if(x<0.5)return Math.log(Math.PI/Math.sin(Math.PI*x))-lgamma(1-x);x-=1;let s=c[0];const t=x+g+0.5;for(let i=1;i<9;i++)s+=c[i]/(x+i);return 0.5*Math.log(2*Math.PI)+(x+0.5)*Math.log(t)-t+Math.log(s);}
+function betacf(a,b,x){const tiny=1e-300;let qab=a+b,qap=a+1,qam=a-1,c=1,d=1-qab*x/qap;if(Math.abs(d)<tiny)d=tiny;d=1/d;let h=d;for(let m=1;m<=300;m++){const m2=2*m;let aa=m*(b-m)*x/((qam+m2)*(a+m2));d=1+aa*d;if(Math.abs(d)<tiny)d=tiny;c=1+aa/c;if(Math.abs(c)<tiny)c=tiny;d=1/d;h*=d*c;aa=-(a+m)*(qab+m)*x/((a+m2)*(qap+m2));d=1+aa*d;if(Math.abs(d)<tiny)d=tiny;c=1+aa/c;if(Math.abs(c)<tiny)c=tiny;d=1/d;const del=d*c;h*=del;if(Math.abs(del-1)<1e-14)break;}return h;}
+function ibeta(x,a,b){if(x<=0)return 0;if(x>=1)return 1;const bt=Math.exp(lgamma(a+b)-lgamma(a)-lgamma(b)+a*Math.log(x)+b*Math.log(1-x));return x<(a+1)/(a+b+2)?bt*betacf(a,b,x)/a:1-bt*betacf(b,a,1-x)/b;}
+const pt=(t,df)=>{const x=df/(df+t*t),tail=0.5*ibeta(x,df/2,0.5);return t>0?1-tail:tail;};
+const f=(x,d=3)=>x.toLocaleString("en-IE",{minimumFractionDigits:d,maximumFractionDigits:d}).replace(/^-/,"−");
+const pc=(x,d=1)=>(100*x).toFixed(d)+"%";
+
+/* canvas */
+const cssv=()=>{const cs=getComputedStyle(document.documentElement);return k=>cs.getPropertyValue("--"+k).trim();};
+const MONO='12px "JetBrains Mono", ui-monospace, Menlo, monospace', BODY='12px "JetBrains Mono", ui-monospace, Menlo, monospace';
+function niceTicks(a,b,n){const span=b-a;let step=Math.pow(10,Math.floor(Math.log10(span/n)));const e=span/n/step;if(e>=7.5)step*=10;else if(e>=3.5)step*=5;else if(e>=1.5)step*=2;const t=[];for(let v=Math.ceil(a/step-1e-9)*step;v<=b+1e-9;v+=step)t.push(+v.toFixed(8));return t;}
+function chart(host,o){
+  let cv=host.querySelector("canvas");if(!cv){cv=document.createElement("canvas");cv.setAttribute("role","img");host.appendChild(cv);}
+  cv.setAttribute("aria-label",o.aria||"");
+  const dpr=Math.max(1,Math.min(3,window.devicePixelRatio||1)),w=Math.max(260,host.clientWidth||600),h=o.h||270;
+  cv.style.height=h+"px";cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);
+  const ctx=cv.getContext("2d");ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);
+  const col=cssv(),m={l:o.yticks?44:16,r:16,t:o.mt||34,b:44},iw=w-m.l-m.r,ih=h-m.t-m.b;
+  const sx=v=>m.l+(v-o.x[0])/(o.x[1]-o.x[0])*iw, sy=v=>m.t+ih-(v-o.y[0])/(o.y[1]-o.y[0])*ih;
+  ctx.font=MONO;ctx.lineWidth=1;
+  if(o.yticks)o.yticks.forEach(t=>{const y=Math.round(sy(t))+.5;ctx.strokeStyle=col("line");ctx.beginPath();ctx.moveTo(m.l,y);ctx.lineTo(m.l+iw,y);ctx.stroke();ctx.fillStyle=col("muted");ctx.textAlign="right";ctx.textBaseline="middle";ctx.fillText(o.yfmt?o.yfmt(t):t,m.l-7,y);});
+  ctx.strokeStyle=col("muted");ctx.beginPath();ctx.moveTo(m.l,m.t+ih+.5);ctx.lineTo(m.l+iw,m.t+ih+.5);ctx.stroke();
+  ctx.fillStyle=col("muted");ctx.textAlign="center";ctx.textBaseline="top";
+  niceTicks(o.x[0],o.x[1],Math.max(4,Math.min(9,Math.floor(iw/80)))).forEach(v=>{if(v<o.x[0]||v>o.x[1])return;const x=Math.round(sx(v))+.5;ctx.beginPath();ctx.moveTo(x,m.t+ih);ctx.lineTo(x,m.t+ih+5);ctx.stroke();ctx.fillText(String(+v.toFixed(4)),x,m.t+ih+8);});
+  ctx.font=BODY;ctx.textBaseline="bottom";ctx.fillText(o.xlab||"",m.l+iw/2,h-4);
+  const P={ctx,sx,sy,col,m,iw,ih,w,h};
+  ctx.save();ctx.beginPath();ctx.rect(m.l,m.t-30,iw,ih+30);ctx.clip();o.draw(P);ctx.restore();
+  if(o.over)o.over(P);
+}
+function fillUnder(P,fn,a,b,color,alpha){const{ctx,sx,sy}=P;if(b<=a)return;ctx.save();ctx.globalAlpha=alpha;ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(sx(a),sy(0));const N=200;for(let i=0;i<=N;i++){const x=a+(b-a)*i/N;ctx.lineTo(sx(x),sy(fn(x)));}ctx.lineTo(sx(b),sy(0));ctx.closePath();ctx.fill();ctx.restore();}
+function line(P,fn,a,b,color,lw,dash){const{ctx,sx,sy}=P;ctx.save();ctx.strokeStyle=color;ctx.lineWidth=lw;if(dash)ctx.setLineDash(dash);ctx.beginPath();const N=300;for(let i=0;i<=N;i++){const x=a+(b-a)*i/N;i?ctx.lineTo(sx(x),sy(fn(x))):ctx.moveTo(sx(x),sy(fn(x)));}ctx.stroke();ctx.restore();}
+function label(P,x,y,t,color,align,font){const{ctx}=P;ctx.save();ctx.font=font||MONO;ctx.textAlign=align||"center";ctx.textBaseline="bottom";ctx.lineJoin="round";ctx.lineWidth=5;ctx.strokeStyle=P.col("bg");ctx.strokeText(t,x,y);ctx.fillStyle=color;ctx.fillText(t,x,y);ctx.restore();}
+function seg(id,cb){$("#"+id).addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;setSeg(id,b.dataset.v);cb(b.dataset.v);});}
+function setSeg(id,v){$$("#"+id+" button").forEach(x=>x.setAttribute("aria-pressed",String(+x.dataset.v)===String(+v)?"true":"false"));}
+
+/* ---------- Part 2 ---------- */
+const MU0=18;
+const S={alpha:0.05,d:6,sig:10.5,n:27};
+function calc(al,d,sig,n){const se=sig/Math.sqrt(n),z=qnorm(1-al),yc=MU0+z*se,beta=Phi((yc-(MU0+d))/se);return{se,z,yc,beta,power:1-beta};}
+function paintA(){
+  const{alpha,d,sig,n}=S,R=calc(alpha,d,sig,n),muA=MU0+d,se=R.se;
+  $("#alo").textContent=f(alpha,3).replace(/0+$/,"").replace(/\.$/,"");$("#dlo").textContent=d;$("#sgo").textContent=sig;$("#nno").textContent=n;
+  setSeg("alq",[0.1,0.05,0.01].find(v=>Math.abs(v-alpha)<1e-9)??-1);
+  $("#tA").innerHTML=`Sampling distribution of ȳ (n = ${n}): μ₀ = ${MU0} h vs μ<sub>A</sub> = ${f(muA,1)} h`;
+  const lo=MU0-4*se,hi=muA+4*se,ymax=dnorm(0,0,se)*1.22;
+  const f0=x=>dnorm(x,MU0,se),fA=x=>dnorm(x,muA,se);
+  chart($("#cA"),{x:[lo,hi],y:[0,ymax],h:290,xlab:"Sample mean ȳ (hours of pain relief)",aria:"Null and alternative sampling distributions with alpha, beta and power",
+    draw:P=>{const c=P.col;
+      fillUnder(P,fA,R.yc,hi,c("power"),.28);
+      fillUnder(P,fA,lo,R.yc,c("beta"),.55);
+      fillUnder(P,f0,R.yc,hi,c("alpha"),.7);
+      line(P,f0,lo,hi,c("h0"),2.2);line(P,fA,lo,hi,c("ha"),2.6);
+      const x=P.sx(R.yc);P.ctx.save();P.ctx.strokeStyle=c("crit");P.ctx.lineWidth=2.5;P.ctx.beginPath();P.ctx.moveTo(x,P.sy(0));P.ctx.lineTo(x,P.sy(ymax*0.97));P.ctx.stroke();P.ctx.restore();},
+    over:P=>{const c=P.col,pk=dnorm(0,0,se);
+      if(d>0.6*se*4||d===0){}
+      label(P,P.sx(MU0),P.sy(pk)-6,d<3*se?"H₀":"if H₀ true",c("h0"));
+      if(d>0)label(P,P.sx(muA),P.sy(pk)-6,d<3*se?"Hₐ":"if Hₐ true",c("ha"));
+      const x=P.sx(R.yc),right=x<P.m.l+P.iw-120;
+      label(P,x+(right?6:-6),P.m.t-14,`reject if ȳ > ${f(R.yc,2)}`,c("crit"),right?"left":"right");}});
+  $("#meters").innerHTML=[["a","α = Pr(Type I error)",alpha],["b","β = Pr(Type II error)",R.beta],["p","Power = 1 − β",R.power]].map(([k,t,v])=>`<div class="meter ${k}"><span>${t}</span><b>${pc(v,1)}</b><div class="bar"><i style="width:${Math.max(0,Math.min(100,100*v))}%"></i></div></div>`).join("");
+  $("#wA").innerHTML=`<span class="k">SE</span>             σ/√n = ${sig}/√${n} = ${f(se,3)}\n<span class="k">Critical value</span> z<sub>α</sub> = z<sub>${+alpha.toFixed(3)}</sub> = ${f(R.z,3)}${[0.1,0.05,0.01].some(v=>Math.abs(v-alpha)<1e-9)?"   (Table 5)":""}\n<span class="k">Cut-off for ȳ</span>  ȳ* = μ₀ + z<sub>α</sub> × SE = ${MU0} + ${f(R.z,3)} × ${f(se,3)} = ${f(R.yc,2)} hours\n<span class="k">β</span>              Pr(ȳ ≤ ${f(R.yc,2)} | μ = ${f(muA,1)}) = Φ((${f(R.yc,2)} − ${f(muA,1)})/${f(se,3)}) = Φ(${f((R.yc-muA)/se,2)}) = ${f(R.beta,3)}\n<span class="k">Power</span>          1 − β = ${f(R.power,3)}`;
+  let say;
+  if(d===0) say="With Δ = 0 the two curves sit on top of each other: H<sub>A</sub> and H₀ say the same thing, and the “power” is just α.";
+  else if(R.power>=0.9) say=`With n = ${n}, a real improvement of ${d} h would be detected ${pc(R.power,0)} of the time. Try lowering α: the amber line moves right, the terracotta area (α) shrinks and the steel area (β) grows.`;
+  else say=`With n = ${n}, a real improvement of ${d} h would be missed ${pc(R.beta,0)} of the time. Increase n: both curves get narrower, so the overlap, and with it β, shrinks while α stays at ${f(alpha,3).replace(/0+$/,"")}.`;
+  $("#sayA").textContent=say;
+  // power curve
+  const nmax=Math.max(120,n),pw=k=>calc(alpha,d,sig,k).power;
+  chart($("#cP"),{x:[2,nmax],y:[0,1],h:220,mt:18,xlab:"Sample size n",yticks:[0,0.25,0.5,0.75,0.9,1],yfmt:v=>Math.round(v*100)+"%",aria:"Power against sample size",
+    draw:P=>{const c=P.col;line(P,()=>0.9,2,nmax,c("muted"),1.2,[5,4]);
+      const{ctx,sx,sy}=P;ctx.save();ctx.strokeStyle=c("power");ctx.lineWidth=2.6;ctx.beginPath();for(let k=2;k<=nmax;k++){const X=sx(k),Y=sy(pw(k));k===2?ctx.moveTo(X,Y):ctx.lineTo(X,Y);}ctx.stroke();
+      ctx.fillStyle=c("ink");ctx.beginPath();ctx.arc(sx(n),sy(R.power),5,0,7);ctx.fill();ctx.restore();},
+    over:P=>{const x=P.sx(n),right=x<P.m.l+P.iw-140;label(P,x+(right?8:-8),P.sy(R.power)-6,`n = ${n}: ${pc(R.power,0)}`,P.col("ink"),right?"left":"right");}});
+}
+$("#al").addEventListener("input",e=>{S.alpha=+e.target.value;paintA();});
+seg("alq",v=>{S.alpha=+v;$("#al").value=v;paintA();});
+$("#dl").addEventListener("input",e=>{S.d=+e.target.value;paintA();});
+$("#sg").addEventListener("input",e=>{S.sig=+e.target.value;paintA();});
+$("#nn").addEventListener("input",e=>{S.n=+e.target.value;paintA();});
+$("#preset").onclick=()=>{Object.assign(S,{alpha:0.05,d:6,sig:10.5,n:27});$("#al").value=0.05;$("#dl").value=6;$("#sg").value=10.5;$("#nn").value=27;paintA();};
+
+/* ---------- Part 3 ---------- */
+const SS={design:1,tails:1};
+function paintS(){
+  const al=+$("#sa").value,pw=+$("#sp").value,sig=+$("#ss").value,d=+$("#sdl").value,beta=1-pw;
+  if(!(sig>0&&d>0)){$("#wS").textContent="Enter σ > 0 and Δ > 0.";$("#sayS").textContent="";return;}
+  const za=qnorm(1-(SS.tails===2?al/2:al)),zb=qnorm(1-beta),k=SS.design===2?2:1,n=k*(sig/d)**2*(za+zb)**2,N=Math.ceil(n-1e-9);
+  const zaLab=SS.tails===2?`z<sub>α/2</sub> = z<sub>${+(al/2).toFixed(3)}</sub>`:`z<sub>α</sub> = z<sub>${al}</sub>`;
+  $("#wS").innerHTML=`<span class="k">Quantiles</span>  ${zaLab} = ${f(za,3)}     z<sub>β</sub> = z<sub>${+beta.toFixed(2)}</sub> = ${f(zb,3)}\n<span class="k">Formula</span>    n = ${k===2?"2 · ":""}(σ/Δ)² (${SS.tails===2?"z<sub>α/2</sub>":"z<sub>α</sub>"} + z<sub>β</sub>)²\n<span class="k">Numbers</span>    n = ${k===2?"2 × ":""}(${sig}/${d})² × (${f(za,3)} + ${f(zb,3)})² = ${f(n,2)}\n<span class="k">Answer</span>     <b>n = ${N}${k===2?" per group, "+2*N+" in total":""}</b>  (always round up)`;
+  $("#sayS").textContent=`To detect a difference of ${d} with ${Math.round(pw*100)}% power at α = ${al} (${SS.tails===2?"two":"one"}-tailed), you need at least ${N} ${k===2?"subjects in each group":"subjects"}. Halving Δ multiplies n by 4; a smaller α or a higher power also costs subjects.`;
+}
+seg("sd",v=>{SS.design=+v;paintS();});seg("st",v=>{SS.tails=+v;paintS();});
+["sa","sp","ss","sdl"].forEach(id=>$("#"+id).addEventListener("input",paintS));
+$$("[data-ex]").forEach(b=>b.addEventListener("click",()=>{const ex={pain05:[1,1,"0.05","0.90",10.5,6],pain01:[1,1,"0.01","0.90",10.5,6],diet:[2,1,"0.01","0.90",50,30]}[b.dataset.ex];
+  SS.design=ex[0];SS.tails=ex[1];setSeg("sd",ex[0]);setSeg("st",ex[1]);$("#sa").value=ex[2];$("#sp").value=ex[3];$("#ss").value=ex[4];$("#sdl").value=ex[5];paintS();}));
+
+/* ---------- Part 4 ---------- */
+function twoSample(n1,m1,s1,n2,m2,s2){const df=n1+n2-2,sp=Math.sqrt(((n1-1)*s1*s1+(n2-1)*s2*s2)/df),se=sp*Math.sqrt(1/n1+1/n2),t=(m1-m2)/se,p=1-pt(t,df);return{df,sp,se,t,p,diff:m1-m2};}
+const CASES=[
+  {h:"Big study, tiny effect",tag:"high power",d:[457,5.4,0.5,592,5.3,0.5],msg:"Statistically significant, but is a 0.1 difference worth anything to a patient? Probably not."},
+  {h:"Small study, big effect",tag:"low power",d:[8,8.4,4.2,11,5.7,3.7],msg:"Not significant at 5%, yet a 2.7 difference could be clinically important. The study was too small to tell."}];
+$("#cases").innerHTML=CASES.map(c=>{const r=twoSample(...c.d),rej=r.p<=0.05;return `<div class="case"><div><span class="tag">${c.tag}</span><h3>${c.h}</h3></div>
+  <table class="t"><tr><th></th><th>n</th><th>ȳ</th><th>s</th></tr><tr><td>New drug</td><td>${c.d[0]}</td><td>${c.d[1]}</td><td>${c.d[2]}</td></tr><tr><td>Reference</td><td>${c.d[3]}</td><td>${c.d[4]}</td><td>${c.d[5]}</td></tr></table>
+  <div class="work">Difference ȳ₁ − ȳ₂ = ${f(r.diff,1)}\nSE = ${f(r.se,3)},  t = ${f(r.t,2)}  (${r.df} df)\np ${r.p<0.001?"< 0.001":"= "+f(r.p,3)}</div>
+  <p><span class="verdict ${rej?"rej":"keep"}">${rej?"Reject H₀":"Do not reject H₀"}</span></p><p>${c.msg}</p></div>`;}).join("");
+
+/* ---------- Quiz ---------- */
+const Q=[
+ {q:"A pregnancy test says “pregnant”, but the woman is not pregnant. Which error is this?",o:["Type II error (false negative)","Type I error (false positive)","No error: the test worked","A wrong choice of α"],a:1,e:"H₀ (not pregnant) is true, but the test rejected it. Rejecting a true H₀ is a Type I error, a false positive."},
+ {q:"Keeping n, σ and Δ fixed, we lower α from 0.05 to 0.01. What happens to β?",o:["β decreases","β stays the same","β increases","β becomes 0.01"],a:2,e:"A smaller α moves the critical value to the right. Fewer results count as evidence, so a real effect is missed more often: β goes up and power goes down. Try it with the α slider."},
+ {q:"A study has 90% power to detect an improvement of 6 hours. What does that mean?",o:["There is a 90% chance the drug works","90% of patients will improve by 6 hours","The p-value will be 0.10","If the drug really improves relief by 6 h, the test will reject H₀ about 90% of the time"],a:3,e:"Power is Pr(reject H₀ | H<sub>A</sub> true) for a given effect size. It is about the test’s ability to detect a real effect, not about the drug or the patients."},
+ {q:"Which change reduces both α and β at the same time?",o:["Lowering α only","Increasing the sample size n (and lowering α a little)","Raising α only","Using a two-tailed test instead of one-tailed"],a:1,e:"With n fixed, α and β trade off. A larger n makes both curves narrower, so you can lower α and still reduce β. That is why sample-size planning matters."},
+ {q:"A trial with about 1,000 patients finds the new drug lowers blood pressure 0.1 units more than the reference, p < 0.001. What is the best reading?",o:["The difference is statistically significant but may be too small to matter clinically","The new drug is much better than the reference","The result must be a Type I error","The sample was too small"],a:0,e:"Large samples have high power, so even tiny differences become significant. Statistical significance says the difference is probably real; whether it matters is a separate, practical question."}
+];
+const ans=new Array(Q.length).fill(null);
+function renderQuiz(){$("#quiz").innerHTML=Q.map((q,i)=>`<div class="q"><h3><span class="qn">Q${i+1}</span>${q.q}</h3><div class="opts">${q.o.map((o,j)=>`<button class="opt" data-q="${i}" data-o="${j}"><span class="k">${"ABCD"[j]}</span><span>${o}</span></button>`).join("")}</div><p class="fb" id="fb${i}" aria-live="polite"></p></div>`).join("");upd();}
+function upd(){$("#score").textContent=`${ans.filter((v,i)=>v===Q[i].a).length} / ${Q.length}`;}
+$("#quiz").addEventListener("click",e=>{const b=e.target.closest(".opt");if(!b)return;const i=+b.dataset.q,j=+b.dataset.o;if(ans[i]!==null)return;ans[i]=j;
+  $$(`.opt[data-q="${i}"]`).forEach(x=>{x.disabled=true;const k=+x.dataset.o;if(k===Q[i].a)x.classList.add("right");else if(k===j)x.classList.add("wrong");});
+  $("#fb"+i).innerHTML=(j===Q[i].a?'<b class="ok">Correct.</b> ':'<b class="no">Not quite.</b> ')+Q[i].e;upd();});
+$("#qReset").onclick=()=>{ans.fill(null);renderQuiz();};
+renderQuiz();
+
+/* boot + repaint */
+let raf=0;const rp=()=>{cancelAnimationFrame(raf);raf=requestAnimationFrame(paintA);};
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",rp);
+new MutationObserver(rp).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+let lw=0;new ResizeObserver(en=>{const w=Math.round(en[0].contentRect.width);if(w!==lw){lw=w;rp();}}).observe($("main .wrap"));
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(rp);
+paintA();paintS();
+})();
+</script>
+<script>
+/* ---------- theme toggle (shares the site's stored preference) ---------- */
+(function(){
+  var root = document.documentElement;
+  var btn  = document.getElementById('themeToggle');
+  function current(){ return root.getAttribute('data-theme') === 'light' ? 'light' : 'dark'; }
+  function sync(){
+    var t = current();
+    btn.setAttribute('aria-pressed', t === 'light' ? 'true' : 'false');
+    document.getElementById('tmode').textContent = t === 'light' ? 'Light' : 'Dark';
+  }
+  sync();
+  btn.addEventListener('click', function(){
+    var t = current() === 'light' ? 'dark' : 'light';
+    root.setAttribute('data-theme', t);
+    try{ localStorage.setItem('theme', t); }catch(e){}
+    sync();
+  });
+})();
+
+/* ---------- ȳ in running text uses the mono face (the serif sets it poorly) ---------- */
+(function(){
+  var SPLIT = /([\u0233\u0232])/;
+  var SKIP = 'svg,canvas,.work,.mono,.eq,select,option,textarea,input,script,style,.ph,table.t,output';
+  function wrapIn(root){
+    if (!root || root.nodeType !== 1 && root.nodeType !== 11) return;
+    var tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: function(n){
+      if (!SPLIT.test(n.nodeValue)) return NodeFilter.FILTER_REJECT;
+      var p = n.parentElement;
+      return p && !p.closest(SKIP) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+    }});
+    var list = []; while (tw.nextNode()) list.push(tw.currentNode);
+    list.forEach(function(n){
+      var frag = document.createDocumentFragment();
+      n.nodeValue.split(SPLIT).forEach(function(part, i){
+        if (!part) return;
+        if (i % 2) { var s = document.createElement('span'); s.className = 'ph'; s.textContent = part; frag.appendChild(s); }
+        else frag.appendChild(document.createTextNode(part));
+      });
+      n.parentNode.replaceChild(frag, n);
+    });
+  }
+  wrapIn(document.body);
+  new MutationObserver(function(ms){
+    ms.forEach(function(m){
+      if (m.type === 'characterData') { wrapIn(m.target.parentElement); return; }
+      m.addedNodes.forEach(function(n){ wrapIn(n.nodeType === 3 ? n.parentElement : n); });
+    });
+  }).observe(document.body, { childList: true, subtree: true, characterData: true });
+})();
+</script>
+
+</body>
+</html>
