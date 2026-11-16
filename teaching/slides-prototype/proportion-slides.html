@@ -87,12 +87,13 @@ body[data-toc="header"] #side,body[data-toc="off"] #side{display:none}
   position:absolute;inset:0;visibility:hidden;pointer-events:none;
   background:linear-gradient(180deg,var(--ink-2),var(--ink-3));
   border:1px solid var(--line);border-radius:16px;
-  padding:38px 62px 34px;font-size:25px;font-weight:400;line-height:1.42;overflow:hidden;
+  padding:38px 62px 34px;font-size:calc(25px*var(--fs,1));font-weight:400;line-height:1.42;overflow:hidden;touch-action:none;
 }
 .slide.on{visibility:visible;pointer-events:auto}
-.slide.sm{font-size:22px}
-.slide.xs{font-size:20px}
-.slide h2{font-family:"Space Grotesk",sans-serif;font-weight:600;font-size:34px;line-height:1.15;margin:0 0 22px;letter-spacing:-.01em}
+.slide.sm{font-size:calc(22px*var(--fs,1))}
+.slide.xs{font-size:calc(20px*var(--fs,1))}
+.slide.scrolly{overflow-y:auto;touch-action:pan-y}
+.slide h2{font-family:"Space Grotesk",sans-serif;font-weight:600;font-size:calc(34px*var(--fs,1));line-height:1.15;margin:0 0 22px;letter-spacing:-.01em}
 .slide h2::after{content:"";display:block;width:54px;height:2px;background:var(--amber);margin-top:12px}
 .slide h2 .katex{font-size:1em}
 .slide p{margin:0 0 .55em}
@@ -219,12 +220,27 @@ svg text.t-amber{fill:var(--amber)} svg text.t-terra{fill:var(--terra)} svg text
 #bar .tools{display:flex;align-items:center;gap:8px}
 #bar .pill{padding:5px 13px;font-size:13px}
 #count{min-width:64px;text-align:center}
+.menu{display:flex;align-items:center;gap:8px}
+#bMenu{display:none;font-size:17px;padding:4px 14px}
+@media (max-width:1180px),(pointer:coarse){
+  #bar{position:relative}
+  #bar>.mono{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  #bMenu{display:inline-block}
+  .menu{display:none;position:absolute;right:12px;bottom:calc(100% + 8px);flex-direction:column;align-items:stretch;gap:6px;min-width:210px;z-index:80;
+    background:var(--ink-2);border:1px solid var(--line-2);border-radius:14px;padding:10px;box-shadow:0 14px 40px rgba(0,0,0,.4)}
+  #bar.open .menu{display:flex}
+  #bar.open #bMenu{background:var(--amber);border-color:var(--amber);color:var(--on-accent)}
+  #bar .menu .pill{padding:10px 16px;font-size:15px;text-align:left}
+}
 body.focus #top,body.focus #side,body.focus #bar{display:none}
 #mini{display:none;position:fixed;right:10px;bottom:10px;z-index:60;gap:6px;opacity:.3;transition:opacity .2s}
 body.focus #mini{display:flex}
 #mini:hover,#mini:focus-within,#mini:active{opacity:1}
 #mini .pill{padding:6px 14px;font-size:14px;background:var(--ink)}
-@media print{#mini{display:none!important}}
+@media print{#mini,#laser{display:none!important}}
+#laser{position:fixed;left:0;top:0;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;z-index:70;pointer-events:none;opacity:0;transition:opacity .5s;
+  background:var(--amber);box-shadow:0 0 0 5px var(--amber-soft)}
+#laser.show{opacity:.8;transition:none}
 
 @media print{
   @page{size:13.3333in 7.5in;margin:0}
@@ -582,18 +598,24 @@ $$z = \frac{0.2537 - 0.3}{\sqrt{\frac{0.3 \times 0.7}{205}}} \approx -1.45, \qqu
 <footer id="bar">
   <span class="mono">STAT 20070 · Section 4 · Lecture 19 · Inference for a Proportion</span>
   <div class="tools">
+    <div class="menu" id="menu">
+    <button class="pill" id="bFm" title="Smaller text">A−</button>
+    <button class="pill" id="bFp" title="Larger text">A+</button>
     <button class="pill" id="bFs">Full screen</button>
-    <button class="pill" id="bWb">Whiteboard</button>
     <button class="pill" id="bToc">Contents: header</button>
     <button class="pill" id="bTheme">Theme</button>
     <button class="pill" id="bPdf">PDF</button>
+    </div>
+    <button class="pill" id="bWb">Whiteboard</button>
+    <button class="pill" id="bMenu" aria-label="Menu">☰</button>
     <button class="pill" id="bPrev">←</button>
     <span class="mono" id="count"></span>
     <button class="pill" id="bNext">→</button>
   </div>
 </footer>
 
-<div id="mini"><button class="pill" id="mPrev">←</button><button class="pill" id="mNext">→</button><button class="pill" id="mWb">Board</button><button class="pill" id="mX">Exit</button></div>
+<div id="laser"></div>
+<div id="mini"><button class="pill" id="mPrev">←</button><button class="pill" id="mNext">→</button><button class="pill" id="mFm">A−</button><button class="pill" id="mFp">A+</button><button class="pill" id="mWb">Board</button><button class="pill" id="mX">Exit</button></div>
 
 <script>
 window.addEventListener("DOMContentLoaded",function(){
@@ -663,13 +685,12 @@ document.addEventListener("keydown",e=>{
   const k=e.key;
   if(k==="ArrowRight"||k==="PageDown"||k===" "||k==="Enter"){e.preventDefault();next();}
   else if(k==="ArrowLeft"||k==="PageUp"||k==="Backspace"){e.preventDefault();prev();}
-  else if(k==="w"||k==="W")window.__wb();
-  else if(k==="Escape"&&!$("#wb").hidden)window.__wb();
+  else if(k==="w"||k==="W")window.__wb();  else if(k==="Escape"&&!$("#wb").hidden)window.__wb();
   else if(k==="Home")go(0,0);else if(k==="End")go(slides.length-1,0);
   else if(k==="f"||k==="F")fs();
 });
 (function(){let sx=null,sy=0;const v=$("#view");
-  v.addEventListener("touchstart",e=>{sx=(e.touches.length===1&&!e.target.closest(".live,#wb"))?e.touches[0].clientX:null;if(sx!==null)sy=e.touches[0].clientY;},{passive:true});
+  v.addEventListener("touchstart",e=>{sx=(e.touches.length===1&&e.touches[0].touchType!=="stylus"&&!e.target.closest(".live,#wb"))?e.touches[0].clientX:null;if(sx!==null)sy=e.touches[0].clientY;},{passive:true});
   v.addEventListener("touchend",e=>{if(sx===null)return;const t=e.changedTouches[0],dx=t.clientX-sx,dy=t.clientY-sy;sx=null;if(Math.abs(dx)>60&&Math.abs(dx)>2*Math.abs(dy)){if(dx<0)next();else prev();}},{passive:true});})();
 $("#bNext").onclick=e=>{next();e.target.blur();};$("#bPrev").onclick=e=>{prev();e.target.blur();};
 /* Full screen: always hides the deck's own bars so the slide fills the window, and also asks the browser for true full screen where it is supported. A refusal is ignored. */
@@ -681,6 +702,11 @@ function fs(){const d=document,r=d.documentElement,on=!d.body.classList.contains
 ["fullscreenchange","webkitfullscreenchange"].forEach(t=>document.addEventListener(t,()=>{const el=document.fullscreenElement||document.webkitFullscreenElement;
   if(el)nativeFs=true;else if(nativeFs){nativeFs=false;document.body.classList.remove("focus");}
   fit();if(window.__wbSize)window.__wbSize();}));
+/* Pencil marker: a small soft dot that follows the Apple Pencil on the slide, always on, pen only. It fades shortly after the pen lifts. Not shown on the whiteboard or the bars. */
+const dot=$("#laser");let dotT=null;
+function dotAt(e){if(e.pointerType!=="pen")return;if(e.target.closest&&e.target.closest("#wb,#bar,#mini,#top,#side")){dot.classList.remove("show");return;}
+  dot.style.transform="translate("+e.clientX+"px,"+e.clientY+"px)";dot.classList.add("show");clearTimeout(dotT);dotT=setTimeout(()=>dot.classList.remove("show"),700);}
+["pointerdown","pointermove"].forEach(t=>document.addEventListener(t,dotAt,true));
 $("#mPrev").onclick=e=>{prev();e.target.blur();};$("#mNext").onclick=e=>{next();e.target.blur();};
 $("#mWb").onclick=e=>{window.__wb();e.target.blur();};$("#mX").onclick=e=>{fs();e.target.blur();};
 $("#bFs").onclick=e=>{fs();e.target.blur();};
@@ -924,6 +950,19 @@ $("#mBtn").onclick=()=>{$("#mBtnWrap").hidden=true;$("#mSol").hidden=false;zcurv
     renderMathInElement(fb,Object.assign({delimiters:[{left:"$",right:"$",display:false}]},KO));
     const done=res.filter(r=>r!==null).length;$("#qScore").innerHTML="answered "+done+" of "+Q.length+", <b>"+res.filter(r=>r).length+"</b> correct at the first attempt";});
 })();
+
+/* ---------- text size ---------- */
+let fsz=1;
+function setFs(v){fsz=Math.round(Math.max(0.8,Math.min(1.6,v))*100)/100;stage.style.setProperty("--fs",fsz);
+  slides.forEach(s=>{s.classList.remove("scrolly");s.classList.toggle("scrolly",s.scrollHeight>s.clientHeight+2);});
+  try{localStorage.setItem("slides-fs",fsz);}catch(x){}}
+[["#bFm",-0.1],["#bFp",0.1],["#mFm",-0.1],["#mFp",0.1]].forEach(([id,d])=>{$(id).onclick=e=>{setFs(fsz+d);e.target.blur();};});
+document.addEventListener("keydown",e=>{if(e.target.closest&&e.target.closest(".live"))return;if(e.ctrlKey||e.metaKey||e.altKey)return;if(e.key==="+"||e.key==="=")setFs(fsz+0.1);else if(e.key==="-")setFs(fsz-0.1);else if(e.key==="0")setFs(1);});
+try{const v=parseFloat(localStorage.getItem("slides-fs"));if(v>0&&v!==1)setFs(v);}catch(x){}
+
+/* ---------- collapsed menu (tablets and narrow windows) ---------- */
+$("#bMenu").onclick=e=>{$("#bar").classList.toggle("open");e.currentTarget.blur();};
+document.addEventListener("click",e=>{if(e.target.closest("#bMenu,#bFm,#bFp"))return;$("#bar").classList.remove("open");});
 
 fit();
 const h=parseInt(location.hash.slice(1),10);go(h>=1?h-1:0,0);
