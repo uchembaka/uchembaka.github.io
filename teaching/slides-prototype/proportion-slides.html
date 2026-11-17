@@ -124,8 +124,12 @@ b,strong{font-weight:600}
 .info .q{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:50%;border:1px solid var(--amber);color:var(--amber);font:500 11px "JetBrains Mono",monospace;vertical-align:super;margin-left:3px;cursor:help;line-height:1}
 .info .pop{position:absolute;left:0;top:calc(100% + 8px);width:400px;white-space:normal;z-index:20;background:var(--ink);border:1px solid var(--line-2);border-radius:12px;padding:12px 16px;font-size:18px;line-height:1.4;font-weight:300;color:var(--haze);box-shadow:0 14px 40px rgba(0,0,0,.35);opacity:0;visibility:hidden;transition:opacity .15s}
 .info:hover .pop,.info .q:focus + .pop{opacity:1;visibility:visible}
-.notes{list-style:none;padding:0;margin:0}
-.notes li{display:grid;grid-template-columns:150px 1fr 250px;gap:22px;align-items:baseline;padding:11px 0;border-bottom:1px solid var(--line);margin:0}
+/* a note on a whole displayed equation: the ? sits at the right of the equation and the note opens below its centre */
+div.info.eq{display:flex;justify-content:center;align-items:flex-start;white-space:normal}
+div.info.eq .q{margin-top:.6em;margin-left:8px}
+div.info.eq .pop{left:50%;transform:translateX(-50%)}
+.notes{list-style:none;padding:0;margin:0;font-size:.9em;line-height:1.4}
+.notes li{display:grid;grid-template-columns:170px 1fr 90px;gap:22px;align-items:baseline;padding:11px 0;border-bottom:1px solid var(--line);margin:0}
 .notes .ref{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--mute);cursor:pointer;text-align:right}
 .notes .ref:hover{color:var(--amber)}
 .notes .el{color:var(--amber)}
@@ -237,7 +241,13 @@ body.focus #top,body.focus #side,body.focus #bar{display:none}
 body.focus #mini{display:flex}
 #mini:hover,#mini:focus-within,#mini:active{opacity:1}
 #mini .pill{padding:6px 14px;font-size:14px;background:var(--ink)}
-@media print{#mini,#laser{display:none!important}}
+@media print{#mini,#laser,#ink,#inkbar{display:none!important}}
+svg.ico{display:block;width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+#ink{position:absolute;left:0;top:0;width:1280px;height:720px;z-index:30;pointer-events:none;border-radius:16px}
+#inkbar{top:auto;bottom:10px;z-index:55}
+#inkbar[hidden]{display:none}
+#inkbar,#inkbar *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+body.ink .slide.on{cursor:crosshair}
 #laser{position:fixed;left:0;top:0;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;z-index:70;pointer-events:none;opacity:0;transition:opacity .5s;
   background:var(--amber);box-shadow:0 0 0 5px var(--amber-soft)}
 #laser.show{opacity:.8;transition:none}
@@ -349,9 +359,9 @@ $$SE(\hat{p}) = \sqrt{\frac{\,\hat{p}\,(1-\hat{p})\,}{n}\,}\,.$$
 <p>Recall the general structure of a confidence interval (Lecture 18, slide 3):</p>
 $$\cst{\text{Observed value}} \;\,\pm\;\, \cte{(\text{Critical value}) \times (\text{Standard Error})}$$
 <p>In the case of a proportion, for a confidence level $100(1-\alpha)\%$ we get:</p>
-$$\htmlClass{frag f2}{\cst{\hat p}} \;\,\htmlClass{frag f1}{\pm}\;\, \htmlClass{frag f4}{\cte{z_{\alpha/2}}} \;\htmlClass{frag f1}{\times}\; \htmlClass{frag f3}{\sqrt{\frac{\,\hat{p}\,(1-\hat{p})\,}{n}\,}}$$
-<div class="frag f4">
-<p>where <span class="info" data-info="For example, a 95% interval has $\alpha = 0.05$, so $z_{\alpha/2} = z_{0.025} = 1.96$.">$z_{\alpha/2}$</span> is the appropriate quantile of a standard Normal<br>
+$$\htmlClass{frag f1}{\cst{\hat p} \;\,\pm\;\, \cte{z_{\alpha/2}} \;\times\; \sqrt{\frac{\,\hat{p}\,(1-\hat{p})\,}{n}\,}}$$
+<div class="frag f1">
+<p>where <span class="info" data-info="For example, a 95% interval has $\alpha = 0.05$, so $z_{\alpha/2} = z_{0.025} = 1.96$. Critical values are read from Table 5 of the New Cambridge Statistical Tables (percentage points of the Normal distribution), with $P = 100 \times \alpha/2$.">$z_{\alpha/2}$</span> is the appropriate quantile of a standard Normal<br>
 <em class="small">(the value leaving area $=\alpha/2$ to its right: $\Pr(Z &gt; z_{\alpha/2})=\alpha/2$.)</em></p>
 </div>
 </section>
@@ -394,10 +404,14 @@ $$\text{SE}(\hat p) \,=\, \sqrt{\frac{\,\hat{p}\,(1-\hat{p})\,}{n}\,} = \sqrt{\f
 <h2>Example: Left-handedness of students</h2>
 <ol start="3">
 <li>The 90% confidence interval is:
+<div class="info eq" data-label="$z_{0.05} = 1.645$" data-info="From Table 5 of the New Cambridge Statistical Tables (percentage points of the Normal distribution). For 90% confidence, $\alpha/2 = 0.05$, so read $P = 5$, giving $z_{0.05} = 1.6449 \approx 1.645$.">
 $$\begin{aligned}\hat p \pm 1.645\times\text{SE}(\hat p) &amp;\,=\, 0.1425 \pm 1.645 \times 0.01748 \\[0.5ex] &amp;\,=\, (0.114 \,;\, 0.171)\,.\end{aligned}$$
+</div>
 We are 90% confident that the interval $(0.114 \,;\, 0.171)$ contains the actual proportion of left-handed students.</li>
 <li>The 95% confidence interval is:
+<div class="info eq" data-label="$z_{0.025} = 1.96$" data-info="From Table 5 of the New Cambridge Statistical Tables (percentage points of the Normal distribution). For 95% confidence, $\alpha/2 = 0.025$, so read $P = 2.5$, giving $z_{0.025} = 1.9600$.">
 $$\begin{aligned}\hat p \pm 1.96\times\text{SE}(\hat p) &amp;\,=\, 0.1425 \pm 1.96 \times 0.01748 \\[0.5ex] &amp;\,=\, (0.108 \,;\, 0.177)\,.\end{aligned}$$
+</div>
 As usual, higher confidence implies a wider interval.</li>
 </ol>
 </section>
@@ -422,7 +436,7 @@ As usual, higher confidence implies a wider interval.</li>
 $$\cam{SE(\hat p) = \sqrt{\frac{p(1-p)}{n}}\,.}$$
 <p>Indeed, it determines how precisely $\hat p$ estimates $p$.</p>
 <div class="gap"></div>
-<p>More specifically, with confidence level $1-\alpha$, we know that the estimate $\hat p$ is within the following <b class="c-sage">margin of error</b> of $p$:</p>
+<p>More specifically, with confidence level $1-\alpha$, we know that the estimate $\hat p$ is within the following <span class="info" data-info="The margin of error (ME) is half the width of a confidence interval. The ME is the “plus or minus” attached to an estimate. It tells us how far the estimate could reasonably be from the truth because of sampling alone. If a survey reports 30% with a margin of error of 9 percentage points at 95% confidence, the true proportion is plausibly anywhere from 21% to 39%. A smaller ME means a more precise estimate."><b class="c-sage">margin of error</b></span> of $p$:</p>
 $$\csa{ME = z_{\alpha/2}\,\sqrt{\frac{p\,(1-p)}{n}}\,.}$$
 <p>The margin of error depends on $n$: larger samples lead to smaller error. If we specify a desired ME, we can work out what $n$ is needed to achieve it.</p>
 </section>
@@ -460,7 +474,9 @@ $$\hat p = \frac{124}{200} = 0.62 \quad \leadsto \quad \text{SE}(\hat p) = \sqrt
 <h2>Example: Cancer Survival</h2>
 <ol>
 <li>As $n\hat p = 124$ and $n(1-\hat p)=76$ are greater than 5, the Normal approximation holds. Hence the 95% confidence interval is:
-$$\begin{aligned}\hat p \pm 1.96\times\text{SE}(\hat p) &amp;\,=\, 0.62 \pm 1.96 \times 0.0343 \\[0.5ex] &amp;\,=\, (0.553 \,;\, 0.687)\,.\end{aligned}$$</li>
+<div class="info eq" data-label="$z_{0.025} = 1.96$" data-info="From Table 5 of the New Cambridge Statistical Tables (percentage points of the Normal distribution). For 95% confidence, $\alpha/2 = 0.025$, so read $P = 2.5$, giving $z_{0.025} = 1.9600$.">
+$$\begin{aligned}\hat p \pm 1.96\times\text{SE}(\hat p) &amp;\,=\, 0.62 \pm 1.96 \times 0.0343 \\[0.5ex] &amp;\,=\, (0.553 \,;\, 0.687)\,.\end{aligned}$$
+</div></li>
 <li class="frag f1">In order to estimate the true proportion $p$ to within 1%, with 95% confidence, we need:
 $$n \,=\, \bigg(\frac{z_{\alpha/2}}{ME}\bigg)^2 \! p\,(1-p) \,=\, \bigg(\frac{1.96}{0.01}\bigg)^2 \! p\,(1-p)$$
 Replacing $p$ with $\hat p = 0.62$ gives $n=9051$.<br>
@@ -533,10 +549,12 @@ $$z = \frac{\hat{p} - p_0}{\sqrt{ \frac{p_0(1 - p_0)}{n } } } = \frac{0.525 - 0.
 <div class="cols" style="--l:1fr;--r:500px">
 <div>
 <ol start="3">
-<li>With $\alpha=0.05$, the critical value is $z^*_{0.05} = 1.645$. The test is upper-tailed, hence the rejection region is $z &gt; 1.645$. As we obtained $2.28 &gt; 1.645$, we reject $H_0$.
+<li>With $\alpha=0.05$, the critical value is <span class="info" data-info="From Table 5 of the New Cambridge Statistical Tables (percentage points of the Normal distribution), with $P = 5$: $z_{0.05} = 1.6449 \approx 1.645$. The test is upper tailed, so all of $\alpha$ is in one tail.">$z^*_{0.05} = 1.645$</span>. The test is upper-tailed, hence the rejection region is $z &gt; 1.645$. As we obtained $2.28 &gt; 1.645$, we reject $H_0$.
 <div class="gap"></div>
 Equivalently, for an upper-tail test, the $p$-value is:
+<div class="info eq" data-label="$1 - \Pr(Z &lt; 2.28)$" data-info="From Table 4 of the New Cambridge Statistical Tables (the Normal distribution function): $\Phi(2.28) = \Pr(Z &lt; 2.28) = 0.9887$. Table 4 gives the area to the left of $z$, so the upper tail is $1 - 0.9887 = 0.0113$.">
 $$\begin{aligned}\Pr(Z &gt; z) &amp;= \Pr(Z &gt; 2.28) = 1 - \Pr(Z &lt; 2.28)\\ &amp;= 1 - 0.9887 = 0.0113\end{aligned}$$
+</div>
 As $0.0113 &lt; 0.05$, we reject the null hypothesis at the 5% significance level.</li>
 <li>There is evidence to suggest that more than 40% of the people running the marathon are women and therefore the recruitment efforts were successful.</li>
 </ol>
@@ -556,7 +574,9 @@ As $0.0113 &lt; 0.05$, we reject the null hypothesis at the 5% significance leve
 <div class="live" id="mBtnWrap"><button class="pill primary" id="mBtn">Reveal the solution</button> <span class="c-mute" style="font-size:17px;margin-left:8px">Try it yourself first.</span></div>
 <div id="mSol" hidden>
 <p><b>Solution:</b> $H_0\colon p = 0.3$ vs $H_A\colon p \neq 0.3$, with $\hat p = \frac{52}{205} = 0.2537$.</p>
+<div class="info eq" data-label="$2\Pr(Z \geq 1.45)$" data-info="From Table 4 of the New Cambridge Statistical Tables (the Normal distribution function): $\Phi(1.45) = \Pr(Z &lt; 1.45) = 0.9265$, so $\Pr(Z \geq 1.45) = 1 - 0.9265 = 0.0735$. Table 4 lists positive $z$ only; by symmetry $\Pr(Z \leq -1.45) = \Pr(Z \geq 1.45)$. The test is two sided, so the $p$-value is $2 \times 0.0735 = 0.147$.">
 $$z = \frac{0.2537 - 0.3}{\sqrt{\frac{0.3 \times 0.7}{205}}} \approx -1.45, \qquad p\text{-value} = 2\Pr(Z \geq 1.45) \approx 0.147$$
+</div>
 <p>As $0.147 &gt; 0.05$, we do not reject $H_0$: there is no evidence that the European death rate differs from 30%.</p>
 </div>
 </div>
@@ -577,6 +597,18 @@ $$z = \frac{0.2537 - 0.3}{\sqrt{\frac{0.3 \times 0.7}{205}}} \approx -1.45, \qqu
 <div class="out" id="qScore" style="margin-top:16px;font-size:16px"></div>
 </section>
 
+<canvas id="ink"></canvas>
+</div>
+<div id="inkbar" class="wbt" hidden>
+  <button class="sw on" data-c="--terra" style="background:var(--terra)" title="Red pen"></button>
+  <button class="sw" data-c="--amber" style="background:var(--amber)" title="Amber pen"></button>
+  <button class="sw" data-c="--steel-text" style="background:var(--steel-text)" title="Blue pen"></button>
+  <button class="sw" data-c="--haze" style="background:var(--haze)" title="Plain pen"></button>
+  <button class="pill" id="ikW">Thin</button>
+  <button class="pill" id="ikE">Eraser</button>
+  <button class="pill" id="ikU">Undo</button>
+  <button class="pill" id="ikC">Clear slide</button>
+  <button class="pill" id="ikX">Done</button>
 </div>
 <div id="wb" hidden>
   <canvas id="wbc"></canvas>
@@ -603,9 +635,11 @@ $$z = \frac{0.2537 - 0.3}{\sqrt{\frac{0.3 \times 0.7}{205}}} \approx -1.45, \qqu
     <button class="pill" id="bFp" title="Larger text">A+</button>
     <button class="pill" id="bFs">Full screen</button>
     <button class="pill" id="bToc">Contents: header</button>
+    <button class="pill" id="bPause" title="Reveal slides step by step, or show everything at once">Pauses: on</button>
     <button class="pill" id="bTheme">Theme</button>
     <button class="pill" id="bPdf">PDF</button>
     </div>
+    <button class="pill" id="bPen" title="Pen: write on the slide" aria-label="Pen"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1-4.5L16.5 4a2.1 2.1 0 0 1 3 3L8 18.5 4 20z"/><path d="M14.5 6l3 3"/></svg></button>
     <button class="pill" id="bWb">Whiteboard</button>
     <button class="pill" id="bMenu" aria-label="Menu">☰</button>
     <button class="pill" id="bPrev">←</button>
@@ -615,7 +649,7 @@ $$z = \frac{0.2537 - 0.3}{\sqrt{\frac{0.3 \times 0.7}{205}}} \approx -1.45, \qqu
 </footer>
 
 <div id="laser"></div>
-<div id="mini"><button class="pill" id="mPrev">←</button><button class="pill" id="mNext">→</button><button class="pill" id="mFm">A−</button><button class="pill" id="mFp">A+</button><button class="pill" id="mWb">Board</button><button class="pill" id="mX">Exit</button></div>
+<div id="mini"><button class="pill" id="mPrev">←</button><button class="pill" id="mNext">→</button><button class="pill" id="mFm">A−</button><button class="pill" id="mFp">A+</button><button class="pill" id="mPen" title="Pen: write on the slide" aria-label="Pen"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1-4.5L16.5 4a2.1 2.1 0 0 1 3 3L8 18.5 4 20z"/><path d="M14.5 6l3 3"/></svg></button><button class="pill" id="mWb">Board</button><button class="pill" id="mX">Exit</button></div>
 
 <script>
 window.addEventListener("DOMContentLoaded",function(){
@@ -634,15 +668,19 @@ function seg(root,cb){root.addEventListener("click",e=>{const b=e.target.closest
 const stage=$("#stage");
 const infos=$$(".info");
 if(infos.length){
-  const pre=$$(".slide");
-  const ns=document.createElement("section");ns.className="slide sm";ns.dataset.sec="Notes";
-  let h='<h2>Notes</h2><ul class="notes">';
+  const pre=$$(".slide"),items=[];
   infos.forEach(el=>{
-    const sl=el.closest(".slide"),i=pre.indexOf(sl),t=sl.dataset.title||$("h2",sl).textContent;
-    h+='<li><span class="el">'+el.innerHTML+'</span><span>'+el.dataset.info+'</span><span class="ref" data-go="'+i+'">Slide '+(i+1)+'</span></li>';
+    const sl=el.closest(".slide"),i=pre.indexOf(sl);
+    items.push('<li><span class="el">'+(el.dataset.label||el.innerHTML)+'</span><span>'+el.dataset.info+'</span><span class="ref" data-go="'+i+'">Slide '+(i+1)+'</span></li>');
     el.insertAdjacentHTML("beforeend",'<span class="q" tabindex="0" aria-label="Note">?</span><span class="pop">'+el.dataset.info+'</span>');
   });
-  ns.innerHTML=h+"</ul>";stage.appendChild(ns);
+  /* Notes are spread over as many pages as needed, at most four per page, so each page fits the slide (and the PDF). */
+  const per=4,np=Math.ceil(items.length/per),cut=k=>Math.round(k*items.length/np);
+  for(let k=0;k<np;k++){
+    const ns=document.createElement("section");ns.className="slide sm";ns.dataset.sec="Notes";
+    const tt="Notes"+(np>1?" ("+(k+1)+"/"+np+")":"");ns.dataset.title=tt;
+    ns.innerHTML='<h2>'+tt+'</h2><ul class="notes">'+items.slice(cut(k),cut(k+1)).join("")+"</ul>";stage.appendChild(ns);
+  }
 }
 const slides=$$(".slide");
 const titleOf=s=>s.dataset.title||$("h2",s).childNodes[0].parentNode.cloneNode(true);
@@ -662,17 +700,19 @@ secs.forEach(g=>{
 renderMathInElement(document.body,Object.assign({delimiters:[{left:"$$",right:"$$",display:true},{left:"$",right:"$",display:false}]},KO));
 
 /* ---------- navigation ---------- */
-let cur=0,step=0;
+let cur=0,step=0,pauses=true;
+try{if(localStorage.getItem("slides-pauses")==="off")pauses=false;}catch(x){}
 const stepOf=el=>{const m=el.className.baseVal===undefined?String(el.className).match(/\bf(\d+)\b/):null;return m?+m[1]:1;};
-const maxStep=i=>Math.max(0,...$$(".frag",slides[i]).map(stepOf));
+const maxStep=i=>pauses?Math.max(0,...$$(".frag",slides[i]).map(stepOf)):0;
 function show(){
   slides.forEach((s,i)=>s.classList.toggle("on",i===cur));
-  $$(".frag",slides[cur]).forEach(f=>f.classList.toggle("shown",stepOf(f)<=step));
+  $$(".frag",slides[cur]).forEach(f=>f.classList.toggle("shown",!pauses||stepOf(f)<=step));
   $$("[data-go]",top).forEach(d=>{if(!d.classList.contains("dot"))return;const i=+d.dataset.go;d.classList.toggle("cur",i===cur);d.classList.toggle("seen",i<cur);});
   secs.forEach(g=>g.el.classList.toggle("cur",g.idx.includes(cur)));
   $$("a",side).forEach(a=>a.classList.toggle("cur",+a.dataset.go===cur));
   const ca=$("a.cur",side);if(ca&&ca.scrollIntoView)ca.scrollIntoView({block:"nearest"});
   $("#count").textContent=(cur+1)+" / "+slides.length;
+  if(window.__inkRedraw)window.__inkRedraw();
   try{history.replaceState(null,"","#"+(cur+1));}catch(e){}
 }
 function go(i,st){cur=Math.max(0,Math.min(slides.length-1,i));step=st==="end"?maxStep(cur):(st||0);show();}
@@ -685,7 +725,8 @@ document.addEventListener("keydown",e=>{
   const k=e.key;
   if(k==="ArrowRight"||k==="PageDown"||k===" "||k==="Enter"){e.preventDefault();next();}
   else if(k==="ArrowLeft"||k==="PageUp"||k==="Backspace"){e.preventDefault();prev();}
-  else if(k==="w"||k==="W")window.__wb();  else if(k==="Escape"&&!$("#wb").hidden)window.__wb();
+  else if(k==="w"||k==="W")window.__wb();
+  else if(k==="p"||k==="P")window.__ink();  else if(k==="Escape"&&!$("#wb").hidden)window.__wb();
   else if(k==="Home")go(0,0);else if(k==="End")go(slides.length-1,0);
   else if(k==="f"||k==="F")fs();
 });
@@ -693,6 +734,10 @@ document.addEventListener("keydown",e=>{
   v.addEventListener("touchstart",e=>{sx=(e.touches.length===1&&e.touches[0].touchType!=="stylus"&&!e.target.closest(".live,#wb"))?e.touches[0].clientX:null;if(sx!==null)sy=e.touches[0].clientY;},{passive:true});
   v.addEventListener("touchend",e=>{if(sx===null)return;const t=e.changedTouches[0],dx=t.clientX-sx,dy=t.clientY-sy;sx=null;if(Math.abs(dx)>60&&Math.abs(dx)>2*Math.abs(dy)){if(dx<0)next();else prev();}},{passive:true});})();
 $("#bNext").onclick=e=>{next();e.target.blur();};$("#bPrev").onclick=e=>{prev();e.target.blur();};
+/* Pauses on or off. Off shows every step of every slide at once. Turning pauses back on keeps the current slide fully shown, so nothing disappears. */
+function setPauses(on){pauses=on;$("#bPause").textContent="Pauses: "+(on?"on":"off");step=maxStep(cur);show();try{localStorage.setItem("slides-pauses",on?"on":"off");}catch(x){}}
+$("#bPause").onclick=e=>{setPauses(!pauses);e.target.blur();};
+$("#bPause").textContent="Pauses: "+(pauses?"on":"off");
 /* Full screen: always hides the deck's own bars so the slide fills the window, and also asks the browser for true full screen where it is supported. A refusal is ignored. */
 let nativeFs=false;
 function fs(){const d=document,r=d.documentElement,on=!d.body.classList.contains("focus");d.body.classList.toggle("focus",on);
@@ -704,13 +749,13 @@ function fs(){const d=document,r=d.documentElement,on=!d.body.classList.contains
   fit();if(window.__wbSize)window.__wbSize();}));
 /* Pencil marker: a small soft dot that follows the Apple Pencil on the slide, always on, pen only. It fades shortly after the pen lifts. Not shown on the whiteboard or the bars. */
 const dot=$("#laser");let dotT=null;
-function dotAt(e){if(e.pointerType!=="pen")return;if(e.target.closest&&e.target.closest("#wb,#bar,#mini,#top,#side")){dot.classList.remove("show");return;}
+function dotAt(e){if(e.pointerType!=="pen")return;if(document.body.classList.contains("ink")){dot.classList.remove("show");return;}if(e.target.closest&&e.target.closest("#wb,#bar,#mini,#top,#side")){dot.classList.remove("show");return;}
   dot.style.transform="translate("+e.clientX+"px,"+e.clientY+"px)";dot.classList.add("show");clearTimeout(dotT);dotT=setTimeout(()=>dot.classList.remove("show"),700);}
 ["pointerdown","pointermove"].forEach(t=>document.addEventListener(t,dotAt,true));
 $("#mPrev").onclick=e=>{prev();e.target.blur();};$("#mNext").onclick=e=>{next();e.target.blur();};
 $("#mWb").onclick=e=>{window.__wb();e.target.blur();};$("#mX").onclick=e=>{fs();e.target.blur();};
 $("#bFs").onclick=e=>{fs();e.target.blur();};
-function fit(){const v=$("#view");stage.style.setProperty("--k",Math.min((v.clientWidth-28)/1280,(v.clientHeight-28)/720));}
+function fit(){const v=$("#view");stage.style.setProperty("--k",Math.min((v.clientWidth-28)/1280,(v.clientHeight-28)/720));if(window.__inkSize)window.__inkSize();}
 window.addEventListener("resize",fit);
 const TOC=["header","sidebar","off"];
 function setToc(m){document.body.dataset.toc=m;$("#bToc").textContent="Contents: "+m;fit();if(window.__wbSize)window.__wbSize();}
@@ -761,6 +806,46 @@ $("#bPdf").onclick=e=>{e.target.blur();window.print();};
   $("#wbX").onclick=toggle;$("#bWb").onclick=e=>{toggle();e.target.blur();};
   window.addEventListener("resize",size);
   window.__wb=toggle;window.__wbRedraw=redraw;window.__wbSize=size;
+})();
+
+/* ---------- pen: write directly on the slides ---------- */
+/* Ink is kept per slide, in slide coordinates (1280 x 720), so it stays in place when the window resizes.
+   With the pen on: the Apple Pencil (or the mouse) writes; once a Pencil has been seen, fingers still work the slide as usual. */
+(function(){
+  const cv=$("#ink"),cx=cv.getContext("2d"),bar=$("#inkbar"),ink={};
+  let on=false,cs=null,pid=null,col="--terra",thick=false,erase=false,penSeen=false,q=1,rect=null,kill=false;
+  const cssv=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const mid=(a,b)=>[(a[0]+b[0])/2,(a[1]+b[1])/2];
+  function pen(s,wd){cx.globalCompositeOperation=s.e?"destination-out":"source-over";cx.strokeStyle=s.e?"#000":cssv(s.c);cx.lineWidth=wd;cx.lineCap=cx.lineJoin="round";}
+  function seg(s,i){const p=s.p,b=p[i];pen(s,b[2]);cx.beginPath();
+    if(i===0){cx.moveTo(b[0],b[1]);cx.lineTo(b[0]+0.01,b[1]);}
+    else{const a=p[i-1],m1=mid(a,b),m0=i>1?mid(p[i-2],a):a;cx.moveTo(m0[0],m0[1]);cx.quadraticCurveTo(a[0],a[1],m1[0],m1[1]);}
+    cx.stroke();}
+  function tail(s){const n=s.p.length;if(n<2)return;const a=s.p[n-2],b=s.p[n-1],m=mid(a,b);pen(s,b[2]);cx.beginPath();cx.moveTo(m[0],m[1]);cx.lineTo(b[0],b[1]);cx.stroke();}
+  function redraw(){cx.setTransform(q,0,0,q,0,0);cx.clearRect(0,0,1280,720);(ink[cur]||[]).forEach(s=>{for(let i=0;i<s.p.length;i++)seg(s,i);tail(s);});}
+  function size(){const k=parseFloat(stage.style.getPropertyValue("--k"))||1,nq=Math.min(3,Math.max(1,k*(window.devicePixelRatio||1)));
+    if(cv.width!==Math.round(1280*nq)){q=nq;cv.width=Math.round(1280*q);cv.height=Math.round(720*q);}redraw();}
+  const pt=e=>[(e.clientX-rect.left)/rect.width*1280,(e.clientY-rect.top)/rect.height*720,cs.w*((e.pointerType==="pen"&&e.pressure>0&&!cs.e)?0.45+1.1*e.pressure:1)];
+  const active=()=>on&&$("#wb").hidden;
+  stage.addEventListener("pointerdown",e=>{if(e.pointerType==="pen")penSeen=true;if(!active()||e.button>0||(penSeen&&e.pointerType==="touch"))return;
+    e.preventDefault();e.stopPropagation();if(cs)tail(cs);try{stage.setPointerCapture(e.pointerId);}catch(x){}
+    pid=e.pointerId;rect=cv.getBoundingClientRect();cs={c:col,w:erase?28:(thick?7:3.5),e:erase,p:[]};cs.p.push(pt(e));(ink[cur]=ink[cur]||[]).push(cs);seg(cs,0);kill=true;},true);
+  stage.addEventListener("pointermove",e=>{if(!cs||e.pointerId!==pid)return;e.preventDefault();e.stopPropagation();let ev=e.getCoalescedEvents?e.getCoalescedEvents():[];if(!ev.length)ev=[e];
+    ev.forEach(o=>{const n=pt(o),l=cs.p[cs.p.length-1];if(Math.abs(n[0]-l[0])+Math.abs(n[1]-l[1])<1.2)return;cs.p.push(n);seg(cs,cs.p.length-1);});},true);
+  const up=e=>{if(!cs||e.pointerId!==pid)return;tail(cs);cs=null;pid=null;setTimeout(()=>{kill=false;},350);};
+  ["pointerup","pointercancel","lostpointercapture"].forEach(t=>stage.addEventListener(t,up,true));
+  stage.addEventListener("click",e=>{if(kill){kill=false;e.preventDefault();e.stopPropagation();}},true);
+  ["touchstart","touchmove","touchend"].forEach(t=>stage.addEventListener(t,e=>{if(!active())return;const c=e.changedTouches&&e.changedTouches[0];
+    if((c&&c.touchType==="stylus")||!penSeen){e.preventDefault();e.stopPropagation();}},{capture:true,passive:false}));
+  function toggle(){on=!on;document.body.classList.toggle("ink",on);bar.hidden=!on;$("#bPen").classList.toggle("primary",on);$("#mPen").classList.toggle("primary",on);}
+  $$(".sw",bar).forEach(b=>b.onclick=()=>{col=b.dataset.c;erase=false;$("#ikE").classList.remove("on");$$(".sw",bar).forEach(x=>x.classList.toggle("on",x===b));b.blur();});
+  $("#ikW").onclick=e=>{thick=!thick;e.target.textContent=thick?"Thick":"Thin";e.target.blur();};
+  $("#ikE").onclick=e=>{erase=!erase;e.target.classList.toggle("on",erase);e.target.blur();};
+  $("#ikU").onclick=e=>{(ink[cur]||[]).pop();redraw();e.target.blur();};
+  $("#ikC").onclick=e=>{ink[cur]=[];redraw();e.target.blur();};
+  $("#ikX").onclick=toggle;$("#bPen").onclick=e=>{toggle();e.target.blur();};$("#mPen").onclick=e=>{toggle();e.target.blur();};
+  window.__ink=toggle;window.__inkRedraw=redraw;window.__inkSize=size;
+  size();
 })();
 
 /* ---------- 1. sampling distribution demo ---------- */
