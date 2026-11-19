@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Slide Studio Opener</title>
+<meta name="description" content="Opens Slide Studio decks on this device, offline. Decks stay on the device.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Slides">
+<meta name="theme-color" content="#080A0F">
+<meta name="generator" content="Slide Studio Opener 1.0.0-beta.1">
+<meta name="robots" content="noindex">  <!-- an empty opener has nothing to find; keeps it out of search results while unlisted -->
+
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<script>try{const t=localStorage.getItem("theme");document.documentElement.setAttribute("data-theme",t==="light"||t==="dark"?t:(matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"));}catch(e){document.documentElement.setAttribute("data-theme","dark");}</script>
+<style>
+@font-face{font-family:"Space Grotesk";font-weight:300 700;src:url(space-grotesk.woff2) format("woff2")}
+@font-face{font-family:"JetBrains Mono";font-weight:100 800;src:url(jetbrains-mono.woff2) format("woff2")}
+:root{--ink:#080A0F;--ink-2:#0D1017;--ink-3:#131722;--haze:#E9E6DF;--haze-dim:#B9B6AE;--mute:#7A8190;
+  --line:rgba(233,230,223,.09);--line-2:rgba(233,230,223,.18);--amber:#CFA15F;--amber-soft:rgba(207,161,95,.18);--terra:#D07F66;--on-accent:#080A0F}
+[data-theme="light"]{--ink:#F3F0E9;--ink-2:#FBFAF5;--ink-3:#F0ECE3;--haze:#1B1C20;--haze-dim:#4A4C54;--mute:#6E727D;
+  --line:rgba(20,21,26,.10);--line-2:rgba(20,21,26,.20);--amber:#9E6B22;--amber-soft:rgba(158,107,34,.14);--terra:#A8492F;--on-accent:#FBFAF5}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--ink);color:var(--haze);font:400 16px/1.5 "Space Grotesk",system-ui,sans-serif;-webkit-text-size-adjust:100%}
+button{font:inherit;color:inherit;cursor:pointer}
+.mono{font-family:"JetBrains Mono",ui-monospace,monospace}
+#lib{max-width:880px;margin:0 auto;padding:calc(28px + env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) 60px max(16px,env(safe-area-inset-left))}
+header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+.logo{font-weight:600;font-size:17px;letter-spacing:-.01em;margin-right:auto}
+.logo::before{content:"";display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--amber);margin-right:9px;transform:translateY(-1px)}
+.logo small{font:500 12px "JetBrains Mono",monospace;color:var(--mute);margin-left:8px}
+.btn{border:1px solid var(--line-2);background:none;border-radius:10px;padding:9px 16px;min-height:44px}
+.btn:hover{border-color:var(--amber);color:var(--amber)}
+.btn.primary{background:var(--amber);border-color:var(--amber);color:var(--on-accent);font-weight:500}
+.btn.primary:hover{filter:brightness(1.08);color:var(--on-accent)}
+h1{font-size:30px;letter-spacing:-.015em;margin:26px 0 4px}
+.lead{color:var(--haze-dim);margin:0 0 22px;max-width:640px}
+.hint{border:1px solid var(--amber);background:var(--amber-soft);border-radius:12px;padding:12px 16px;margin:0 0 20px;font-size:15px}
+.hint[hidden]{display:none}
+#list{display:grid;gap:10px}
+.card{display:flex;align-items:center;gap:14px;background:var(--ink-2);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.card .open{flex:1;min-width:0;text-align:left;background:none;border:0;padding:0}
+.card .t{font-size:18px;font-weight:500;line-height:1.3;overflow:hidden;text-overflow:ellipsis}
+.card .m{font-size:13px;color:var(--mute);margin-top:3px;overflow-wrap:anywhere}
+.card .m b{font-weight:500;color:var(--haze-dim)}
+.card .tag{font:500 11px "JetBrains Mono",monospace;padding:2px 7px;border-radius:999px;border:1px solid var(--line-2);color:var(--haze-dim);margin-right:6px}
+.card .tag.lect{border-color:var(--amber);color:var(--amber)}
+.card:hover{border-color:var(--line-2)}
+.card .open:hover .t{color:var(--amber)}
+.card .rm{border:1px solid var(--line);background:none;border-radius:10px;padding:8px 12px;min-height:44px;color:var(--mute);font-size:14px}
+.card .rm:hover{border-color:var(--terra);color:var(--terra)}
+#empty{border:2px dashed var(--line-2);border-radius:14px;padding:34px 20px;text-align:center;color:var(--haze-dim)}
+#empty[hidden]{display:none}
+body.over #lib{outline:2px dashed var(--amber);outline-offset:-6px;border-radius:16px}
+footer{margin-top:28px;color:var(--mute);font-size:13.5px;display:flex;gap:6px 18px;flex-wrap:wrap}
+#view{position:fixed;inset:0;background:var(--ink);z-index:10}
+#view[hidden]{display:none}
+#view iframe{position:absolute;top:env(safe-area-inset-top);left:env(safe-area-inset-left);right:env(safe-area-inset-right);bottom:env(safe-area-inset-bottom);width:calc(100% - env(safe-area-inset-left) - env(safe-area-inset-right));height:calc(100% - env(safe-area-inset-top) - env(safe-area-inset-bottom));border:0;background:var(--ink)}
+#back{position:absolute;top:calc(8px + env(safe-area-inset-top));left:calc(8px + env(safe-area-inset-left));z-index:2;opacity:.55;background:var(--ink-2);border:1px solid var(--line-2);border-radius:10px;padding:6px 12px;font-size:14px}
+#back:hover{opacity:1}
+#back[hidden]{display:none}
+#dlg{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:16px}
+#dlg[hidden]{display:none}
+#dlg .box{background:var(--ink-2);border:1px solid var(--line-2);border-radius:16px;padding:20px 22px;max-width:460px;width:100%}
+#dlg h3{margin:0 0 8px;font-size:18px}
+#dlg p{margin:0 0 16px;color:var(--haze-dim)}
+#dlg .row{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+#toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:30;background:var(--ink-2);border:1px solid var(--amber);border-radius:999px;padding:10px 18px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:calc(100vw - 32px);text-align:center}
+#toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div id="lib">
+  <header>
+    <span class="logo">Slide Studio <small>Opener</small></span>
+    <button class="btn primary" id="openBtn">Open deck</button>
+  </header>
+  <h1>Your decks</h1>
+  <p class="lead">Open a deck file from this device. The deck is kept here, so it opens again without a connection, and your pen marks stay with it.</p>
+  <p class="hint" id="install" hidden>To keep decks on this iPad and use them offline, add this page to the Home Screen: tap <b>Share</b>, then <b>Add to Home Screen</b>, and open the decks from the new <b>Slides</b> icon.</p>
+  <div id="empty" hidden>No decks yet. Tap <b>Open deck</b> and choose the lecturer copy of a deck, for example from iCloud Drive or OneDrive in the Files app.<span id="dropTip"> You can also drop a deck file here.</span></div>
+  <div id="list"></div>
+  <footer><span>Decks stay on this device. Nothing is uploaded.</span><span id="used"></span><span class="mono">1.0.0-beta.1</span></footer>
+</div>
+<div id="view" hidden><button id="back" hidden>‹ Decks</button></div>
+<div id="dlg" hidden><div class="box" role="dialog" aria-modal="true"><h3 id="dlgT"></h3><p id="dlgP"></p><div class="row" id="dlgB"></div></div></div>
+<div id="toast" role="status"></div>
+<input type="file" id="file" accept=".html,.htm,text/html" multiple hidden>
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+const STANDALONE = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+const TOUCH = matchMedia("(pointer: coarse)").matches || navigator.maxTouchPoints > 1;
+
+/* ---------- storage: "meta" holds the list, "files" holds each deck's HTML ---------- */
+let dbp = null;
+function db() {
+  if (!dbp) dbp = new Promise((ok, no) => {
+    const r = indexedDB.open("slide-studio-opener", 1);
+    r.onupgradeneeded = () => { r.result.createObjectStore("meta", { keyPath: "key" }); r.result.createObjectStore("files"); };
+    r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error);
+  });
+  return dbp;
+}
+async function tx(stores, mode, fn) {
+  const d = await db();
+  return new Promise((ok, no) => {
+    const t = d.transaction(stores, mode); let out;
+    Promise.resolve(fn(t)).then(v => out = v);
+    t.oncomplete = () => ok(out); t.onerror = () => no(t.error); t.onabort = () => no(t.error || new Error("Storage was refused"));
+  });
+}
+const req = r => new Promise((ok, no) => { r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error); });
+const allMeta = () => tx(["meta"], "readonly", t => req(t.objectStore("meta").getAll()));
+const getMeta = k => tx(["meta"], "readonly", t => req(t.objectStore("meta").get(k)));
+const putMeta = m => tx(["meta"], "readwrite", t => { t.objectStore("meta").put(m); });
+const getFile = k => tx(["files"], "readonly", t => req(t.objectStore("files").get(k)));
+const putDeck = (m, html) => tx(["meta", "files"], "readwrite", t => { t.objectStore("meta").put(m); t.objectStore("files").put(html, m.key); });
+const delDeck = k => tx(["meta", "files"], "readwrite", t => { t.objectStore("meta").delete(k); t.objectStore("files").delete(k); });
+
+/* ---------- small helpers ---------- */
+function toast(s) { const t = $("#toast"); t.textContent = s; t.classList.add("show"); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove("show"), 3600); }
+function ask(title, text, buttons) {
+  return new Promise(done => {
+    $("#dlgT").textContent = title; $("#dlgP").textContent = text; const b = $("#dlgB"); b.innerHTML = "";
+    buttons.forEach(([label, val, primary]) => { const x = document.createElement("button"); x.className = "btn" + (primary ? " primary" : ""); x.textContent = label;
+      x.onclick = () => { $("#dlg").hidden = true; done(val); }; b.appendChild(x); });
+    $("#dlg").hidden = false; b.lastChild.focus();
+  });
+}
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const unent = s => { const t = document.createElement("textarea"); t.innerHTML = s; return t.value; };
+const mb = n => n >= 1e6 ? (n / 1e6).toFixed(1) + " MB" : Math.max(1, Math.round(n / 1e3)) + " kB";
+const day = t => new Date(t).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+
+/* ---------- the list ---------- */
+async function render() {
+  let list = [];
+  try { list = await allMeta(); } catch (e) { toast("This browser will not let the opener keep decks. Private browsing blocks it."); }
+  list.sort((a, b) => b.opened - a.opened);
+  $("#empty").hidden = list.length > 0;
+  $("#list").innerHTML = list.map(m =>
+    `<div class="card" data-k="${esc(m.key)}"><button class="open"><div class="t">${esc(m.title)}</div>
+      <div class="m"><span class="tag${m.role === "lecturer" ? " lect" : ""}">${m.role === "lecturer" ? "Lecturer copy" : "Student copy"}</span>${esc(m.deck)} · ${mb(m.size)}<br>
+      Opened ${day(m.opened)}${m.slide > 1 ? `, at slide <b>${m.slide}</b>` : ""} · Added ${day(m.added)}</div></button>
+      <button class="rm" aria-label="Remove ${esc(m.title)}">Remove</button></div>`).join("");
+  try { const e = await navigator.storage.estimate(); $("#used").textContent = "Using " + mb(e.usage || 0) + " on this device."; } catch (e) {}
+}
+$("#list").addEventListener("click", async e => {
+  const c = e.target.closest(".card"); if (!c) return; const k = c.dataset.k;
+  if (e.target.closest(".open")) return openDeck(k);
+  if (e.target.closest(".rm")) {
+    const m = await getMeta(k);
+    const yes = await ask("Remove this deck from this device?", `“${m.title}” will be removed from the list. Its pen marks and saved boards stay on this device, so they come back if you open the deck file again.`,
+      [["Cancel", false], ["Remove", true, true]]);
+    if (yes) { await delDeck(k); render(); toast("Removed."); }
+  }
+});
+
+/* ---------- adding decks ---------- */
+async function addFile(f) {
+  const html = await f.text();
+  const body = html.match(/<body\b[^>]*>/i);
+  const deck = body && body[0].match(/\bdata-deck="([^"]*)"/), role = body && body[0].match(/\bdata-role="([^"]*)"/);
+  if (!deck) { await ask("Not a Slide Studio deck", `“${f.name}” is not a deck exported from Slide Studio, so the opener cannot show it.`, [["OK", true, true]]); return null; }
+  const t = html.match(/<title>([^<]*)<\/title>/i);
+  const m = { deck: unent(deck[1]), role: role && role[1] === "student" ? "student" : "lecturer", title: unent(t ? t[1] : f.name).trim() || f.name, file: f.name, size: f.size };
+  m.key = m.deck + ":" + m.role;
+  const old = await getMeta(m.key), now = Date.now();
+  Object.assign(m, { added: old ? old.added : now, updated: now, opened: now, slide: old ? old.slide : 1 });
+  try { await putDeck(m, html); }
+  catch (e) { await ask("There is no room for this deck", "This device refused to keep the deck. Remove decks you no longer need, then try again.", [["OK", true, true]]); return null; }
+  if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+  toast(old ? `“${m.title}” updated. Your pen marks are kept.` : `“${m.title}” added.`);
+  return m.key;
+}
+async function addFiles(files) {
+  let last = null;
+  for (const f of files) { const k = await addFile(f); if (k) last = k; }
+  await render();
+  if (last && files.length === 1) openDeck(last);
+}
+$("#openBtn").onclick = () => $("#file").click();
+$("#file").onchange = e => { const f = [...e.target.files]; e.target.value = ""; if (f.length) addFiles(f); };
+addEventListener("dragover", e => { e.preventDefault(); document.body.classList.add("over"); });
+addEventListener("dragleave", e => { if (!e.relatedTarget) document.body.classList.remove("over"); });
+addEventListener("drop", e => { e.preventDefault(); document.body.classList.remove("over"); const f = [...e.dataTransfer.files].filter(x => /\.html?$/i.test(x.name)); if (f.length) addFiles(f); });
+
+/* ---------- showing a deck ---------- */
+let cur = null, url = null, poll = 0, lastHash = "";
+async function openDeck(k) {
+  const [m, html] = await Promise.all([getMeta(k), getFile(k)]);
+  if (!m || !html) { toast("That deck could not be read. Open the deck file again."); return render(); }
+  cur = m; m.opened = Date.now(); putMeta(m);
+  url = URL.createObjectURL(new Blob([html], { type: "text/html" }));
+  lastHash = "#" + (m.slide || 1);
+  /* a fresh frame for every deck, removed on closing, so the deck adds nothing to the back button's history */
+  const old = $("#frame"); if (old) old.remove();
+  const fr = document.createElement("iframe");
+  fr.id = "frame"; fr.title = m.title; fr.allow = "fullscreen"; fr.setAttribute("allowfullscreen", "");
+  fr.addEventListener("load", decorate); fr.src = url + lastHash;
+  $("#view").insertBefore(fr, $("#back"));
+  $("#view").hidden = false; $("#back").hidden = true; document.title = m.title;
+  if (!history.state || !history.state.deck) history.pushState({ deck: k }, "");
+  clearInterval(poll); poll = setInterval(keepPlace, 1500);
+}
+/* the deck writes its slide number into its address (#7); remember it so the deck reopens where it was left */
+function keepPlace() {
+  if (!cur) return;
+  let h = ""; try { h = $("#frame").contentWindow.location.hash; } catch (e) { return; }
+  if (!h || !$("#frame").contentWindow.location.href.startsWith("blob:")) return;
+  const n = parseInt(h.slice(1), 10);
+  if (h !== lastHash && n >= 1) { lastHash = h; cur.slide = n; putMeta(cur).catch(() => {}); }
+}
+function closeDeck() {
+  if (!cur) return;
+  keepPlace(); clearInterval(poll);
+  $("#view").hidden = true; const fr = $("#frame"); if (fr) fr.remove();
+  if (url) URL.revokeObjectURL(url); url = null; cur = null;
+  document.title = "Slide Studio Opener";
+  try { const t = localStorage.getItem("theme"); if (t) document.documentElement.setAttribute("data-theme", t); } catch (e) {}
+  render();
+}
+function leave() { if (history.state && history.state.deck) history.back(); else closeDeck(); }
+addEventListener("popstate", () => { if (cur) closeDeck(); });
+addEventListener("pagehide", keepPlace);
+document.addEventListener("visibilitychange", () => { if (document.hidden) keepPlace(); });
+$("#back").onclick = leave;
+
+/* once the deck has loaded: add a Decks button to its own bar, hide what does not work inside the opener, and name the PDF after the deck */
+function decorate() {
+  if (!cur || !$("#frame")) return;
+  let w, d; try { w = $("#frame").contentWindow; d = w.document; } catch (e) { $("#back").hidden = false; return; }
+  const menu = d.getElementById("menu"), mini = d.getElementById("mini");
+  if (!menu) { $("#back").hidden = false; return; }
+  const st = d.createElement("style");
+  st.textContent = "#bPres{display:none!important}#bDecks,#mDecks{white-space:nowrap}";   /* presenter view needs a second window, which the opener cannot give */
+  d.head.appendChild(st);
+  const mk = id => { const b = d.createElement("button"); b.className = "pill"; b.id = id; b.textContent = "‹ Decks"; b.title = "Back to your decks"; b.onclick = e => { e.stopPropagation(); leave(); }; return b; };
+  if (!d.getElementById("bDecks")) menu.insertBefore(mk("bDecks"), menu.firstChild);
+  if (mini && !d.getElementById("mDecks")) mini.insertBefore(mk("mDecks"), mini.firstChild);
+  w.addEventListener("beforeprint", () => { document.title = d.title; });
+  w.addEventListener("afterprint", () => { document.title = cur ? cur.title : "Slide Studio Opener"; });
+  w.focus();
+}
+
+/* ---------- start ---------- */
+$("#install").hidden = STANDALONE || !TOUCH;
+$("#dropTip").hidden = TOUCH;
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+render();
+</script>
+</body>
+</html>
